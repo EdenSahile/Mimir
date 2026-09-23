@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+html, body { margin:0; padding:0; background:#04060A; color:#E6EEF0; font-family:'DM Sans', system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+* { box-sizing:border-box; }
+a { color:#CEF4F8; text-decoration:none; }
+a:hover { color:#EAFBFD; }
+button { font-family:inherit; }
+:focus-visible { outline:1px solid rgba(206,244,248,.75); outline-offset:3px; border-radius:6px; }
+::selection { background:rgba(206,244,248,.22); }
+::-webkit-scrollbar { width:8px; height:8px }
+::-webkit-scrollbar-thumb { background:rgba(255,255,255,.09); border-radius:8px }
+@keyframes mim-rise { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:translateY(0) } }
+@keyframes mim-fade { from { opacity:0 } to { opacity:1 } }
+@keyframes mim-star { 0%,100% { opacity:.12 } 50% { opacity:.5 } }
+[style*="scrollbar-width: none"]::-webkit-scrollbar { display:none }
+@keyframes mim-presence { 0%,100% { box-shadow:0 0 0 0 rgba(206,244,248,0); transform:scale(1) } 50% { box-shadow:0 0 18px 2px rgba(206,244,248,.32); transform:scale(1.06) } }
+@keyframes mim-sheet { from { transform:translateY(24px); opacity:0 } to { transform:translateY(0); opacity:1 } }
+@keyframes mim-bar { 0%,100% { transform:scaleY(.32) } 50% { transform:scaleY(1) } }
+@media (prefers-reduced-motion: reduce) { * { animation-duration:.001s !important; animation-iteration-count:1 !important; transition-duration:.001s !important } }
+</style>
+</helmet>
+<div style="position:relative;min-height:100vh;width:100%;overflow-x:hidden;background:#04060A">
+
+  <div style="position:fixed;inset:0;pointer-events:none;background:radial-gradient(1200px 800px at 50% 28%, rgba(22,40,48,.55), rgba(4,6,10,0) 70%), radial-gradient(900px 600px at 82% 92%, rgba(18,28,40,.45), rgba(4,6,10,0) 72%), linear-gradient(180deg, #05080C, #04060A 60%, #030508)"></div>
+  <div style="position:fixed;inset:0;pointer-events:none;opacity:.35;background-image:linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);background-size:96px 96px;mask-image:radial-gradient(1000px 700px at 50% 40%, #000, transparent 78%)"></div>
+  {{ starfield }}
+
+  <sc-if value="{{ isLanding }}" hint-placeholder-val="{{ true }}">
+    <div style="position:relative;min-height:100vh;display:flex;flex-direction:column;padding:34px clamp(24px,5vw,80px) 48px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:24px">
+        <div style="font-family:'Instrument Serif',serif;font-size:21px;letter-spacing:.34em;color:#E6EEF0">MÍMIR</div>
+        <div style="display:flex;align-items:center;gap:28px;font-size:13px;color:rgba(230,238,240,.68)">
+          <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}"><span>Produit</span><span>Mémoire</span><span>Confidentialité</span></sc-if>
+          <button onClick="{{ goOnboarding }}" style="cursor:pointer;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#E6EEF0;font-size:13px;padding:9px 18px;border-radius:999px;backdrop-filter:blur(14px)" style-hover="background:rgba(206,244,248,.12);border-color:rgba(206,244,248,.55)">Entrer</button>
+        </div>
+      </div>
+
+      <div style="flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:center;gap:clamp(24px,5vw,72px);padding:clamp(32px,6vh,96px) 0">
+        <div style="display:flex;flex-direction:column;gap:26px;max-width:540px;animation:mim-rise .9s ease both">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.24em;color:rgba(206,244,248,.62);text-transform:uppercase">Assistant personnel · présence contextuelle</div>
+          <h1 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(42px,5.4vw,74px);line-height:1.02;letter-spacing:-.015em;color:#EFF6F7;text-wrap:pretty">Une intelligence qui connaît votre contexte.</h1>
+          <p style="margin:0;font-size:16.5px;line-height:1.65;color:rgba(230,238,240,.58);max-width:460px;text-wrap:pretty">Mímir tient votre journée, vos projets, vos documents et votre mémoire dans un même espace. Vous lui parlez, il agit avec ce qu'il sait de vous.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;padding-top:6px">
+            <button onClick="{{ goOnboarding }}" style="cursor:pointer;background:linear-gradient(180deg,rgba(206,244,248,.95),rgba(176,226,232,.82));border:none;color:#041014;font-size:14.5px;font-weight:500;padding:14px 28px;border-radius:999px;box-shadow:0 0 40px rgba(206,244,248,.18)" style-hover="box-shadow:0 0 56px rgba(206,244,248,.55)">Faire connaissance</button>
+            <button onClick="{{ goAssistant }}" style="cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:rgba(230,238,240,.82);font-size:14.5px;padding:14px 26px;border-radius:999px" style-hover="border-color:rgba(206,244,248,.55);color:#E6EEF0">Voir l'assistant</button>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;padding-top:14px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(230,238,240,.62);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:7px 13px">Mémoire contrôlable</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(230,238,240,.62);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:7px 13px">Projets vivants</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(230,238,240,.62);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:7px 13px">Intégrations</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;min-height:360px;animation:mim-fade 1.6s ease both">
+          <div style="width:min(100%,400px)">
+            <dc-import name="MimirAvatar" state="{{ landingState }}" slot-id="mimir-avatar" show-slot="{{ true }}" intensity="{{ motionIntensity }}" hint-size="100%,100%"></dc-import>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:1px;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.07)">
+        <div style="flex:1 1 220px;min-width:0;padding:22px 24px;background:rgba(255,255,255,.028)">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;color:rgba(206,244,248,.68);text-transform:uppercase;margin-bottom:10px">Présence</div>
+          <div style="font-size:14px;line-height:1.6;color:rgba(230,238,240,.62)">Mímir a un état visible. Vous voyez quand il écoute, réfléchit ou agit sur vos données.</div>
+        </div>
+        <div style="flex:1 1 220px;min-width:0;padding:22px 24px;background:rgba(255,255,255,.028)">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;color:rgba(206,244,248,.68);text-transform:uppercase;margin-bottom:10px">Contexte</div>
+          <div style="font-size:14px;line-height:1.6;color:rgba(230,238,240,.62)">Vos objectifs, vos projets et vos documents nourrissent chaque réponse, sans que vous les rappeliez.</div>
+        </div>
+        <div style="flex:1 1 220px;min-width:0;padding:22px 24px;background:rgba(255,255,255,.028)">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;color:rgba(206,244,248,.68);text-transform:uppercase;margin-bottom:10px">Contrôle</div>
+          <div style="font-size:14px;line-height:1.6;color:rgba(230,238,240,.62)">Tout ce que Mímir retient est lisible, modifiable et supprimable depuis la Mémoire.</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isOnboarding }}" hint-placeholder-val="{{ false }}">
+    <div style="position:relative;min-height:100vh;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));align-items:center;gap:clamp(24px,4vw,64px);padding:clamp(32px,6vh,72px) clamp(24px,5vw,80px)">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:30px">
+        <div style="width:min(100%,290px)">
+          <dc-import name="MimirAvatar" state="{{ onbState }}" slot-id="mimir-avatar" show-slot="{{ true }}" intensity="{{ motionIntensity }}" hint-size="100%,100%"></dc-import>
+        </div>
+        <div style="text-align:center;max-width:300px">
+          <div style="font-family:'Instrument Serif',serif;font-size:22px;letter-spacing:.3em;color:#E6EEF0">MÍMIR</div>
+          <div style="margin-top:10px;font-size:13.5px;line-height:1.6;color:rgba(230,238,240,.64)">Quelques repères suffisent pour commencer. Vous pourrez tout ajuster plus tard.</div>
+        </div>
+      </div>
+
+      <div style="max-width:560px;width:100%;display:flex;flex-direction:column;gap:28px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <sc-for list="{{ onbDots }}" as="d" hint-placeholder-count="5">
+            <div style="{{ d.style }}"></div>
+          </sc-for>
+          <span style="margin-left:10px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:rgba(230,238,240,.60)">{{ onbCounter }}</span>
+        </div>
+
+        <div style="animation:mim-rise .5s ease both">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:rgba(206,244,248,.58);margin-bottom:16px">{{ onbKicker }}</div>
+          <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(28px,3.4vw,42px);line-height:1.12;color:#EFF6F7;text-wrap:pretty">{{ onbQuestion }}</h2>
+          <p style="margin:14px 0 0;font-size:15px;line-height:1.6;color:rgba(230,238,240,.68)">{{ onbHelp }}</p>
+        </div>
+
+        <sc-if value="{{ onbIsText }}" hint-placeholder-val="{{ true }}">
+          <input value="{{ onbValue }}" onChange="{{ onOnbInput }}" placeholder="{{ onbPlaceholder }}" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:17px 20px;color:#E6EEF0;font-size:16px;outline:none" style-focus="border-color:rgba(206,244,248,.45);background:rgba(206,244,248,.05)" />
+        </sc-if>
+
+        <sc-if value="{{ onbIsChoice }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-wrap:wrap;gap:10px">
+            <sc-for list="{{ onbOptions }}" as="o" hint-placeholder-count="6">
+              <button onClick="{{ o.toggle }}" style="{{ o.style }}">{{ o.label }}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <div style="display:flex;align-items:center;gap:16px;padding-top:6px">
+          <button onClick="{{ onbNext }}" style="cursor:pointer;background:linear-gradient(180deg,rgba(206,244,248,.95),rgba(176,226,232,.82));border:none;color:#041014;font-size:14.5px;font-weight:500;padding:14px 30px;border-radius:999px" style-hover="box-shadow:0 0 44px rgba(206,244,248,.56)">{{ onbCta }}</button>
+          <button onClick="{{ onbSkip }}" style="cursor:pointer;background:none;border:none;color:rgba(230,238,240,.62);font-size:13.5px;text-decoration:underline;text-underline-offset:4px">Passer</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ inApp }}" hint-placeholder-val="{{ false }}">
+    <div style="position:relative;display:flex;min-height:100vh">
+
+      <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:0 0 190px;min-width:0;display:flex;flex-direction:column;gap:30px;padding:30px 20px 26px 26px;border-right:1px solid rgba(255,255,255,.05)">
+        <button onClick="{{ goLanding }}" style="cursor:pointer;background:none;border:none;padding:0;text-align:left;font-family:'Instrument Serif',serif;font-size:18px;letter-spacing:.3em;color:#E6EEF0">MÍMIR</button>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <sc-for list="{{ nav }}" as="n" hint-placeholder-count="8">
+            <button onClick="{{ n.go }}" style="{{ n.style }}" style-hover="color:#E6EEF0">
+              <span style="{{ n.bar }}"></span>{{ n.label }}
+            </button>
+          </sc-for>
+        </div>
+        <div style="margin-top:auto;display:flex;flex-direction:column;gap:9px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.56)">Parcours</div>
+          <button onClick="{{ goLanding }}" style="cursor:pointer;background:none;border:none;padding:0;text-align:left;font-size:12.5px;color:rgba(230,238,240,.62)" style-hover="color:#CEF4F8">Landing</button>
+          <button onClick="{{ goOnboarding }}" style="cursor:pointer;background:none;border:none;padding:0;text-align:left;font-size:12.5px;color:rgba(230,238,240,.62)" style-hover="color:#CEF4F8">Onboarding</button>
+        </div>
+      </div>
+      </sc-if>
+
+      <div style="flex:1 1 0;min-width:0;min-height:0;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:{{ headerPad }};border-bottom:1px solid rgba(255,255,255,.05);flex:0 0 auto">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:nowrap;min-width:0">
+            <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ goLanding }}" style="cursor:pointer;background:none;border:none;padding:0;font-family:'Instrument Serif',serif;font-size:16px;letter-spacing:.3em;color:#E6EEF0">MÍMIR</button>
+            </sc-if>
+            <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:999px;padding:4px">
+              <button onClick="{{ goAssistant }}" style="{{ tabAssistantStyle }}">Assistant</button>
+              <button onClick="{{ goWorkspace }}" style="{{ tabWorkspaceStyle }}">Workspace</button>
+            </div>
+            </sc-if>
+            <sc-if value="{{ showStateSelect }}" hint-placeholder-val="{{ false }}">
+              <select value="{{ avatarState }}" onChange="{{ onStateSelect }}" title="État de Mímir (démo)" style="flex:0 0 auto;white-space:nowrap;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:7px 13px;color:rgba(230,238,240,.62);font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;outline:none;cursor:pointer">
+                <sc-for list="{{ stateOptions }}" as="o" hint-placeholder-count="6">
+                  <option value="{{ o.id }}">{{ o.label }}</option>
+                </sc-for>
+              </select>
+            </sc-if>
+            <sc-if value="{{ showStateBar }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:4px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:3px;flex:0 0 auto">
+                <button onClick="{{ setVoice }}" style="{{ voiceTabStyle }}">Voix</button>
+                <button onClick="{{ setText }}" style="{{ textTabStyle }}">Texte</button>
+              </div>
+            </sc-if>
+          </div>
+          <div style="display:flex;align-items:center;gap:18px">
+            <sc-if value="{{ wideHeader }}" hint-placeholder-val="{{ true }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(230,238,240,.58);white-space:nowrap">{{ clock }}</div></sc-if>
+            <div style="display:flex;align-items:center;gap:11px">
+              <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(140deg,rgba(206,244,248,.28),rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:.06em;color:#E6EEF0">LM</div>
+              <sc-if value="{{ wideHeader }}" hint-placeholder-val="{{ true }}"><div style="font-size:13px;color:rgba(230,238,240,.62);white-space:nowrap">{{ userName }}</div></sc-if>
+            </div>
+          </div>
+        </div>
+
+        <sc-if value="{{ isAssistant }}" hint-placeholder-val="{{ false }}">
+          <div style="position:relative;flex:1 1 0;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:safe center;padding:clamp(14px,2vw,28px);overflow:hidden">
+
+            <sc-if value="{{ ambientOn }}" hint-placeholder-val="{{ true }}">
+            <div style="position:absolute;top:clamp(20px,4vh,46px);left:clamp(20px,3vw,44px);max-width:216px;display:flex;flex-direction:column;gap:14px;opacity:.82">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(206,244,248,.68)">Aujourd'hui</div>
+              <sc-for list="{{ ambientToday }}" as="t" hint-placeholder-count="3">
+                <div style="display:flex;gap:10px;align-items:baseline">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:rgba(206,244,248,.55);flex:0 0 auto">{{ t.time }}</span>
+                  <span style="font-size:13px;line-height:1.45;color:rgba(230,238,240,.56)">{{ t.label }}</span>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="position:absolute;top:clamp(20px,4vh,46px);right:clamp(20px,3vw,44px);max-width:206px;display:flex;flex-direction:column;gap:12px;align-items:flex-end;opacity:.82">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(206,244,248,.68)">Contexte actif</div>
+              <div style="display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-end">
+                <sc-for list="{{ ambientContext }}" as="c" hint-placeholder-count="4">
+                  <span style="font-size:11.5px;color:rgba(230,238,240,.56);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:6px 11px;background:rgba(255,255,255,.025)">{{ c }}</span>
+                </sc-for>
+              </div>
+            </div>
+
+            </sc-if>
+
+            <sc-if value="{{ hasRequest }}" hint-placeholder-val="{{ false }}">
+              <div style="max-width:620px;text-align:center;margin-bottom:6px;flex:0 0 auto;animation:mim-fade .7s ease both">
+                <sc-if value="{{ notCompact }}" hint-placeholder-val="{{ true }}">
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:rgba(206,244,248,.6);margin-bottom:9px">Votre demande</div>
+                </sc-if>
+                <div style="font-size:15px;line-height:1.5;color:rgba(230,238,240,.72)">{{ lastRequest }}</div>
+              </div>
+            </sc-if>
+
+            <div style="flex:1 1 0;min-height:{{ avatarMin }};max-height:480px;width:100%;display:flex;justify-content:center;align-items:stretch">
+            <div style="position:relative;height:100%;aspect-ratio:4/5;max-width:100%">
+              <dc-import name="MimirAvatar" state="{{ avatarState }}" slot-id="mimir-avatar" show-slot="{{ slotOn }}" show-hint="{{ hintOn }}" intensity="{{ motionIntensity }}" hint-size="100%,100%"></dc-import>
+            </div>
+            </div>
+
+            <div style="height:22px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;margin-top:4px">{{ voiceBars }}</div>
+
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:rgba(206,244,248,.72);display:flex;align-items:center;gap:9px;margin-top:8px">
+              <span style="{{ stateDotStyle }}"></span>{{ stateLabel }}
+            </div>
+
+            <sc-if value="{{ isProcessingState }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px;animation:mim-fade .4s ease both">
+                <sc-for list="{{ sources }}" as="s" hint-placeholder-count="4">
+                  <span style="{{ s.style }}">{{ s.label }}</span>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ showGreeting }}" hint-placeholder-val="{{ true }}">
+              <div style="max-width:520px;text-align:center;margin-top:20px">
+                <div style="font-family:'Instrument Serif',serif;font-size:clamp(26px,3vw,38px);line-height:1.15;color:#EFF6F7;text-wrap:pretty">{{ greeting }}</div>
+                <sc-if value="{{ showGreetingSub }}" hint-placeholder-val="{{ true }}">
+                  <div style="margin-top:12px;font-size:14.5px;line-height:1.6;color:rgba(230,238,240,.66)">{{ greetingSub }}</div>
+                </sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ hasResponse }}" hint-placeholder-val="{{ false }}">
+              <div style="width:min(100%,700px);text-align:center;margin-top:10px;max-height:34vh;overflow-y:auto;scrollbar-width:none;flex:0 1 auto;min-height:2.6em;-webkit-mask-image:linear-gradient(180deg,#000 78%,transparent);mask-image:linear-gradient(180deg,#000 78%,transparent);padding-bottom:14px">
+                <div style="font-family:'Instrument Serif',serif;font-size:clamp(20px,2.2vw,28px);line-height:1.44;color:#F1F8F9;text-wrap:pretty">{{ responseShown }}{{ caret }}</div>
+                <sc-if value="{{ showSuccessCard }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:inline-flex;align-items:center;gap:12px;margin-top:22px;background:rgba(206,244,248,.06);border:1px solid rgba(206,244,248,.2);border-radius:999px;padding:11px 18px 11px 16px;animation:mim-rise .5s ease both">
+                    <span style="width:6px;height:6px;border-radius:50%;background:#CEF4F8;box-shadow:0 0 12px #CEF4F8"></span>
+                    <span style="font-size:13.5px;color:rgba(230,238,240,.85)">{{ successText }}</span>
+                    <button onClick="{{ goMyDay }}" style="cursor:pointer;background:none;border:none;color:#CEF4F8;font-size:13px;text-decoration:underline;text-underline-offset:3px">Ouvrir</button>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-if>
+
+            <div style="width:min(100%,720px);margin-top:auto;padding-top:22px;display:flex;flex-direction:column;align-items:center;gap:13px">
+              <sc-if value="{{ isTextMode }}" hint-placeholder-val="{{ true }}">
+                <div style="width:100%;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);border-radius:999px;padding:8px 8px 8px 22px;backdrop-filter:blur(20px);box-shadow:0 18px 60px rgba(0,0,0,.35)">
+                  <input value="{{ input }}" onChange="{{ onInput }}" onKeyDown="{{ onKey }}" placeholder="Parlez à Mímir" style="flex:1;min-width:0;background:none;border:none;outline:none;color:#E6EEF0;font-size:15.5px;padding:10px 0" />
+                  <button onClick="{{ send }}" style="cursor:pointer;height:40px;padding:0 22px;border-radius:999px;background:linear-gradient(180deg,rgba(206,244,248,.95),rgba(176,226,232,.82));border:none;color:#041014;font-size:13.5px;font-weight:500">Envoyer</button>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ isVoiceMode }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:13px">
+                  <button onClick="{{ micToggle }}" style="{{ micStyle }}">
+                    <span style="display:block;width:13px;height:21px;border-radius:7px;border:1.5px solid currentColor"></span>
+                  </button>
+                  <div style="font-size:13px;color:rgba(230,238,240,.66)">{{ micHint }}</div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ showSuggestions }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;max-width:100%">
+                <sc-for list="{{ suggestions }}" as="s" hint-placeholder-count="4">
+                  <button onClick="{{ s.run }}" style="cursor:pointer;flex:0 0 auto;white-space:nowrap;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:9px 15px;color:rgba(230,238,240,.6);font-size:12.5px" style-hover="border-color:rgba(206,244,248,.55);color:#E6EEF0">{{ s.label }}</button>
+                </sc-for>
+              </div>
+              </sc-if>
+              <div style="display:flex;gap:9px;justify-content:center">
+                <sc-if value="{{ hasThread }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ toggleThread }}" style="cursor:pointer;background:none;border:1px solid rgba(206,244,248,.22);border-radius:999px;padding:9px 14px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:rgba(206,244,248,.7)" style-hover="color:#EAFBFD;border-color:rgba(206,244,248,.45)">{{ threadLabel }}</button>
+                </sc-if>
+              </div>
+            </div>
+
+            <sc-if value="{{ threadOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;top:0;right:0;bottom:0;width:min(88%,330px);background:linear-gradient(180deg,rgba(10,14,18,.92),rgba(6,9,12,.94));border-left:1px solid rgba(255,255,255,.07);backdrop-filter:blur(26px);padding:26px 24px;overflow-y:auto;animation:mim-fade .4s ease both">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6)">Fil de l'échange</span>
+                  <button onClick="{{ toggleThread }}" style="cursor:pointer;background:none;border:none;color:rgba(230,238,240,.6);font-size:16px;line-height:1">×</button>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:18px">
+                  <sc-for list="{{ messages }}" as="m" hint-placeholder-count="2">
+                    <div>
+                      <div style="{{ m.roleStyle }}">{{ m.role }}</div>
+                      <div style="{{ m.textStyle }}">{{ m.text }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isWorkspace }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:1;padding:{{ wsPad }};display:flex;flex-direction:column;gap:{{ wsGap }};animation:mim-rise .9s cubic-bezier(.22,1,.36,1) both">
+
+            <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px">
+              <div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:rgba(206,244,248,.55);margin-bottom:12px">{{ screenKicker }}</div>
+                <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(30px,3.4vw,44px);line-height:1.08;color:#EFF6F7">{{ screenTitle }}</h2>
+                <p style="margin:12px 0 0;font-size:14.5px;line-height:1.6;color:rgba(230,238,240,.66);max-width:600px;text-wrap:pretty">{{ screenSub }}</p>
+              </div>
+              <button onClick="{{ askHere }}" style="cursor:pointer;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:999px;padding:9px 18px 9px 10px;color:rgba(230,238,240,.75);font-size:13px;backdrop-filter:blur(16px)" style-hover="border-color:rgba(206,244,248,.55);color:#E6EEF0">
+                <span style="width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 42% 38%, rgba(206,244,248,.6), rgba(206,244,248,.08) 70%);border:1px solid rgba(206,244,248,.3);animation:mim-presence 5s ease-in-out infinite"></span>
+                Demander à Mímir
+              </button>
+            </div>
+
+            <sc-if value="{{ isMyDay }}" hint-placeholder-val="{{ false }}">
+              <div style="animation:mim-rise .6s cubic-bezier(.22,1,.36,1) .12s both;display:flex;flex-direction:column;gap:22px">
+                <div style="background:linear-gradient(180deg,rgba(206,244,248,.055),rgba(255,255,255,.015));border:1px solid rgba(206,244,248,.14);border-radius:20px;padding:26px 28px;backdrop-filter:blur(18px)">
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(206,244,248,.6);margin-bottom:14px">Lecture de Mímir</div>
+                  <div style="font-family:'Instrument Serif',serif;font-size:clamp(20px,2.2vw,27px);line-height:1.35;color:#EFF6F7;max-width:760px;text-wrap:pretty">{{ dayReading }}</div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px">
+                  <div style="background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;backdrop-filter:blur(18px)">
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.60);margin-bottom:18px">Priorités</div>
+                    <div style="display:flex;flex-direction:column;gap:16px">
+                      <sc-for list="{{ priorities }}" as="p" hint-placeholder-count="3">
+                        <div style="display:flex;gap:13px;align-items:flex-start">
+                          <span style="{{ p.dot }}"></span>
+                          <div style="min-width:0">
+                            <div style="font-size:14.5px;color:#E6EEF0;line-height:1.4">{{ p.label }}</div>
+                            <div style="margin-top:5px;font-size:12px;color:rgba(230,238,240,.62)">{{ p.meta }}</div>
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                  <div style="background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;backdrop-filter:blur(18px)">
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.60);margin-bottom:18px">Agenda</div>
+                    <div style="display:flex;flex-direction:column;gap:2px">
+                      <sc-for list="{{ agenda }}" as="a" hint-placeholder-count="3">
+                        <div style="display:flex;gap:16px;align-items:baseline;padding:11px 0;border-top:1px solid rgba(255,255,255,.05)">
+                          <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:rgba(206,244,248,.7);flex:0 0 52px">{{ a.time }}</span>
+                          <div style="min-width:0">
+                            <div style="font-size:14px;color:#E6EEF0">{{ a.label }}</div>
+                            <div style="margin-top:4px;font-size:12px;color:rgba(230,238,240,.60)">{{ a.meta }}</div>
+                          </div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                  <div style="background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;backdrop-filter:blur(18px)">
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.60);margin-bottom:18px">Rappels & signaux</div>
+                    <div style="display:flex;flex-direction:column;gap:14px">
+                      <sc-for list="{{ signals }}" as="s" hint-placeholder-count="3">
+                        <div>
+                          <div style="font-size:14px;color:#E6EEF0;line-height:1.45">{{ s.label }}</div>
+                          <div style="margin-top:5px;font-size:12px;color:rgba(230,238,240,.62)">{{ s.meta }}</div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isProjects }}" hint-placeholder-val="{{ false }}">
+              <div style="animation:mim-rise .6s cubic-bezier(.22,1,.36,1) .12s both;display:flex;flex-direction:column;gap:14px">
+                <sc-for list="{{ projects }}" as="p" hint-placeholder-count="4">
+                  <button onClick="{{ p.open }}" style="cursor:pointer;text-align:left;display:flex;flex-wrap:wrap;align-items:center;gap:22px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:22px 26px;backdrop-filter:blur(16px)" style-hover="border-color:rgba(206,244,248,.56);background:rgba(206,244,248,.045)">
+                    <div style="flex:1 1 220px;min-width:0">
+                      <div style="display:flex;align-items:center;gap:12px">
+                        <span style="{{ p.dot }}"></span>
+                        <span style="font-family:'Instrument Serif',serif;font-size:22px;color:#EFF6F7">{{ p.name }}</span>
+                        <span style="{{ p.badge }}">{{ p.statusMark }} {{ p.status }}</span>
+                      </div>
+                      <div style="margin-top:9px;font-size:13.5px;line-height:1.55;color:rgba(230,238,240,.68);max-width:560px">{{ p.desc }}</div>
+                    </div>
+                    <div style="flex:0 0 214px;min-width:0">
+                      <div style="display:flex;justify-content:space-between;gap:12px;white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;color:rgba(230,238,240,.62);margin-bottom:8px">
+                        <span>{{ p.tasks }}</span><span>{{ p.pct }}%</span>
+                      </div>
+                      <div style="height:2px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden">
+                        <div style="{{ p.barStyle }}"></div>
+                      </div>
+                      <div style="margin-top:10px;font-size:11.5px;color:rgba(230,238,240,.58)">{{ p.updated }}</div>
+                    </div>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isProject }}" hint-placeholder-val="{{ false }}">
+              <div style="animation:mim-rise .6s cubic-bezier(.22,1,.36,1) .12s both;display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px">
+                <div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+                  <button onClick="{{ goProjects }}" style="cursor:pointer;background:none;border:1px solid rgba(255,255,255,.09);border-radius:999px;padding:8px 16px;color:rgba(230,238,240,.6);font-size:12.5px">← Projets</button>
+                  <sc-for list="{{ projectTabs }}" as="t" hint-placeholder-count="4">
+                    <span style="font-size:12.5px;color:rgba(230,238,240,.62);border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:4px">{{ t }}</span>
+                  </sc-for>
+                </div>
+                <div style="background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;backdrop-filter:blur(18px)">
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.60);margin-bottom:16px">Objectifs</div>
+                  <div style="display:flex;flex-direction:column;gap:15px">
+                    <sc-for list="{{ projectGoals }}" as="g" hint-placeholder-count="3">
+                      <div>
+                        <div style="font-size:14px;color:#E6EEF0;line-height:1.45">{{ g.label }}</div>
+                        <div style="margin-top:6px;height:2px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden"><div style="{{ g.barStyle }}"></div></div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;backdrop-filter:blur(18px)">
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.60);margin-bottom:16px">Tâches</div>
+                  <div style="display:flex;flex-direction:column;gap:2px">
+                    <sc-for list="{{ projectTasks }}" as="t" hint-placeholder-count="4">
+                      <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid rgba(255,255,255,.05)">
+                        <span style="{{ t.box }}"></span>
+                        <span style="{{ t.text }}">{{ t.label }}</span>
+                        <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(230,238,240,.58)">{{ t.due }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;backdrop-filter:blur(18px);display:flex;flex-direction:column;gap:20px">
+                  <div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.60);margin-bottom:14px">Documents liés</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px">
+                      <sc-for list="{{ projectDocs }}" as="d" hint-placeholder-count="3">
+                        <span style="font-size:12px;color:rgba(230,238,240,.62);background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 12px">{{ d }}</span>
+                      </sc-for>
+                    </div>
+                  </div>
+                  <div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.60);margin-bottom:14px">Connecté</div>
+                    <div style="display:flex;flex-direction:column;gap:11px">
+                      <sc-for list="{{ projectLinks }}" as="l" hint-placeholder-count="2">
+                        <div style="display:flex;align-items:center;gap:11px;font-size:13px;color:rgba(230,238,240,.62)">
+                          <span style="width:5px;height:5px;border-radius:50%;background:rgba(206,244,248,.7)"></span>{{ l }}
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+                <div style="grid-column:1/-1;background:linear-gradient(180deg,rgba(206,244,248,.05),rgba(255,255,255,.012));border:1px solid rgba(206,244,248,.14);border-radius:18px;padding:22px 26px">
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(206,244,248,.6);margin-bottom:12px">Ce que Mímir en retient</div>
+                  <div style="font-size:14.5px;line-height:1.65;color:rgba(230,238,240,.72);max-width:780px;text-wrap:pretty">{{ projectInsight }}</div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isNews }}" hint-placeholder-val="{{ false }}">
+              <div style="animation:mim-rise .6s cubic-bezier(.22,1,.36,1) .12s both;display:flex;flex-direction:column;gap:16px">
+                <div style="grid-column:1/-1;display:flex;gap:18px;align-items:flex-start;background:linear-gradient(180deg,rgba(206,244,248,.055),rgba(255,255,255,.015));border:1px solid rgba(206,244,248,.16);border-radius:20px;padding:22px 26px">
+                  <span style="flex:0 0 auto;width:26px;height:26px;margin-top:2px;border-radius:50%;background:radial-gradient(circle at 42% 38%, rgba(206,244,248,.6), rgba(206,244,248,.08) 70%);border:1px solid rgba(206,244,248,.3);animation:mim-presence 5s ease-in-out infinite"></span>
+                  <div style="min-width:0">
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(206,244,248,.72);margin-bottom:10px">Lecture de Mímir</div>
+                    <div style="font-family:'Instrument Serif',serif;font-size:clamp(19px,2vw,24px);line-height:1.38;color:#EFF6F7;max-width:760px;text-wrap:pretty">{{ newsReading }}</div>
+                  </div>
+                </div>
+                <sc-for list="{{ news }}" as="n" hint-placeholder-count="4">
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px 26px;backdrop-filter:blur(16px)">
+                    <div style="min-width:0">
+                      <div style="display:flex;align-items:center;gap:12px;margin-bottom:11px">
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:rgba(206,244,248,.6)">{{ n.tag }}</span>
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:rgba(230,238,240,.55)">{{ n.when }}</span>
+                      </div>
+                      <div style="font-family:'Instrument Serif',serif;font-size:23px;line-height:1.22;color:#EFF6F7;text-wrap:pretty">{{ n.title }}</div>
+                      <div style="margin-top:10px;font-size:13.5px;line-height:1.6;color:rgba(230,238,240,.70)">{{ n.summary }}</div>
+                    </div>
+                    <div style="min-width:0;border-left:1px solid rgba(255,255,255,.06);padding-left:22px">
+                      <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:rgba(230,238,240,.58);margin-bottom:10px">Pourquoi pour vous</div>
+                      <div style="font-size:13.5px;line-height:1.6;color:rgba(230,238,240,.68)">{{ n.why }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isJobs }}" hint-placeholder-val="{{ false }}">
+              <div style="animation:mim-rise .6s cubic-bezier(.22,1,.36,1) .12s both;display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px">
+                <div style="grid-column:1/-1;display:flex;gap:18px;align-items:flex-start;background:linear-gradient(180deg,rgba(206,244,248,.055),rgba(255,255,255,.015));border:1px solid rgba(206,244,248,.16);border-radius:20px;padding:22px 26px">
+                  <span style="flex:0 0 auto;width:26px;height:26px;margin-top:2px;border-radius:50%;background:radial-gradient(circle at 42% 38%, rgba(206,244,248,.6), rgba(206,244,248,.08) 70%);border:1px solid rgba(206,244,248,.3);animation:mim-presence 5s ease-in-out infinite"></span>
+                  <div style="min-width:0">
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(206,244,248,.72);margin-bottom:10px">Lecture de Mímir</div>
+                    <div style="font-family:'Instrument Serif',serif;font-size:clamp(19px,2vw,24px);line-height:1.38;color:#EFF6F7;max-width:760px;text-wrap:pretty">{{ jobsReading }}</div>
+                  </div>
+                </div>
+                <div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.58);margin-right:6px">Critères</span>
+                  <sc-for list="{{ jobCriteria }}" as="c" hint-placeholder-count="4">
+                    <span style="font-size:12px;color:rgba(230,238,240,.62);background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.09);border-radius:999px;padding:7px 13px">{{ c }}</span>
+                  </sc-for>
+                  <button style="cursor:pointer;font-size:12px;color:#CEF4F8;background:none;border:1px dashed rgba(206,244,248,.55);border-radius:999px;padding:7px 13px">Ajuster</button>
+                </div>
+                <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:14px">
+                  <sc-for list="{{ jobs }}" as="j" hint-placeholder-count="3">
+                    <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:center;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:22px 26px">
+                      <div style="flex:1 1 240px;min-width:0">
+                        <div style="font-size:16.5px;color:#EFF6F7">{{ j.role }}</div>
+                        <div style="margin-top:6px;font-size:13px;color:rgba(230,238,240,.68)">{{ j.company }}</div>
+                        <div style="margin-top:10px;font-size:13px;line-height:1.55;color:rgba(230,238,240,.6);max-width:520px">{{ j.note }}</div>
+                      </div>
+                      <div style="flex:0 0 120px;text-align:right">
+                        <div style="font-family:'JetBrains Mono',monospace;font-size:20px;color:#CEF4F8">{{ j.match }}</div>
+                        <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(230,238,240,.58);margin-top:4px">Affinité</div>
+                      </div>
+                      <div style="flex:0 0 auto;display:flex;gap:9px">
+                        <button style="cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:9px 16px;color:rgba(230,238,240,.7);font-size:12.5px">Sauvegarder</button>
+                        <button style="cursor:pointer;background:rgba(206,244,248,.9);border:none;border-radius:999px;padding:9px 16px;color:#041014;font-size:12.5px;font-weight:500">Adapter mon CV</button>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="grid-column:1/-1;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px 26px">
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.60);margin-bottom:18px">Candidatures</div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px">
+                    <sc-for list="{{ pipeline }}" as="p" hint-placeholder-count="4">
+                      <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:14px">
+                        <div style="font-family:'JetBrains Mono',monospace;font-size:22px;color:#EFF6F7">{{ p.count }}</div>
+                        <div style="margin-top:6px;font-size:12.5px;color:rgba(230,238,240,.66)">{{ p.label }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isMemory }}" hint-placeholder-val="{{ false }}">
+              <div style="animation:mim-rise .6s cubic-bezier(.22,1,.36,1) .12s both;display:flex;flex-direction:column;gap:18px">
+                <div style="grid-column:1/-1;display:flex;gap:18px;align-items:flex-start;background:linear-gradient(180deg,rgba(206,244,248,.055),rgba(255,255,255,.015));border:1px solid rgba(206,244,248,.16);border-radius:20px;padding:22px 26px">
+                  <span style="flex:0 0 auto;width:26px;height:26px;margin-top:2px;border-radius:50%;background:radial-gradient(circle at 42% 38%, rgba(206,244,248,.6), rgba(206,244,248,.08) 70%);border:1px solid rgba(206,244,248,.3);animation:mim-presence 5s ease-in-out infinite"></span>
+                  <div style="min-width:0">
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(206,244,248,.72);margin-bottom:10px">Lecture de Mímir</div>
+                    <div style="font-family:'Instrument Serif',serif;font-size:clamp(19px,2vw,24px);line-height:1.38;color:#EFF6F7;max-width:760px;text-wrap:pretty">{{ memoryReading }}</div>
+                  </div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px">
+                  <sc-for list="{{ memory }}" as="m" hint-placeholder-count="4">
+                    <div style="background:linear-gradient(180deg,rgba(255,255,255,.042),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;backdrop-filter:blur(16px)">
+                      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px">
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(206,244,248,.58)">{{ m.title }}</span>
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:rgba(230,238,240,.55)">{{ m.count }}</span>
+                      </div>
+                      <div style="display:flex;flex-direction:column;gap:2px">
+                        <sc-for list="{{ m.items }}" as="i" hint-placeholder-count="3">
+                          <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-top:1px solid rgba(255,255,255,.05)">
+                            <span style="font-size:13.5px;line-height:1.5;color:rgba(230,238,240,.74);min-width:0">{{ i.text }}</span>
+                            <span style="margin-left:auto;flex:0 0 auto;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(230,238,240,.55)">{{ i.src }}</span>
+                          </div>
+                        </sc-for>
+                      </div>
+                      <div style="display:flex;gap:16px;margin-top:16px">
+                        <button style="cursor:pointer;background:none;border:none;padding:0;color:rgba(206,244,248,.8);font-size:12.5px">Modifier</button>
+                        <button style="cursor:pointer;background:none;border:none;padding:0;color:rgba(230,238,240,.60);font-size:12.5px">Oublier</button>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:18px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:20px 24px">
+                  <div style="flex:1 1 280px;min-width:0;font-size:13.5px;line-height:1.6;color:rgba(230,238,240,.56)">Mímir ne mémorise rien sans trace. Chaque élément indique sa source et peut être retiré à tout moment.</div>
+                  <button style="cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:10px 18px;color:rgba(230,238,240,.72);font-size:12.5px">Exporter ma mémoire</button>
+                  <button style="cursor:pointer;background:none;border:1px solid rgba(232,176,152,.3);border-radius:999px;padding:10px 18px;color:rgba(232,190,170,.9);font-size:12.5px">Tout effacer</button>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isDocuments }}" hint-placeholder-val="{{ false }}">
+              <div style="animation:mim-rise .6s cubic-bezier(.22,1,.36,1) .12s both;display:flex;flex-direction:column;gap:22px">
+                <div style="display:flex;flex-wrap:wrap;gap:12px">
+                  <sc-for list="{{ docActions }}" as="a" hint-placeholder-count="3">
+                    <button onClick="{{ a.run }}" style="cursor:pointer;display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,rgba(206,244,248,.07),rgba(255,255,255,.015));border:1px solid rgba(206,244,248,.18);border-radius:14px;padding:16px 20px;color:#E6EEF0;font-size:14px;text-align:left" style-hover="border-color:rgba(206,244,248,.60)">
+                      <span style="width:6px;height:6px;border-radius:50%;background:#CEF4F8;box-shadow:0 0 10px rgba(206,244,248,.8)"></span>{{ a.label }}
+                    </button>
+                  </sc-for>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px">
+                  <sc-for list="{{ docGroups }}" as="g" hint-placeholder-count="2">
+                    <div style="background:linear-gradient(180deg,rgba(255,255,255,.042),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;backdrop-filter:blur(16px)">
+                      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px">
+                        <span style="font-family:'Instrument Serif',serif;font-size:21px;color:#EFF6F7">{{ g.title }}</span>
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(230,238,240,.55)">{{ g.meta }}</span>
+                      </div>
+                      <div style="display:flex;flex-direction:column;gap:2px">
+                        <sc-for list="{{ g.items }}" as="d" hint-placeholder-count="4">
+                          <div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-top:1px solid rgba(255,255,255,.05)">
+                            <span style="flex:0 0 auto;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;color:rgba(206,244,248,.55);border:1px solid rgba(206,244,248,.18);border-radius:5px;padding:4px 6px">{{ d.kind }}</span>
+                            <span style="font-size:13.5px;color:rgba(230,238,240,.8);min-width:0">{{ d.name }}</span>
+                            <span style="margin-left:auto;flex:0 0 auto;font-size:11.5px;color:rgba(230,238,240,.56)">{{ d.meta }}</span>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+              <div style="animation:mim-rise .6s cubic-bezier(.22,1,.36,1) .12s both;display:flex;flex-direction:column;gap:22px">
+                <div style="display:flex;gap:6px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:999px;padding:4px;align-self:flex-start;flex-wrap:wrap">
+                  <sc-for list="{{ settingsTabs }}" as="t" hint-placeholder-count="3">
+                    <button onClick="{{ t.set }}" style="{{ t.style }}">{{ t.label }}</button>
+                  </sc-for>
+                </div>
+
+                <sc-if value="{{ settingsIsProfile }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px">
+                    <div style="background:linear-gradient(180deg,rgba(255,255,255,.042),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:26px">
+                      <div style="display:flex;align-items:center;gap:16px;margin-bottom:22px">
+                        <div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(140deg,rgba(206,244,248,.55),rgba(255,255,255,.05));border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:16px;color:#E6EEF0">LM</div>
+                        <div>
+                          <div style="font-size:17px;color:#EFF6F7">{{ userName }}</div>
+                          <div style="margin-top:4px;font-size:13px;color:rgba(230,238,240,.66)">{{ userRole }}</div>
+                        </div>
+                      </div>
+                      <div style="display:flex;flex-direction:column;gap:2px">
+                        <sc-for list="{{ profileFields }}" as="f" hint-placeholder-count="4">
+                          <div style="display:flex;gap:16px;align-items:baseline;padding:12px 0;border-top:1px solid rgba(255,255,255,.05)">
+                            <span style="flex:0 0 120px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(230,238,240,.58)">{{ f.label }}</span>
+                            <span style="font-size:13.5px;color:rgba(230,238,240,.78);min-width:0">{{ f.value }}</span>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </div>
+                    <div style="background:linear-gradient(180deg,rgba(255,255,255,.042),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:26px">
+                      <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.60);margin-bottom:18px">Préférences</div>
+                      <div style="display:flex;flex-direction:column;gap:2px">
+                        <sc-for list="{{ prefs }}" as="p" hint-placeholder-count="4">
+                          <div style="display:flex;align-items:center;gap:16px;padding:14px 0;border-top:1px solid rgba(255,255,255,.05)">
+                            <div style="min-width:0">
+                              <div style="font-size:13.5px;color:#E6EEF0">{{ p.label }}</div>
+                              <div style="margin-top:4px;font-size:12px;color:rgba(230,238,240,.60)">{{ p.meta }}</div>
+                            </div>
+                            <button onClick="{{ p.toggle }}" style="{{ p.track }}"><span style="{{ p.knob }}"></span></button>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ settingsIsIntegrations }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px">
+                    <sc-for list="{{ integrations }}" as="i" hint-placeholder-count="6">
+                      <div style="display:flex;flex-direction:column;gap:14px;background:linear-gradient(180deg,rgba(255,255,255,.042),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:22px">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                          <span style="font-size:15px;color:#EFF6F7">{{ i.name }}</span>
+                          <span style="{{ i.badge }}">{{ i.statusMark }} {{ i.status }}</span>
+                        </div>
+                        <div style="font-size:12.5px;line-height:1.55;color:rgba(230,238,240,.66)">{{ i.scope }}</div>
+                        <button style="{{ i.btn }}">{{ i.action }}</button>
+                      </div>
+                    </sc-for>
+                    <div style="display:flex;align-items:center;justify-content:center;border:1px dashed rgba(255,255,255,.12);border-radius:18px;padding:22px;min-height:150px;color:rgba(230,238,240,.60);font-size:13px">+ Connecter un service</div>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ settingsIsPrivacy }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px">
+                    <sc-for list="{{ privacy }}" as="p" hint-placeholder-count="3">
+                      <div style="background:linear-gradient(180deg,rgba(255,255,255,.042),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px">
+                        <div style="font-size:15px;color:#EFF6F7;margin-bottom:10px">{{ p.title }}</div>
+                        <div style="font-size:13px;line-height:1.6;color:rgba(230,238,240,.70)">{{ p.body }}</div>
+                        <div style="margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:rgba(206,244,248,.55)">{{ p.state }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+          <div style="flex:0 0 84px"></div>
+        </sc-if>
+      </div>
+    </div>
+
+    <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+      <sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ closeSheet }}" style="position:fixed;inset:0;z-index:30;background:rgba(2,4,6,.6);backdrop-filter:blur(8px);animation:mim-fade .3s ease both"></div>
+        <div style="position:fixed;left:12px;right:12px;bottom:92px;z-index:31;background:rgba(10,14,18,.96);border:1px solid rgba(255,255,255,.09);border-radius:22px;padding:10px;box-shadow:0 30px 80px rgba(0,0,0,.6);animation:mim-sheet .4s cubic-bezier(.22,1,.36,1) both">
+          <sc-for list="{{ sheetItems }}" as="i" hint-placeholder-count="6">
+            <button onClick="{{ i.go }}" style="{{ i.style }}">{{ i.label }}<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(230,238,240,.5)">→</span></button>
+          </sc-for>
+        </div>
+      </sc-if>
+      <div style="position:fixed;left:12px;right:12px;bottom:12px;z-index:32;display:flex;align-items:center;justify-content:space-around;background:rgba(8,12,16,.92);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:8px 6px;backdrop-filter:blur(22px);box-shadow:0 18px 50px rgba(0,0,0,.5)">
+        <sc-for list="{{ tabsLeft }}" as="t" hint-placeholder-count="2">
+          <button onClick="{{ t.go }}" style="{{ t.style }}">{{ t.label }}</button>
+        </sc-for>
+        <button onClick="{{ goAssistant }}" aria-label="Mímir" style="{{ mimTabStyle }}"></button>
+        <sc-for list="{{ tabsRight }}" as="t" hint-placeholder-count="2">
+          <button onClick="{{ t.go }}" style="{{ t.style }}">{{ t.label }}</button>
+        </sc-for>
+      </div>
+    </sc-if>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showAmbient&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;showStateDemo&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;motionIntensity&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1,&quot;min&quot;:0,&quot;max&quot;:1.5,&quot;step&quot;:0.1,&quot;tsType&quot;:&quot;number&quot;}}">
+const MONO = "'JetBrains Mono',monospace";
+const LIGHT = 'rgba(206,244,248,';
+const PANEL = 'linear-gradient(180deg,rgba(255,255,255,.042),rgba(255,255,255,.012))';
+
+const STATE_LABELS = { idle:'Présent', listening:'À l\u2019écoute', thinking:'Réflexion', processing:'Traitement des données', responding:'Réponse', success:'Terminé' };
+const STATE_CHIPS = [['idle','Idle'],['listening','Listening'],['thinking','Thinking'],['processing','Processing'],['responding','Responding'],['success','Success']];
+
+const NAV = [
+  ['assistant','Mímir'], ['myday','My Day'], ['projects','Projets'], ['news','AI News'],
+  ['jobs','Job Watch'], ['memory','Mémoire'], ['documents','Documents'], ['settings','Réglages']
+];
+
+const SCREEN_META = {
+  myday:     ['Journée en cours', 'My Day', 'Ce qui compte aujourd\u2019hui, trié par Mímir selon vos objectifs et vos engagements.'],
+  projects:  ['4 projets suivis', 'Projets', 'Chaque projet garde ses objectifs, ses tâches, ses documents et son historique.'],
+  project:   ['Projet · Atlas', 'Atlas', 'Refonte de la plateforme client. Mímir suit l\u2019avancement et les documents associés.'],
+  news:      ['Veille personnalisée', 'AI News', 'Une sélection resserrée, filtrée selon vos domaines d\u2019intérêt.'],
+  jobs:      ['Veille emploi', 'Job Watch', 'Mímir suit le marché pour vous et prépare vos candidatures.'],
+  memory:    ['Mémoire de Mímir', 'Mémoire', 'Tout ce que Mímir sait de vous, lisible et modifiable.'],
+  documents: ['Documents', 'Documents', 'Vos documents sont une capacité de Mímir, pas un gestionnaire de fichiers.'],
+  settings:  ['Compte', 'Réglages', 'Profil, préférences, confidentialité et services connectés.']
+};
+
+const ONB = [
+  { kicker:'Étape 1 · Identité', q:'Comment doit-on vous appeler ?', help:'Mímir utilisera ce prénom dans ses réponses.', type:'text', placeholder:'Votre prénom' },
+  { kicker:'Étape 2 · Activité', q:'Que faites-vous en ce moment ?', help:'Une phrase suffit. Cela cadre le contexte de tous vos échanges.', type:'text', placeholder:'ex. product designer, freelance' },
+  { kicker:'Étape 3 · Objectifs', q:'Sur quoi voulez-vous avancer ?', help:'Choisissez ce qui compte cette saison. Vous pourrez en ajouter.', type:'choice', options:['Structurer mes projets','Trouver un poste','Apprendre','Mieux gérer mon temps','Développer mon activité','Écrire davantage'] },
+  { kicker:'Étape 4 · Intérêts', q:'Que doit suivre Mímir pour vous ?', help:'Cela alimente votre veille.', type:'choice', options:['IA & modèles','Design produit','Outils dev','Marché de l\u2019emploi','Startups','Recherche'] },
+  { kicker:'Étape 5 · Usage', q:'Comment voulez-vous travailler avec Mímir ?', help:'Le ton et le niveau d\u2019initiative de Mímir s\u2019ajustent.', type:'choice', options:['Il me résume la journée','Il me propose des priorités','Il attend mes demandes','Il agit sur mes documents'] }
+];
+
+const PROJECTS = [
+  { id:'atlas', name:'Atlas', status:'Actif', desc:'Refonte de la plateforme client, de la recherche utilisateur à la livraison.', pct:62, tasks:'14 tâches · 6 ouvertes', updated:'Mis à jour il y a 2 h' },
+  { id:'halo', name:'Halo', status:'Actif', desc:'Application mobile de suivi d\u2019habitudes. Phase de prototypage.', pct:28, tasks:'9 tâches · 7 ouvertes', updated:'Mis à jour hier' },
+  { id:'positionnement', name:'Positionnement', status:'En pause', desc:'Clarification de l\u2019offre et des références présentées aux clients.', pct:80, tasks:'6 tâches · 1 ouverte', updated:'Mis à jour la semaine dernière' },
+  { id:'portfolio', name:'Portfolio 2026', status:'Actif', desc:'Nouvelle sélection de projets et réécriture des études de cas.', pct:15, tasks:'11 tâches · 10 ouvertes', updated:'Mis à jour il y a 3 j' }
+];
+
+const chip = (on) => `cursor:pointer;font-family:${MONO};font-size:10px;letter-spacing:.16em;text-transform:uppercase;padding:9px 14px;border-radius:999px;transition:all .3s ease;` +
+  (on ? `background:${LIGHT}.12);border:1px solid ${LIGHT}.38);color:#EAFBFD` : 'background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.08);color:rgba(230,238,240,.64)');
+
+class Component extends DCLogic {
+  state = {
+    screen:'landing', avatarState:'idle', input:'', messages:[], successText:'',
+    mode:'text', lastRequest:'', fullResponse:'', revealIdx:0, srcActive:0, threadOpen:false,
+    onbStep:0, onbText:'', onbPicked:{}, settingsTab:'profile',
+    prefs:[true,true,false,true], projectId:'atlas'
+  };
+
+  componentDidMount() {
+    const cycle = ['idle', 'listening', 'thinking', 'responding', 'idle'];
+    let k = 0;
+    this.landingTimer = setInterval(() => { if (this.state.screen === 'landing') { k = (k + 1) % cycle.length; this.setState({ landingState: cycle[k] }); } }, 3800);
+    this.onResize = () => this.forceUpdate();
+    window.addEventListener('resize', this.onResize);
+  }
+  componentWillUnmount() { clearInterval(this.landingTimer); (this.timers || []).forEach(clearTimeout); window.removeEventListener('resize', this.onResize); }
+  later(fn, ms) { (this.timers = this.timers || []).push(setTimeout(fn, ms)); }
+
+  go = (screen) => { this.setState({ screen }); if (typeof window !== 'undefined') window.scrollTo(0, 0); };
+
+  setDemoState = (id) => {
+    const demo = 'Trois choses comptent aujourd\u2019hui : la revue Atlas à 14 h, la relecture du brief avant ce soir, et une réponse attendue sur une candidature.';
+    const showAnswer = id === 'responding' || id === 'success';
+    this.setState({
+      avatarState:id,
+      lastRequest: id === 'idle' ? '' : 'Qu\u2019est-ce que je dois faire aujourd\u2019hui ?',
+      fullResponse: showAnswer ? demo : '',
+      revealIdx: showAnswer ? 999 : 0,
+      srcActive: id === 'processing' ? 3 : 0,
+      successText: id === 'success' ? 'Ton CV a été analysé.' : ''
+    });
+  };
+
+  reveal = (words) => {
+    const i = this.state.revealIdx + 1;
+    this.setState({ revealIdx:i });
+    if (i < words.length) this.later(() => this.reveal(words), 55);
+    else {
+      this.later(() => this.setState({ avatarState:'success', successText:'Résumé de la journée préparé.' }), 600);
+      this.later(() => this.setState({ avatarState:'idle' }), 3400);
+    }
+  };
+
+  runFlow = (text) => {
+    const answer = 'Trois choses comptent aujourd\u2019hui : la revue Atlas à 14 h, la relecture du brief avant ce soir, et une réponse attendue sur une candidature. J\u2019ai décalé le reste à demain.';
+    const msgs = this.state.messages.concat([{ role:'user', text }]);
+    this.setState({ messages: msgs, input:'', avatarState:'listening', successText:'', lastRequest:text, fullResponse:'', revealIdx:0, srcActive:0 });
+    this.later(() => this.setState({ avatarState:'thinking' }), 1000);
+    this.later(() => this.setState({ avatarState:'processing' }), 2200);
+    [1, 2, 3, 4].forEach((n) => this.later(() => this.setState({ srcActive:n }), 2200 + n * 320));
+    this.later(() => {
+      this.setState({ avatarState:'responding', fullResponse:answer, revealIdx:0, messages: msgs.concat([{ role:'mimir', text:answer }]) });
+      this.reveal(answer.split(' '));
+    }, 3700);
+  };
+
+  renderVals() {
+    const h = React.createElement;
+    const s = this.state;
+    const screen = s.screen;
+    const workspaceScreens = ['myday','projects','project','news','jobs','memory','documents','settings'];
+    const isWorkspace = workspaceScreens.indexOf(screen) >= 0;
+    const meta = SCREEN_META[screen === 'project' ? 'project' : screen] || ['', '', ''];
+
+    const stars = [];
+    for (let i = 0; i < 46; i++) {
+      const x = (i * 97) % 100, y = (i * 61) % 100;
+      stars.push(h('div', { key:i, style:{ position:'absolute', left:x + '%', top:y + '%', width:'1px', height:'1px',
+        borderRadius:'50%', background:'#CFE9EC', animation:`mim-star ${(6 + (i % 7))}s ease-in-out ${(i * .29).toFixed(2)}s infinite` } }));
+    }
+
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1400;
+    const busy = !!s.lastRequest || !!s.fullResponse;
+    const mobile = vw < 760;
+    const L2 = 'rgba(206,244,248,';
+    const moreIds = ['news','jobs','memory','settings'];
+    const mobTab = (id, label) => {
+      const on = id === 'more' ? (moreIds.indexOf(screen) >= 0 || s.sheetOpen) : (id === screen || (id === 'projects' && screen === 'project'));
+      return { label, go: () => id === 'more' ? this.setState({ sheetOpen: !s.sheetOpen }) : (this.setState({ sheetOpen:false }), this.go(id)),
+        style:`cursor:pointer;min-width:52px;min-height:44px;background:none;border:none;font-size:12px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:${on ? '#EAFBFD' : 'rgba(230,238,240,.64)'}` };
+    };
+    const voiceOn = ['listening', 'responding'].indexOf(s.avatarState) >= 0;
+    const revealing = s.avatarState === 'responding' && s.revealIdx < s.fullResponse.split(' ').length;
+    const barEls = [];
+    for (let i = 0; i < 27; i++) {
+      const base = 4 + Math.abs(Math.sin(i * 1.7)) * 16;
+      barEls.push(h('div', { key:i, style:{ width:'2px', borderRadius:'2px', background:'#CEF4F8',
+        height: voiceOn ? base + 'px' : '2px',
+        opacity: voiceOn ? (s.avatarState === 'listening' ? .8 : .6) : 0,
+        transformOrigin:'bottom center',
+        transition:'height .5s ease, opacity .6s ease',
+        animation: voiceOn ? `mim-bar ${(.6 + (i % 6) * .11).toFixed(2)}s ease-in-out ${(i * .045).toFixed(2)}s infinite` : 'none' } }));
+    }
+    const bars = h('div', { style:{ display:'flex', alignItems:'flex-end', gap:'3px', height:'22px' } }, barEls);
+
+    const step = ONB[s.onbStep];
+    const picked = s.onbPicked[s.onbStep] || [];
+
+    const barStyle = (pct) => `width:${pct}%;height:100%;background:linear-gradient(90deg,${LIGHT}.35),${LIGHT}.85));border-radius:2px`;
+
+    return {
+      starfield: h('div', { style:{ position:'fixed', inset:0, pointerEvents:'none' } }, stars),
+
+      isLanding: screen === 'landing',
+      isOnboarding: screen === 'onboarding',
+      inApp: screen !== 'landing' && screen !== 'onboarding',
+      isAssistant: screen === 'assistant',
+      isWorkspace,
+      isMyDay: screen === 'myday', isProjects: screen === 'projects', isProject: screen === 'project',
+      isNews: screen === 'news', isJobs: screen === 'jobs', isMemory: screen === 'memory',
+      isDocuments: screen === 'documents', isSettings: screen === 'settings',
+
+      goLanding: () => this.go('landing'),
+      goOnboarding: () => { this.setState({ onbStep:0 }); this.go('onboarding'); },
+      goAssistant: () => this.go('assistant'),
+      goWorkspace: () => this.go('myday'),
+      goMyDay: () => this.go('myday'),
+      goProjects: () => this.go('projects'),
+      askHere: () => this.go('assistant'),
+
+      showAmbient: this.props.showAmbient ?? true,
+      showStateDemo: this.props.showStateDemo ?? true,
+      motionIntensity: this.props.motionIntensity ?? 1,
+
+      userName:'Léa Marchand',
+      userRole:'Product designer · freelance',
+      clock:'Mar. 22 sept · 09:41',
+
+      nav: NAV.map(([id, label]) => {
+        const active = id === screen || (id === 'projects' && screen === 'project');
+        return { label, go: () => this.go(id),
+          style:`cursor:pointer;display:flex;align-items:center;gap:11px;background:none;border:none;padding:9px 0;text-align:left;font-size:13.5px;letter-spacing:.005em;transition:color .3s ease;color:${active ? '#EFF6F7' : 'rgba(230,238,240,.64)'}`,
+          bar:`display:block;width:1px;height:13px;border-radius:1px;background:${active ? '#CEF4F8' : 'transparent'};box-shadow:${active ? '0 0 8px rgba(206,244,248,.9)' : 'none'}` };
+      }),
+
+      tabAssistantStyle:`cursor:pointer;border:none;border-radius:999px;padding:8px 18px;font-size:13px;transition:all .3s ease;${screen === 'assistant' ? `background:${LIGHT}.14);color:#EAFBFD` : 'background:none;color:rgba(230,238,240,.66)'}`,
+      tabWorkspaceStyle:`cursor:pointer;border:none;border-radius:999px;padding:8px 18px;font-size:13px;transition:all .3s ease;${isWorkspace ? `background:${LIGHT}.14);color:#EAFBFD` : 'background:none;color:rgba(230,238,240,.66)'}`,
+
+      avatarState: s.avatarState,
+      stateLabel: STATE_LABELS[s.avatarState],
+      stateDotStyle:`width:5px;height:5px;border-radius:50%;background:#CEF4F8;box-shadow:0 0 10px ${LIGHT}.9);opacity:${s.avatarState === 'idle' ? .5 : 1};transition:opacity .6s ease`,
+      voiceBars: bars,
+      showStateBar: (this.props.showStateDemo ?? true) && screen === 'assistant',
+      stateOptions: STATE_CHIPS.map(([id, label]) => ({ id, label })),
+      onStateSelect: (e) => this.setDemoState(e.target.value),
+      slotOn: true,
+      orbBoxStyle:`position:relative;flex:0 0 auto;height:${busy ? (vh < 640 ? '190px' : 'min(36vh,400px)') : (vh < 640 ? '250px' : 'min(46vh,480px)')};aspect-ratio:4/5;transition:height .8s cubic-bezier(.22,1,.36,1)`,
+      compact: vh < 640,
+      newsReading:'Trois signaux cette semaine. Le premier touche directement Atlas : les modèles à contexte long changent le découpage prévu pour l\u2019analyse de documents.',
+      jobsReading:'Une offre dépasse 90 % d\u2019affinité. Votre CV v4 ne met pas encore en avant la recherche utilisateur, que les trois offres demandent. Je peux l\u2019adapter.',
+      memoryReading:'Je retiens 18 éléments sur vous. Trois viennent de conversations récentes et n\u2019ont pas encore été relus : vous pouvez les confirmer ou les retirer.',
+      avatarMin: busy && vh < 640 ? '120px' : '150px',
+      isMobile: mobile, isDesktop: !mobile,
+      headerPad: mobile ? '14px 20px' : '17px clamp(20px,3vw,44px)',
+      wsPad: mobile ? '24px 20px' : 'clamp(24px,3vw,44px)',
+      wsGap: mobile ? '22px' : '30px',
+      showStateSelect: (this.props.showStateDemo ?? true) && screen === 'assistant' && !mobile,
+      sheetOpen: !!s.sheetOpen,
+      closeSheet: () => this.setState({ sheetOpen:false }),
+      sheetItems: [['news','AI News'],['jobs','Job Watch'],['memory','Mémoire'],['settings','Réglages'],['landing','Landing'],['onboarding','Onboarding']].map(([id, label]) => ({
+        label, go: () => { this.setState({ sheetOpen:false, onbStep:0 }); this.go(id); },
+        style:`cursor:pointer;width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:none;border-radius:14px;padding:15px 16px;text-align:left;font-size:15px;color:${screen === id ? '#EAFBFD' : 'rgba(230,238,240,.8)'}` })),
+      tabsLeft: [['myday','My Day'],['projects','Projets']].map(([id, label]) => mobTab(id, label)),
+      tabsRight: [['documents','Docs'],['more','Plus']].map(([id, label]) => mobTab(id, label)),
+      mimTabStyle:`cursor:pointer;width:50px;height:50px;border-radius:50%;flex:0 0 auto;border:1px solid ${screen === 'assistant' ? L2 + '.55)' : L2 + '.3)'};background:radial-gradient(circle at 50% 40%, ${L2}${screen === 'assistant' ? '.6' : '.42'}), ${L2}.06) 70%);animation:mim-presence ${s.avatarState === 'idle' ? 5 : 1.6}s ease-in-out infinite`,
+      wideHeader: vw >= 1100,
+      notCompact: vh >= 640,
+      hintOn: !busy && vh >= 640,
+      showGreetingSub: vh >= 700,
+      landingState: s.landingState || 'idle',
+      showSuggestions: !busy,
+      ambientOn: (this.props.showAmbient ?? true) && !busy && vw >= 1180,
+      isProcessingState: s.avatarState === 'processing',
+      sources: ['Agenda', 'Projets', 'CV — version 4', 'Objectifs'].map((label, i) => ({
+        label,
+        style:`font-family:${MONO};font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;padding:7px 12px;border-radius:999px;transition:all .45s ease;` +
+          (i < s.srcActive
+            ? `background:${LIGHT}.1);border:1px solid ${LIGHT}.34);color:#EAFBFD`
+            : 'background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.07);color:rgba(230,238,240,.4)')
+      })),
+      hasRequest: !!s.lastRequest,
+      lastRequest: s.lastRequest,
+      hasResponse: !!s.fullResponse,
+      responseShown: s.fullResponse.split(' ').slice(0, s.revealIdx).join(' '),
+      caret: revealing ? h('span', { style:{ display:'inline-block', width:'2px', height:'1em', marginLeft:'4px', background:'#CEF4F8', verticalAlign:'-.12em', boxShadow:'0 0 10px rgba(206,244,248,.9)', animation:'mim-star 1.1s steps(1,end) infinite' } }) : null,
+      threadOpen: s.threadOpen,
+      toggleThread: () => this.setState({ threadOpen: !s.threadOpen }),
+      threadLabel:`Fil de l'échange · ${s.messages.length}`,
+      isVoiceMode: s.mode === 'voice',
+      isTextMode: s.mode === 'text',
+      setVoice: () => this.setState({ mode:'voice' }),
+      setText: () => this.setState({ mode:'text' }),
+      voiceTabStyle:`cursor:pointer;border:none;border-radius:999px;padding:7px 16px;font-size:12.5px;transition:all .3s ease;${s.mode === 'voice' ? `background:${LIGHT}.14);color:#EAFBFD` : 'background:none;color:rgba(230,238,240,.6)'}`,
+      textTabStyle:`cursor:pointer;border:none;border-radius:999px;padding:7px 16px;font-size:12.5px;transition:all .3s ease;${s.mode === 'text' ? `background:${LIGHT}.14);color:#EAFBFD` : 'background:none;color:rgba(230,238,240,.6)'}`,
+      micStyle:`cursor:pointer;width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .4s ease;${s.avatarState === 'listening' ? `background:${LIGHT}.16);border:1px solid ${LIGHT}.5);color:#EAFBFD;box-shadow:0 0 44px ${LIGHT}.22)` : 'background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:rgba(230,238,240,.72)'}`,
+      micHint: s.avatarState === 'listening' ? 'Mímir vous écoute' : 'Appuyez et parlez',
+
+      showGreeting: s.messages.length === 0 && s.avatarState === 'idle',
+      greeting:'Bonjour Léa.',
+      greetingSub:'Votre journée est chargée en début d\u2019après-midi. Demandez-moi ce que vous voulez savoir.',
+      hasThread: s.messages.length > 0,
+      showSuccessCard: !!s.successText,
+      successText: s.successText,
+
+      messages: s.messages.map((m) => ({
+        text: m.text,
+        role: m.role === 'user' ? 'Vous' : 'Mímir',
+        roleStyle:`font-family:${MONO};font-size:9px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:7px;color:${m.role === 'user' ? 'rgba(230,238,240,.5)' : 'rgba(206,244,248,.72)'}`,
+        textStyle:`font-size:13.5px;line-height:1.6;color:${m.role === 'user' ? 'rgba(230,238,240,.68)' : 'rgba(235,246,247,.88)'}`
+      })),
+
+      input: s.input,
+      onInput: (e) => this.setState({ input: e.target.value }),
+      onKey: (e) => { if (e.key === 'Enter' && s.input.trim()) this.runFlow(s.input.trim()); },
+      send: () => { if (s.input.trim()) this.runFlow(s.input.trim()); },
+      micToggle: () => {
+        if (s.avatarState === 'listening') this.runFlow('Qu\u2019est-ce que je dois faire aujourd\u2019hui ?');
+        else this.setState({ avatarState:'listening', successText:'' });
+      },
+
+      suggestions: [
+        'Qu\u2019est-ce que je dois faire aujourd\u2019hui ?',
+        'Où en suis-je sur Atlas ?',
+        'Analyse mon CV',
+        'Rappelle-moi mes objectifs'
+      ].slice(0, vw < 1000 ? 3 : 4).map((label) => ({ label, run: () => this.runFlow(label) })),
+
+      stateChips: STATE_CHIPS.map(([id, label]) => ({
+        label, style: chip(s.avatarState === id),
+        set: () => {
+          const demo = 'Trois choses comptent aujourd\u2019hui : la revue Atlas à 14 h, la relecture du brief avant ce soir, et une réponse attendue sur une candidature.';
+          const showAnswer = id === 'responding' || id === 'success';
+          this.setState({
+            avatarState:id,
+            lastRequest: id === 'idle' ? '' : 'Qu\u2019est-ce que je dois faire aujourd\u2019hui ?',
+            fullResponse: showAnswer ? demo : '',
+            revealIdx: showAnswer ? 999 : 0,
+            srcActive: id === 'processing' ? 3 : 0,
+            successText: id === 'success' ? 'Ton CV a été analysé.' : ''
+          });
+        }
+      })),
+
+      ambientToday: [
+        { time:'11:00', label:'Point hebdo Halo' },
+        { time:'14:00', label:'Revue Atlas avec l\u2019équipe' },
+        { time:'18:00', label:'Relecture du brief à rendre' }
+      ],
+      ambientContext: ['Atlas', 'CV v4', '3 objectifs', 'Calendar', 'GitHub'],
+
+      screenKicker: meta[0], screenTitle: meta[1], screenSub: meta[2],
+
+      dayReading:'Votre après-midi est le point de tension : la revue Atlas et la relecture du brief tombent le même jour. Je vous conseille de traiter le brief avant 11 h.',
+      priorities: [
+        { label:'Relire et envoyer le brief Halo', meta:'Échéance ce soir · projet Halo', dot:`flex:0 0 auto;width:7px;height:7px;border-radius:50%;margin-top:6px;background:#CEF4F8;box-shadow:0 0 10px ${LIGHT}.8)` },
+        { label:'Préparer la revue Atlas', meta:'14:00 · 3 points à trancher', dot:'flex:0 0 auto;width:7px;height:7px;border-radius:50%;margin-top:6px;background:rgba(232,199,154,.9)' },
+        { label:'Répondre à la relance d\u2019un recruteur', meta:'En attente depuis 2 jours', dot:'flex:0 0 auto;width:7px;height:7px;border-radius:50%;margin-top:6px;background:rgba(255,255,255,.25)' }
+      ],
+      agenda: [
+        { time:'11:00', label:'Point hebdo Halo', meta:'Visio · 30 min' },
+        { time:'14:00', label:'Revue Atlas', meta:'Avec l\u2019équipe produit · 1 h' },
+        { time:'17:30', label:'Créneau libre', meta:'Mímir suggère d\u2019y placer le portfolio' }
+      ],
+      signals: [
+        { label:'Certification à renouveler', meta:'Expire dans 3 semaines' },
+        { label:'Deux offres correspondent à vos critères', meta:'Job Watch · ajoutées ce matin' },
+        { label:'Le dépôt Atlas a 4 nouveaux commits', meta:'GitHub · depuis hier soir' }
+      ],
+
+      projects: PROJECTS.map((p) => ({
+        name:p.name, desc:p.desc, status:p.status, statusMark: p.status === 'Actif' ? '●' : '‖', pct:p.pct, tasks:p.tasks, updated:p.updated,
+        open: () => { this.setState({ projectId:p.id }); this.go('project'); },
+        dot:`width:7px;height:7px;border-radius:50%;background:${p.status === 'Actif' ? '#CEF4F8' : 'rgba(255,255,255,.22)'};box-shadow:${p.status === 'Actif' ? `0 0 10px ${LIGHT}.8)` : 'none'}`,
+        badge:`font-family:${MONO};font-size:9px;letter-spacing:.16em;text-transform:uppercase;padding:4px 8px;border-radius:5px;color:${p.status === 'Actif' ? 'rgba(206,244,248,.75)' : 'rgba(230,238,240,.60)'};border:1px solid ${p.status === 'Actif' ? 'rgba(206,244,248,.22)' : 'rgba(255,255,255,.1)'}`,
+        barStyle: barStyle(p.pct)
+      })),
+
+      projectTabs: ['Vue d\u2019ensemble', 'Tâches', 'Documents', 'Historique'],
+      projectGoals: [
+        { label:'Valider le nouveau parcours d\u2019inscription', barStyle: barStyle(75) },
+        { label:'Livrer la bibliothèque de composants', barStyle: barStyle(48) },
+        { label:'Réduire le temps de première action', barStyle: barStyle(30) }
+      ],
+      projectTasks: [
+        { label:'Tests utilisateurs sur le parcours', due:'22 SEPT', done:true },
+        { label:'Spécifier les états d\u2019erreur', due:'24 SEPT', done:false },
+        { label:'Revue des tokens avec le dev', due:'26 SEPT', done:false },
+        { label:'Préparer la démo interne', due:'30 SEPT', done:false }
+      ].map((t) => ({
+        label:t.label, due:t.due,
+        box:`flex:0 0 auto;width:14px;height:14px;border-radius:4px;border:1px solid ${t.done ? 'rgba(206,244,248,.68)' : 'rgba(255,255,255,.16)'};background:${t.done ? LIGHT + '.55)' : 'transparent'}`,
+        text:`font-size:14px;color:${t.done ? 'rgba(230,238,240,.62)' : '#E6EEF0'};text-decoration:${t.done ? 'line-through' : 'none'}`
+      })),
+      projectDocs: ['Brief v3.pdf', 'Recherche utilisateurs.md', 'Specs parcours.fig', 'Notes de revue'],
+      projectLinks: ['Dépôt GitHub · atlas-web', 'Google Calendar · revues hebdo', 'Notion · base de specs'],
+      projectInsight:'Le projet avance, mais deux objectifs dépendent de la même personne côté développement. Les tests utilisateurs ont fait ressortir un blocage sur la deuxième étape du parcours, non encore traité dans les tâches.',
+
+      news: [
+        { tag:'Modèles', when:'Il y a 4 h', title:'Nouvelle génération de modèles à contexte long', summary:'Les fenêtres de contexte s\u2019allongent encore, avec un coût par token en baisse sur les offres d\u2019entrée.', why:'Vous travaillez sur des analyses de documents longs dans Atlas. Cela change le découpage prévu.' },
+        { tag:'Outils', when:'Hier', title:'Les éditeurs de design ouvrent leurs API d\u2019agents', summary:'Plusieurs outils exposent désormais des points d\u2019entrée pour piloter les fichiers depuis un agent.', why:'Directement lié à votre chaîne design → code sur Halo.' },
+        { tag:'Marché', when:'Il y a 2 j', title:'Les postes produit-IA se concentrent sur trois profils', summary:'Une analyse des offres publiées ce trimestre montre une spécialisation nette des intitulés.', why:'Aligné avec vos critères de veille emploi. Deux offres suivies correspondent.' }
+      ],
+      jobCriteria: ['Product design', 'Remote ou Paris', 'Séniorité 5 ans +', 'Produit IA', '55–70 k€'],
+      jobs: [
+        { role:'Senior Product Designer', company:'Plateforme B2B · Remote', note:'Équipe de 4 designers, forte composante recherche. Correspond à vos objectifs de structuration.', match:'92%' },
+        { role:'Design Lead · Produit IA', company:'Série A · Paris', note:'Poste de cadrage plus que d\u2019exécution. Demande une expérience de management.', match:'78%' },
+        { role:'Product Designer freelance', company:'Mission 6 mois · Hybride', note:'Mission courte, compatible avec vos projets en cours.', match:'71%' }
+      ],
+      pipeline: [
+        { count:'3', label:'Candidatures envoyées' },
+        { count:'2', label:'En discussion' },
+        { count:'7', label:'Offres sauvegardées' },
+        { count:'1', label:'Réponse attendue' }
+      ],
+
+      memory: [
+        { title:'Identité', count:'4 éléments', items:[
+          { text:'Se présente comme product designer indépendante', src:'Onboarding' },
+          { text:'Basée à Lyon, disponible en remote', src:'Profil' },
+          { text:'Préfère le tutoiement dans les réponses', src:'Conversation' }
+        ]},
+        { title:'Objectifs', count:'3 éléments', items:[
+          { text:'Structurer ses projets avant fin d\u2019année', src:'Onboarding' },
+          { text:'Trouver une mission longue en produit IA', src:'Job Watch' },
+          { text:'Publier trois études de cas', src:'Conversation' }
+        ]},
+        { title:'Habitudes', count:'5 éléments', items:[
+          { text:'Travaille surtout le matin', src:'Agenda' },
+          { text:'Ne veut pas de notifications après 19 h', src:'Préférences' },
+          { text:'Relit ses documents avant envoi', src:'Conversation' }
+        ]},
+        { title:'Contexte professionnel', count:'6 éléments', items:[
+          { text:'Quatre projets actifs, dont deux clients', src:'Projets' },
+          { text:'CV en version 4, dernière mise à jour en août', src:'Documents' },
+          { text:'Utilise GitHub et Notion au quotidien', src:'Intégrations' }
+        ]}
+      ],
+
+      docActions: [
+        { label:'Analyser mon CV', run: () => this.runFlow('Analyse mon CV') },
+        { label:'Comparer mon CV à une offre', run: () => this.runFlow('Compare mon CV avec cette offre') },
+        { label:'Résumer un document', run: () => this.runFlow('Résume ce document') }
+      ],
+      docGroups: [
+        { title:'Personnel', meta:'9 documents', items:[
+          { kind:'PDF', name:'CV — version 4', meta:'Août 2026' },
+          { kind:'WEB', name:'Profil LinkedIn', meta:'Synchronisé' },
+          { kind:'PDF', name:'Certification UX Research', meta:'Expire en oct.' },
+          { kind:'DOC', name:'Lettre de motivation type', meta:'Juin 2026' }
+        ]},
+        { title:'Projets', meta:'23 documents', items:[
+          { kind:'PDF', name:'Atlas — brief v3', meta:'Atlas' },
+          { kind:'MD', name:'Halo — recherche utilisateurs', meta:'Halo' },
+          { kind:'FIG', name:'Atlas — specs parcours', meta:'Atlas' },
+          { kind:'DOC', name:'Positionnement — offre 2026', meta:'Positionnement' }
+        ]}
+      ],
+
+      settingsTabs: [['profile','Profil'],['integrations','Intégrations'],['privacy','Confidentialité']].map(([id, label]) => ({
+        label, set: () => this.setState({ settingsTab:id }),
+        style:`cursor:pointer;border:none;border-radius:999px;padding:9px 18px;font-size:13px;transition:all .3s ease;${s.settingsTab === id ? `background:${LIGHT}.14);color:#EAFBFD` : 'background:none;color:rgba(230,238,240,.66)'}`
+      })),
+      settingsIsProfile: s.settingsTab === 'profile',
+      settingsIsIntegrations: s.settingsTab === 'integrations',
+      settingsIsPrivacy: s.settingsTab === 'privacy',
+      profileFields: [
+        { label:'Activité', value:'Product design indépendant' },
+        { label:'Fuseau', value:'Europe/Paris' },
+        { label:'Langue', value:'Français' },
+        { label:'Intérêts', value:'IA & modèles · Design produit · Emploi' }
+      ],
+      prefs: [
+        { label:'Résumé du matin', meta:'Mímir prépare la journée à 8 h' },
+        { label:'Suggestions proactives', meta:'Propose des priorités sans demande' },
+        { label:'Notifications le soir', meta:'Après 19 h' },
+        { label:'Animations réduites', meta:'Respecte les préférences système' }
+      ].map((p, i) => {
+        const on = s.prefs[i];
+        return { label:p.label, meta:p.meta,
+          toggle: () => { const n = s.prefs.slice(); n[i] = !n[i]; this.setState({ prefs:n }); },
+          track:`cursor:pointer;margin-left:auto;flex:0 0 auto;width:42px;height:24px;border-radius:999px;border:1px solid ${on ? 'rgba(206,244,248,.60)' : 'rgba(255,255,255,.12)'};background:${on ? LIGHT + '.2)' : 'rgba(255,255,255,.04)'};display:flex;align-items:center;padding:2px;transition:all .3s ease`,
+          knob:`display:block;width:18px;height:18px;border-radius:50%;background:${on ? '#CEF4F8' : 'rgba(255,255,255,.4)'};transform:translateX(${on ? 18 : 0}px);transition:transform .3s cubic-bezier(.22,1,.36,1)` };
+      }),
+      integrations: [
+        { name:'Google Calendar', status:'Connecté', scope:'Lecture des événements · écriture des créneaux', on:true },
+        { name:'Gmail', status:'Connecté', scope:'Lecture des messages marqués uniquement', on:true },
+        { name:'GitHub', status:'Connecté', scope:'Dépôts liés aux projets · activité récente', on:true },
+        { name:'Notion', status:'Disponible', scope:'Bases de notes et de specs', on:false },
+        { name:'Slack', status:'Disponible', scope:'Résumés de canaux choisis', on:false }
+      ].map((i) => ({
+        name:i.name, status:i.status, scope:i.scope, statusMark: i.on ? '✓' : '+',
+        badge:`font-family:${MONO};font-size:9px;letter-spacing:.16em;text-transform:uppercase;padding:4px 8px;border-radius:5px;color:${i.on ? 'rgba(206,244,248,.8)' : 'rgba(230,238,240,.60)'};border:1px solid ${i.on ? 'rgba(206,244,248,.24)' : 'rgba(255,255,255,.1)'}`,
+        action: i.on ? 'Gérer les accès' : 'Connecter',
+        btn:`cursor:pointer;margin-top:auto;border-radius:999px;padding:10px 16px;font-size:12.5px;${i.on ? 'background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:rgba(230,238,240,.72)' : 'background:rgba(206,244,248,.9);border:none;color:#041014;font-weight:500'}`
+      })),
+      privacy: [
+        { title:'Ce que Mímir peut lire', body:'Seules les sources que vous connectez explicitement. Chaque intégration indique son périmètre.', state:'5 sources actives' },
+        { title:'Conservation', body:'Les conversations sont conservées 12 mois par défaut. La mémoire, elle, reste jusqu\u2019à ce que vous la retiriez.', state:'12 mois' },
+        { title:'Entraînement', body:'Vos données ne servent pas à entraîner de modèle. Aucune exception, aucun réglage caché.', state:'Désactivé' }
+      ],
+
+      onbState: ['idle','listening','thinking','processing','responding'][s.onbStep] || 'idle',
+      onbDots: ONB.map((x, i) => ({ style:`width:${i === s.onbStep ? 22 : 6}px;height:2px;border-radius:2px;transition:all .4s ease;background:${i <= s.onbStep ? '#CEF4F8' : 'rgba(255,255,255,.12)'}` })),
+      onbCounter:`${s.onbStep + 1} / ${ONB.length}`,
+      onbKicker: step.kicker, onbQuestion: step.q, onbHelp: step.help,
+      onbIsText: step.type === 'text', onbIsChoice: step.type === 'choice',
+      onbPlaceholder: step.placeholder || '',
+      onbValue: s.onbText,
+      onOnbInput: (e) => this.setState({ onbText: e.target.value }),
+      onbOptions: (step.options || []).map((label) => ({
+        label,
+        style:`cursor:pointer;font-size:13.5px;padding:12px 18px;border-radius:999px;transition:all .3s ease;${picked.indexOf(label) >= 0 ? `background:${LIGHT}.13);border:1px solid ${LIGHT}.4);color:#EAFBFD` : 'background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);color:rgba(230,238,240,.62)'}`,
+        toggle: () => {
+          const cur = (s.onbPicked[s.onbStep] || []).slice();
+          const k = cur.indexOf(label);
+          if (k >= 0) cur.splice(k, 1); else cur.push(label);
+          this.setState({ onbPicked: Object.assign({}, s.onbPicked, { [s.onbStep]: cur }) });
+        }
+      })),
+      onbCta: s.onbStep === ONB.length - 1 ? 'Entrer dans Mímir' : 'Continuer',
+      onbNext: () => {
+        if (s.onbStep === ONB.length - 1) this.go('assistant');
+        else this.setState({ onbStep: s.onbStep + 1, onbText:'' });
+      },
+      onbSkip: () => this.go('assistant')
+    };
+  }
+}
+
+</script>
+</body>
+</html>

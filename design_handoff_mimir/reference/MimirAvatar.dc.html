@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<script src="./image-slot.js"></script>
+<style>
+@keyframes mav-breathe { 0%,100% { transform:scale(1); opacity:.88 } 50% { transform:scale(1.03); opacity:1 } }
+@keyframes mav-spin { to { transform:rotate(360deg) } }
+@keyframes mav-spin-rev { to { transform:rotate(-360deg) } }
+@keyframes mav-ripple { 0% { transform:scale(.55); opacity:.55 } 100% { transform:scale(1.45); opacity:0 } }
+@keyframes mav-drift { 0%,100% { transform:translate3d(0,0,0); opacity:.3 } 50% { transform:translate3d(0,-8px,0); opacity:.85 } }
+@keyframes mav-tick { 0%,100% { opacity:.15 } 50% { opacity:.9 } }
+@keyframes mav-scan { 0% { top:4%; opacity:0 } 12% { opacity:1 } 88% { opacity:1 } 100% { top:92%; opacity:0 } }
+@keyframes mav-gaze { 0%,100% { transform:translateX(-6%) } 50% { transform:translateX(6%) } }
+@keyframes mav-mouth { 0%,100% { transform:scaleX(.5); opacity:.35 } 50% { transform:scaleX(1); opacity:.9 } }
+@keyframes mav-rim { 0% { box-shadow:0 0 0 1px rgba(206,244,248,.5), 0 0 60px rgba(206,244,248,.35) } 100% { box-shadow:0 0 0 1px rgba(206,244,248,.14), 0 0 0 rgba(206,244,248,0) } }
+</style>
+</helmet>
+<div style="position:relative;width:100%;aspect-ratio:4/5">
+  {{ back }}
+  <div style="{{ frameStyle }}">
+    <div style="position:absolute;inset:0;background:radial-gradient(120% 80% at 50% 30%, rgba(26,40,46,.9), rgba(8,12,16,.96) 70%)"></div>
+    <sc-if value="{{ showSlot }}" hint-placeholder-val="{{ true }}">
+      <div ref="{{ slotRef }}" style="position:absolute;inset:0">
+        <image-slot id="{{ slotId }}" fit="cover" shape="rect" radius="0" placeholder="Render" style="color:rgba(206,244,248,.55);opacity:.001"></image-slot>
+      </div>
+    </sc-if>
+    {{ fallback }}
+    {{ front }}
+    <sc-if value="{{ showHint }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;left:0;right:0;bottom:9%;text-align:center;pointer-events:none;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:rgba(206,244,248,.5)">Déposer un render</div>
+    </sc-if>
+  </div>
+  {{ outer }}
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:420,&quot;height&quot;:525},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;idle&quot;,&quot;listening&quot;,&quot;thinking&quot;,&quot;processing&quot;,&quot;responding&quot;,&quot;success&quot;],&quot;default&quot;:&quot;idle&quot;,&quot;tsType&quot;:&quot;'idle'|'listening'|'thinking'|'processing'|'responding'|'success'&quot;},&quot;amplitude&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0.6,&quot;min&quot;:0,&quot;max&quot;:1,&quot;step&quot;:0.05,&quot;tsType&quot;:&quot;number | undefined&quot;},&quot;intensity&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1,&quot;min&quot;:0,&quot;max&quot;:1.6,&quot;step&quot;:0.1,&quot;tsType&quot;:&quot;number&quot;},&quot;showSlot&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;slotId&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;mimir-avatar&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const L = 'rgba(206,244,248,';
+const W = 'rgba(238,242,228,';
+const CFG = {
+  idle:       { halo:.16, haloY:36, rim:.12, arc:0,   spin:90, dots:8,  ripples:0, ticks:0, scan:false, gazeY:0,  gazeO:.35, gazeMove:false, mouth:false, breathe:8 },
+  listening:  { halo:.30, haloY:36, rim:.30, arc:.16, spin:40, dots:13, ripples:2, ticks:0, scan:false, gazeY:0,  gazeO:.95, gazeMove:false, mouth:false, breathe:3.4 },
+  thinking:   { halo:.34, haloY:22, rim:.20, arc:.42, spin:10, dots:15, ripples:0, ticks:0, scan:false, gazeY:-5, gazeO:.5,  gazeMove:true,  mouth:false, breathe:2.6 },
+  processing: { halo:.22, haloY:36, rim:.26, arc:0,   spin:16, dots:7,  ripples:0, ticks:10, scan:true, gazeY:0,  gazeO:0,   gazeMove:false, mouth:false, breathe:0 },
+  responding: { halo:.40, haloY:44, rim:.24, arc:.28, spin:28, dots:11, ripples:1, ticks:0, scan:false, gazeY:0,  gazeO:.75, gazeMove:false, mouth:true,  breathe:4.4, warm:true },
+  success:    { halo:.30, haloY:36, rim:.14, arc:0,   spin:70, dots:7,  ripples:3, ticks:0, scan:false, gazeY:0,  gazeO:.6,  gazeMove:false, mouth:false, breathe:6, flash:true }
+};
+
+class Component extends DCLogic {
+  state = { filled:false };
+  slotRef = React.createRef();
+
+  componentDidMount() { this.watch(); }
+  componentDidUpdate() { this.watch(); }
+  componentWillUnmount() { if (this.mo) this.mo.disconnect(); }
+  watch() {
+    const host = this.slotRef.current;
+    const slot = host && host.querySelector('image-slot');
+    if (!slot || slot === this.watched) return;
+    if (this.mo) this.mo.disconnect();
+    this.watched = slot;
+    const sync = () => {
+      const f = slot.hasAttribute('data-filled');
+      slot.style.opacity = f ? '1' : '0.001';
+      if (f !== this.state.filled) this.setState({ filled:f });
+    };
+    this.mo = new MutationObserver(sync);
+    this.mo.observe(slot, { attributes:true, attributeFilter:['data-filled'] });
+    sync();
+  }
+
+  renderVals() {
+    const h = React.createElement;
+    const st = this.props.state || 'idle';
+    const c = CFG[st] || CFG.idle;
+    const m = this.props.intensity ?? 1;
+    const amp = this.props.amplitude;
+    const light = c.warm ? W : L;
+    const a = (v) => (v * m).toFixed(3);
+    const showSlot = this.props.showSlot ?? true;
+    const filled = showSlot && this.state.filled;
+
+    const back = [];
+    back.push(h('div', { key:'halo', style:{ position:'absolute', inset:'-22% -30%', pointerEvents:'none',
+      background:`radial-gradient(42% 36% at 50% ${c.haloY}%, ${light}${a(c.halo)}), rgba(0,0,0,0) 72%)`,
+      transition:'background 1.4s ease',
+      animation: c.breathe ? `mav-breathe ${c.breathe}s ease-in-out infinite` : 'none' } }));
+    const ring = (inset, op, k) => h('div', { key:k, style:{ position:'absolute', left:'50%', top:'38%', width:inset, aspectRatio:'1', transform:'translate(-50%,-50%)', borderRadius:'50%', border:`1px solid rgba(190,236,240,${op})`, pointerEvents:'none' } });
+    back.push(ring('112%', .09, 'r1'), ring('86%', .07, 'r2'));
+
+    const outer = [];
+    const ringBox = (k, size, style, kids) => h('div', { key:k, style:Object.assign({ position:'absolute', left:'50%', top:'38%', width:size, aspectRatio:'1', marginLeft:`calc(${size} / -2)`, marginTop:`calc(${size} / -2)`, borderRadius:'50%', pointerEvents:'none' }, style) }, kids);
+    const maskRing = (px) => `radial-gradient(circle, rgba(0,0,0,0) calc(50% - ${px}px), #000 calc(50% - ${px}px), #000 50%, rgba(0,0,0,0) 50%)`;
+
+    if (c.arc > 0) {
+      outer.push(ringBox('arc', '112%', { background:`conic-gradient(from 0deg, rgba(0,0,0,0) 0turn, ${light}${a(.55)}) ${c.arc}turn, rgba(0,0,0,0) ${c.arc + .02}turn)`, WebkitMask:maskRing(1.5), mask:maskRing(1.5), animation:`mav-spin ${c.spin}s linear infinite` }));
+      outer.push(ringBox('arc2', '86%', { background:`conic-gradient(from 180deg, rgba(0,0,0,0) 0turn, ${light}${a(.32)}) ${(c.arc * .5).toFixed(2)}turn, rgba(0,0,0,0) ${(c.arc * .5 + .02).toFixed(2)}turn)`, WebkitMask:maskRing(1), mask:maskRing(1), animation:`mav-spin-rev ${c.spin * 1.6}s linear infinite` }));
+    }
+    if (c.ticks) {
+      const seg = [];
+      for (let i = 0; i < c.ticks; i++) seg.push(h('div', { key:i, style:{ position:'absolute', left:'50%', top:'50%', width:'1px', height:'50%', transformOrigin:'top center', transform:`rotate(${i * 360 / c.ticks}deg)`, background:`linear-gradient(180deg, rgba(0,0,0,0) 86%, ${L}${a(.7)}) 94%, rgba(0,0,0,0))`, animation:`mav-tick 1.4s ease-in-out ${(i * 1.4 / c.ticks).toFixed(2)}s infinite` } }));
+      outer.push(ringBox('ticks', '112%', { animation:`mav-spin ${c.spin}s linear infinite` }, seg));
+    }
+    for (let i = 0; i < c.ripples; i++) {
+      outer.push(ringBox('rip' + i, '70%', { border:`1px solid ${light}${a(.34)})`, animation:`mav-ripple ${c.flash ? 2.2 : 3.4}s ease-out ${(i * (c.flash ? .3 : 1.1)).toFixed(2)}s infinite` }));
+    }
+    const dots = [];
+    for (let i = 0; i < c.dots; i++) {
+      const ang = (i * 137.508) % 360, r = 44 + ((i * 37) % 20);
+      dots.push(h('div', { key:i, style:{ position:'absolute', left:`${(50 + Math.cos(ang * Math.PI / 180) * r).toFixed(2)}%`, top:`${(38 + Math.sin(ang * Math.PI / 180) * r * 1.05).toFixed(2)}%`, width:i % 4 === 0 ? '3px' : '2px', height:i % 4 === 0 ? '3px' : '2px', borderRadius:'50%', background:`${light}${a(.75)})`, boxShadow:`0 0 6px ${L}.5)`, animation:`mav-drift ${7 + (i % 5)}s ease-in-out ${(i * .37).toFixed(2)}s infinite` } }));
+    }
+    outer.push(h('div', { key:'dots', style:{ position:'absolute', inset:0, pointerEvents:'none' } }, dots));
+
+    const fallback = filled ? null : h('div', { style:{ position:'absolute', inset:0, pointerEvents:'none' } }, [
+      h('div', { key:'head', style:{ position:'absolute', left:'50%', top:'34%', width:'46%', height:'40%', transform:'translate(-50%,-50%)', borderRadius:'50%', background:`radial-gradient(50% 50% at 50% 42%, rgba(206,244,248,.20), rgba(206,244,248,.05) 62%, rgba(0,0,0,0) 72%)`, filter:'blur(2px)' } }),
+      h('div', { key:'neck', style:{ position:'absolute', left:'50%', top:'54%', width:'16%', height:'16%', transform:'translateX(-50%)', background:'linear-gradient(180deg, rgba(206,244,248,.08), rgba(206,244,248,.03))', filter:'blur(4px)' } }),
+      h('div', { key:'shoulders', style:{ position:'absolute', left:'50%', bottom:'-26%', width:'118%', height:'56%', transform:'translateX(-50%)', borderRadius:'50%', background:'radial-gradient(50% 50% at 50% 30%, rgba(206,244,248,.13), rgba(206,244,248,.03) 60%, rgba(0,0,0,0) 72%)', filter:'blur(3px)' } }),
+      h('div', { key:'seam', style:{ position:'absolute', left:'50%', top:'16%', width:'1px', height:'40%', background:`linear-gradient(180deg, rgba(0,0,0,0), ${L}.28), rgba(0,0,0,0))` } })
+    ]);
+
+    const front = [];
+    front.push(h('div', { key:'gaze', style:{ position:'absolute', left:'30%', right:'30%', top:`${33 + c.gazeY}%`, height:'2px', borderRadius:'2px', pointerEvents:'none',
+      background:`linear-gradient(90deg, rgba(0,0,0,0), ${light}${a(c.gazeO * (filled ? .45 : 1))}), rgba(0,0,0,0))`, boxShadow:`0 0 12px ${L}${a(c.gazeO * .5)})`,
+      transition:'top 1.1s cubic-bezier(.22,1,.36,1), background .8s ease',
+      animation: c.gazeMove ? 'mav-gaze 3.2s ease-in-out infinite' : 'none' } }));
+    if (c.mouth) {
+      const s = amp == null ? null : Math.max(.2, Math.min(1, amp));
+      front.push(h('div', { key:'mouth', style:{ position:'absolute', left:'42%', right:'42%', top:'47%', height:'2px', borderRadius:'2px', pointerEvents:'none',
+        background:`linear-gradient(90deg, rgba(0,0,0,0), ${W}${a(.85 * (filled ? .5 : 1))}), rgba(0,0,0,0))`,
+        transform: s == null ? undefined : `scaleX(${s})`, animation: s == null ? 'mav-mouth .42s ease-in-out infinite' : 'none' } }));
+    }
+    if (c.scan) {
+      front.push(h('div', { key:'scan', style:{ position:'absolute', left:0, right:0, height:'28%', pointerEvents:'none',
+        background:`linear-gradient(180deg, rgba(0,0,0,0), ${L}${a(.10)}) 80%, ${L}${a(.5)}) 99%, rgba(0,0,0,0))`, animation:'mav-scan 2.6s cubic-bezier(.45,0,.55,1) infinite' } }));
+    }
+    front.push(h('div', { key:'fade', style:{ position:'absolute', inset:0, pointerEvents:'none', background:'linear-gradient(180deg, rgba(4,6,10,0) 62%, rgba(4,6,10,.85) 100%)' } }));
+
+    return {
+      back, outer, fallback, front, showSlot, slotRef:this.slotRef,
+      showHint: showSlot && !filled && (this.props.showHint ?? false),
+      slotId: this.props.slotId || 'mimir-avatar',
+      frameStyle:`position:absolute;left:13%;right:13%;top:5%;bottom:3%;border-radius:999px 999px 46% 46% / 40% 40% 14% 14%;overflow:hidden;box-shadow:0 0 0 1px ${L}${a(c.rim)}), 0 30px 80px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08);transition:box-shadow 1s ease;${c.flash ? 'animation:mav-rim 1.6s ease-out 1' : ''}`
+    };
+  }
+}
+
+</script>
+</body>
+</html>

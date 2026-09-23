@@ -1,0 +1,16 @@
+{
+  "name": "mimir",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm run --parallel dev:api dev:web",
+    "dev:api": "pnpm --filter @mimir/api dev",
+    "dev:web": "pnpm --filter @mimir/web dev",
+    "build": "pnpm run --parallel build:api build:web",
+    "build:api": "pnpm --filter @mimir/api build",
+    "build:web": "pnpm --filter @mimir/web build",
+    "db:generate": "pnpm --filter @mimir/db generate",
+    "db:push": "pnpm --filter @mimir/db push",
+    "db:migrate": "pnpm --filter @mimir/db migrate",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

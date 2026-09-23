@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+html, body { margin:0; padding:0; background:#04060A; color:#E6EEF0; font-family:'DM Sans', system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+* { box-sizing:border-box; }
+a { color:#CEF4F8; text-decoration:none; }
+a:hover { color:#EAFBFD; }
+button, input { font-family:inherit; }
+:focus-visible { outline:1px solid rgba(206,244,248,.75); outline-offset:3px; border-radius:6px; }
+@keyframes ds-bar { 0%,100% { transform:scaleY(.32) } 50% { transform:scaleY(1) } }
+@keyframes ds-spin { to { transform:rotate(360deg) } }
+@keyframes ds-caret { 0%,49% { opacity:1 } 50%,100% { opacity:0 } }
+@keyframes ds-pulse { 0%,100% { opacity:.45 } 50% { opacity:1 } }
+@media (prefers-reduced-motion: reduce) { * { animation-duration:.001s !important; animation-iteration-count:1 !important; transition-duration:.001s !important } }
+</style>
+</helmet>
+<div style="position:relative;min-height:100vh;background:radial-gradient(1100px 700px at 70% 0%, rgba(22,40,48,.5), rgba(4,6,10,0) 70%), #04060A">
+  <div style="max-width:1240px;margin:0 auto;padding:clamp(28px,5vw,72px) clamp(20px,4vw,56px) 120px;display:flex;flex-direction:column;gap:88px">
+
+    <header style="display:flex;flex-direction:column;gap:22px;max-width:760px">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <span style="font-family:'Instrument Serif',serif;font-size:20px;letter-spacing:.32em;color:#E6EEF0">MÍMIR</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(206,244,248,.72);border:1px solid rgba(206,244,248,.24);border-radius:999px;padding:5px 11px">Design System · v0.1</span>
+        <a href="Mímir.dc.html" style="font-size:13px">Ouvrir le prototype →</a>
+      </div>
+      <h1 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(40px,5vw,64px);line-height:1.04;color:#EFF6F7;text-wrap:pretty">Une présence, puis une interface.</h1>
+      <p style="margin:0;font-size:16px;line-height:1.7;color:rgba(230,238,240,.7);text-wrap:pretty">Ce document décrit les fondations visuelles de Mímir et les composants à implémenter en React + TypeScript. La règle d'ordre est toujours la même : MimirAvatar d'abord, le texte l'accompagne, les données viennent ensuite.</p>
+      <nav style="display:flex;flex-wrap:wrap;gap:8px;padding-top:6px">
+        <sc-for list="{{ toc }}" as="t" hint-placeholder-count="10">
+          <a href="{{ t.href }}" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(230,238,240,.66);border:1px solid rgba(255,255,255,.09);border-radius:999px;padding:8px 13px" style-hover="color:#EAFBFD;border-color:rgba(206,244,248,.4)">{{ t.label }}</a>
+        </sc-for>
+      </nav>
+    </header>
+
+    <section id="avatar" style="display:flex;flex-direction:column;gap:30px">
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(206,244,248,.72)">01 · MimirAvatar</div>
+        <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(30px,3.4vw,42px);line-height:1.1;color:#EFF6F7">Le composant central</h2>
+        <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(230,238,240,.7);text-wrap:pretty">MimirAvatar représente Mímir. Le portrait actuel (silhouette lumineuse ou render déposé) est un placeholder : le cadre est conçu pour recevoir plus tard une vidéo, un rendu temps réel ou un avatar 3D, piloté par les mêmes props. Tout ce qui entoure le portrait (halo, anneaux, regard, bouche, particules) appartient au composant, pas à l'écran.</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:28px;align-items:start">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:18px;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.008));border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:30px 24px 26px">
+          <div style="width:min(100%,320px)">
+            <dc-import name="MimirAvatar" state="{{ pgState }}" amplitude="{{ pgAmp }}" intensity="{{ pgIntensity }}" slot-id="mimir-avatar" show-slot="{{ true }}" hint-size="100%,400px"></dc-import>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:rgba(206,244,248,.8)">{{ pgLabel }}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:22px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6)">Playground</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:13px;color:rgba(230,238,240,.7)"><code style="font-family:'JetBrains Mono',monospace;color:#CEF4F8">state</code></div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <sc-for list="{{ pgStates }}" as="s" hint-placeholder-count="6">
+                <button onClick="{{ s.set }}" style="{{ s.style }}">{{ s.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(230,238,240,.7)"><code style="font-family:'JetBrains Mono',monospace;color:#CEF4F8">amplitude</code><span style="font-family:'JetBrains Mono',monospace;font-size:11px">{{ pgAmpLabel }}</span></div>
+            <input type="range" min="0" max="1" step="0.05" value="{{ pgAmp }}" onChange="{{ onAmp }}" style="width:100%;accent-color:#CEF4F8" />
+            <div style="font-size:12.5px;line-height:1.55;color:rgba(230,238,240,.6)">Visible en Responding. Déplacez le curseur : la lueur de bouche suit la valeur.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:rgba(230,238,240,.7)"><code style="font-family:'JetBrains Mono',monospace;color:#CEF4F8">intensity</code><span style="font-family:'JetBrains Mono',monospace;font-size:11px">{{ pgIntLabel }}</span></div>
+            <input type="range" min="0" max="1.6" step="0.1" value="{{ pgIntensity }}" onChange="{{ onInt }}" style="width:100%;accent-color:#CEF4F8" />
+          </div>
+          <div style="display:flex;flex-direction:column;border-top:1px solid rgba(255,255,255,.07)">
+            <sc-for list="{{ props }}" as="p" hint-placeholder-count="6">
+              <div style="display:grid;grid-template-columns:minmax(0,120px) minmax(0,1fr);gap:16px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.06)">
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <code style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#CEF4F8">{{ p.name }}</code>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(230,238,240,.56)">{{ p.type }}</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <span style="font-size:13.5px;line-height:1.55;color:rgba(230,238,240,.82)">{{ p.now }}</span>
+                  <span style="font-size:12.5px;line-height:1.55;color:rgba(230,238,240,.6)">{{ p.later }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6)">Anatomie · 4 couches</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px">
+          <sc-for list="{{ layers }}" as="l" hint-placeholder-count="4">
+            <div style="background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:20px 22px;display:flex;flex-direction:column;gap:9px">
+              <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#CEF4F8">{{ l.n }}</span><span style="font-size:15px;color:#EFF6F7">{{ l.name }}</span></div>
+              <div style="font-size:13px;line-height:1.6;color:rgba(230,238,240,.68)">{{ l.body }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <section id="etats" style="display:flex;flex-direction:column;gap:30px">
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(206,244,248,.72)">02 · États de Mímir</div>
+        <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(30px,3.4vw,42px);line-height:1.1;color:#EFF6F7">Six états, toujours nommés</h2>
+        <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(230,238,240,.7);text-wrap:pretty">Chaque état combine lumière, regard et mouvement. Aucun ne repose seulement sur la couleur : le libellé d'état (mono, sous l'avatar) est toujours affiché et annoncé via <code style="font-family:'JetBrains Mono',monospace;color:#CEF4F8">aria-live="polite"</code>.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px">
+        <sc-for list="{{ states }}" as="s" hint-placeholder-count="6">
+          <div style="display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.008));border:1px solid rgba(255,255,255,.07);border-radius:20px;overflow:hidden">
+            <div style="padding:22px 50px 4px">
+              <dc-import name="MimirAvatar" state="{{ s.id }}" slot-id="mimir-avatar" show-slot="{{ true }}" hint-size="100%,260px"></dc-import>
+            </div>
+            <div style="padding:6px 24px 24px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                <span style="font-family:'Instrument Serif',serif;font-size:24px;color:#EFF6F7">{{ s.label }}</span>
+                <code style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(206,244,248,.8)">{{ s.code }}</code>
+              </div>
+              <div style="font-size:13.5px;line-height:1.6;color:rgba(230,238,240,.78)">{{ s.meaning }}</div>
+              <div style="display:flex;flex-direction:column;gap:7px;border-top:1px solid rgba(255,255,255,.06);padding-top:12px">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:rgba(230,238,240,.56)">Signaux actuels</div>
+                <div style="font-size:12.5px;line-height:1.55;color:rgba(230,238,240,.68)">{{ s.cues }}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:rgba(230,238,240,.56)">Avatar animé (cible)</div>
+                <div style="font-size:12.5px;line-height:1.55;color:rgba(230,238,240,.68)">{{ s.future }}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:rgba(230,238,240,.56)">Déclencheur</div>
+                <div style="font-size:12.5px;line-height:1.55;color:rgba(230,238,240,.68)">{{ s.trigger }}</div>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6)">Variantes de taille</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:14px">
+          <sc-for list="{{ sizes }}" as="z" hint-placeholder-count="4">
+            <div style="border-top:1px solid rgba(255,255,255,.1);padding-top:14px;display:flex;flex-direction:column;gap:7px">
+              <div style="display:flex;justify-content:space-between;gap:10px"><span style="font-size:14.5px;color:#EFF6F7">{{ z.name }}</span><code style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(206,244,248,.8)">{{ z.size }}</code></div>
+              <div style="font-size:12.5px;line-height:1.55;color:rgba(230,238,240,.66)">{{ z.use }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <section id="motion" style="display:flex;flex-direction:column;gap:30px">
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(206,244,248,.72)">03 · Motion</div>
+        <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(30px,3.4vw,42px);line-height:1.1;color:#EFF6F7">Le mouvement signale un changement d'état</h2>
+        <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(230,238,240,.7);text-wrap:pretty">Hors de l'avatar, rien ne bouge en continu. Les boucles ambiantes (respiration, particules) restent sous 8 % d'opacité de variation et s'arrêtent avec <code style="font-family:'JetBrains Mono',monospace;color:#CEF4F8">prefers-reduced-motion</code> ; l'état reste alors lisible par la lumière statique et le libellé.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:12px">
+        <sc-for list="{{ durations }}" as="d" hint-placeholder-count="5">
+          <div style="background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:6px">
+            <code style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#CEF4F8">{{ d.token }}</code>
+            <span style="font-size:20px;color:#EFF6F7">{{ d.value }}</span>
+            <span style="font-size:12px;line-height:1.5;color:rgba(230,238,240,.62)">{{ d.use }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px">
+        <div style="flex:1 1 280px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px 18px"><code style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#CEF4F8">--ease-presence</code><div style="margin-top:6px;font-size:13px;color:rgba(230,238,240,.72)">cubic-bezier(.22, 1, .36, 1) · entrées, changements de taille de l'avatar</div></div>
+        <div style="flex:1 1 280px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px 18px"><code style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#CEF4F8">--ease-breath</code><div style="margin-top:6px;font-size:13px;color:rgba(230,238,240,.72)">ease-in-out · boucles de respiration, regard, bouche</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;border-top:1px solid rgba(255,255,255,.08)">
+        <sc-for list="{{ transitions }}" as="t" hint-placeholder-count="7">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px 24px;padding:18px 0;border-bottom:1px solid rgba(255,255,255,.06)">
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <span style="font-size:15px;color:#EFF6F7">{{ t.from }}</span>
+              <code style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(206,244,248,.8)">{{ t.timing }}</code>
+            </div>
+            <div style="font-size:13px;line-height:1.6;color:rgba(230,238,240,.74)">{{ t.what }}</div>
+            <div style="font-size:12.5px;line-height:1.6;color:rgba(230,238,240,.6)">{{ t.ui }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section id="couleurs" style="display:flex;flex-direction:column;gap:30px">
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(206,244,248,.72)">04 · Couleurs & contraste</div>
+        <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(30px,3.4vw,42px);line-height:1.1;color:#EFF6F7">Une seule lumière</h2>
+        <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(230,238,240,.7);text-wrap:pretty">Le fond est un noir bleuté profond. L'accent est une lumière froide presque blanche, jamais un bleu électrique. Une lumière chaude n'apparaît que lorsque Mímir parle. Ratios indiqués sur <code style="font-family:'JetBrains Mono',monospace;color:#CEF4F8">void</code> (approximatifs, à vérifier en CI).</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:14px">
+        <sc-for list="{{ colors }}" as="c" hint-placeholder-count="10">
+          <div style="border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;background:rgba(255,255,255,.02)">
+            <div style="{{ c.swatch }}"></div>
+            <div style="padding:14px 16px;display:flex;flex-direction:column;gap:5px">
+              <div style="display:flex;justify-content:space-between;gap:10px"><code style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#EFF6F7">{{ c.token }}</code><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:rgba(206,244,248,.8)">{{ c.ratio }}</span></div>
+              <code style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:rgba(230,238,240,.6)">{{ c.value }}</code>
+              <span style="font-size:12px;line-height:1.5;color:rgba(230,238,240,.66)">{{ c.use }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section id="typo" style="display:flex;flex-direction:column;gap:30px">
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(206,244,248,.72)">05 · Typographie</div>
+        <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(30px,3.4vw,42px);line-height:1.1;color:#EFF6F7">Trois voix</h2>
+        <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(230,238,240,.7);text-wrap:pretty">Instrument Serif porte la parole de Mímir et les titres. DM Sans porte l'interface. JetBrains Mono porte les états, métadonnées et libellés système, toujours en capitales espacées.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;border-top:1px solid rgba(255,255,255,.08)">
+        <sc-for list="{{ type }}" as="t" hint-placeholder-count="9">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px 28px;align-items:baseline;padding:18px 0;border-bottom:1px solid rgba(255,255,255,.06)">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <code style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#CEF4F8">{{ t.token }}</code>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:rgba(230,238,240,.6)">{{ t.spec }}</span>
+            </div>
+            <div style="{{ t.style }}">{{ t.sample }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section id="surfaces" style="display:flex;flex-direction:column;gap:30px">
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(206,244,248,.72)">06 · Surfaces, bordures, rayons, ombres, lumière</div>
+        <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(30px,3.4vw,42px);line-height:1.1;color:#EFF6F7">Du verre sombre, peu de couches</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px">
+        <sc-for list="{{ surfaces }}" as="s" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="{{ s.demo }}"><span style="font-size:13px;color:rgba(230,238,240,.82)">{{ s.name }}</span></div>
+            <code style="font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.6;color:rgba(230,238,240,.62)">{{ s.spec }}</code>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:14px">
+        <sc-for list="{{ radii }}" as="r" hint-placeholder-count="6">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="{{ r.demo }}"></div>
+            <div style="display:flex;justify-content:space-between"><code style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#CEF4F8">{{ r.token }}</code><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:rgba(230,238,240,.6)">{{ r.value }}</span></div>
+            <span style="font-size:12px;color:rgba(230,238,240,.62)">{{ r.use }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px">
+        <sc-for list="{{ lights }}" as="l" hint-placeholder-count="4">
+          <div style="background:rgba(255,255,255,.022);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;gap:8px">
+            <code style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#CEF4F8">{{ l.token }}</code>
+            <code style="font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.55;color:rgba(230,238,240,.62)">{{ l.value }}</code>
+            <span style="font-size:12.5px;line-height:1.55;color:rgba(230,238,240,.7)">{{ l.use }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6)">Espacements · base 4</div>
+        <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:18px">
+          <sc-for list="{{ spacing }}" as="s" hint-placeholder-count="9">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+              <div style="{{ s.demo }}"></div>
+              <code style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:rgba(230,238,240,.7)">{{ s.label }}</code>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font-size:12.5px;line-height:1.6;color:rgba(230,238,240,.62);max-width:720px">Grille : sidebar 190px + zone fluide, gouttière 18px, marges clamp(20px, 3vw, 44px). Contenu Workspace en auto-fit minmax(280px, 1fr). Mobile : colonne unique, marges 20px, barre de navigation basse 64px.</div>
+      </div>
+    </section>
+
+    <section id="composants" style="display:flex;flex-direction:column;gap:30px">
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(206,244,248,.72)">07 · Boutons & inputs</div>
+        <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(30px,3.4vw,42px);line-height:1.1;color:#EFF6F7">Contrôles</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:18px">
+        <div style="background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:18px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6)">Button</div>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+            <button style="cursor:pointer;background:linear-gradient(180deg,rgba(206,244,248,.95),rgba(176,226,232,.82));border:none;color:#041014;font-size:14px;font-weight:500;padding:13px 26px;border-radius:999px" style-hover="box-shadow:0 0 44px rgba(206,244,248,.26)">Primary</button>
+            <button style="cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:rgba(230,238,240,.86);font-size:14px;padding:13px 24px;border-radius:999px" style-hover="border-color:rgba(206,244,248,.4)">Secondary</button>
+            <button style="cursor:pointer;background:none;border:none;color:#CEF4F8;font-size:14px;padding:13px 4px;text-decoration:underline;text-underline-offset:4px">Ghost</button>
+            <button style="cursor:pointer;background:none;border:1px solid rgba(232,176,152,.36);color:rgba(236,196,176,.95);font-size:14px;padding:13px 22px;border-radius:999px">Destructive</button>
+            <button disabled="disabled" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);color:rgba(230,238,240,.4);font-size:14px;padding:13px 22px;border-radius:999px">Disabled</button>
+          </div>
+          <div style="font-size:12.5px;line-height:1.6;color:rgba(230,238,240,.62)">Un seul Primary par vue. Hauteur 44px min. Focus : contour 1px lumière à 75 %, décalé de 3px.</div>
+        </div>
+        <div style="background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:18px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6)">Input · Toggle · Chip</div>
+          <input placeholder="Champ texte" style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:15px 18px;color:#E6EEF0;font-size:15px;outline:none" style-focus="border-color:rgba(206,244,248,.5);background:rgba(206,244,248,.05)" />
+          <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center">
+            <span style="display:flex;align-items:center;width:42px;height:24px;border-radius:999px;border:1px solid rgba(206,244,248,.4);background:rgba(206,244,248,.2);padding:2px"><span style="display:block;width:18px;height:18px;border-radius:50%;background:#CEF4F8;transform:translateX(18px)"></span></span>
+            <span style="display:flex;align-items:center;width:42px;height:24px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);padding:2px"><span style="display:block;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.4)"></span></span>
+            <span style="font-size:13px;padding:10px 16px;border-radius:999px;background:rgba(206,244,248,.13);border:1px solid rgba(206,244,248,.4);color:#EAFBFD">Chip actif</span>
+            <span style="font-size:13px;padding:10px 16px;border-radius:999px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);color:rgba(230,238,240,.7)">Chip</span>
+          </div>
+        </div>
+        <div style="grid-column:1/-1;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:18px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6)">Composer · texte et voix</div>
+          <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:center">
+            <div style="flex:1 1 380px;min-width:0;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);border-radius:999px;padding:8px 8px 8px 22px;box-shadow:0 18px 60px rgba(0,0,0,.35)">
+              <span style="flex:1;font-size:15px;color:rgba(230,238,240,.56)">Parlez à Mímir</span>
+              <span style="height:40px;padding:0 22px;border-radius:999px;background:linear-gradient(180deg,rgba(206,244,248,.95),rgba(176,226,232,.82));color:#041014;font-size:13.5px;font-weight:500;display:flex;align-items:center">Envoyer</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px">
+              <span style="width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(206,244,248,.16);border:1px solid rgba(206,244,248,.5);color:#EAFBFD;box-shadow:0 0 44px rgba(206,244,248,.22)"><span style="display:block;width:13px;height:21px;border-radius:7px;border:1.5px solid currentColor"></span></span>
+              <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:13.5px;color:#EFF6F7">Push-to-talk</span><span style="font-size:12px;color:rgba(230,238,240,.62)">Actif = Listening sur l'avatar</span></div>
+            </div>
+          </div>
+          <div style="font-size:12.5px;line-height:1.6;color:rgba(230,238,240,.62)">Le composer est toujours ancré en bas de la scène. Voix/Texte est un réglage de session, pas deux interfaces : la même réponse est dite et écrite.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="navigation" style="display:flex;flex-direction:column;gap:30px">
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(206,244,248,.72)">08 · Navigation</div>
+        <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(30px,3.4vw,42px);line-height:1.1;color:#EFF6F7">Discrète, jamais dominante</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px">
+        <div style="background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:6px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6);margin-bottom:10px">NavRail · desktop</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 0;font-size:13.5px;color:#EFF6F7"><span style="display:block;width:1px;height:13px;background:#CEF4F8;box-shadow:0 0 8px rgba(206,244,248,.9)"></span>Mímir</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 0;font-size:13.5px;color:rgba(230,238,240,.66)"><span style="display:block;width:1px;height:13px"></span>My Day</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:8px 0;font-size:13.5px;color:rgba(230,238,240,.66)"><span style="display:block;width:1px;height:13px"></span>Projets</div>
+          <div style="margin-top:10px;font-size:12.5px;line-height:1.6;color:rgba(230,238,240,.62)">Texte seul, trait lumineux 1px pour l'actif. Pas d'icônes : la navigation se lit, elle ne décore pas.</div>
+        </div>
+        <div style="background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:14px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6)">ModeSwitch</div>
+          <div style="display:flex;align-self:flex-start;gap:6px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:999px;padding:4px">
+            <span style="border-radius:999px;padding:8px 18px;font-size:13px;background:rgba(206,244,248,.14);color:#EAFBFD">Assistant</span>
+            <span style="border-radius:999px;padding:8px 18px;font-size:13px;color:rgba(230,238,240,.6)">Workspace</span>
+          </div>
+          <div style="font-size:12.5px;line-height:1.6;color:rgba(230,238,240,.62)">Bascule entre les deux modes. En Workspace, la présence mini de Mímir reste dans l'en-tête et ramène à l'Assistant.</div>
+        </div>
+        <div style="background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:14px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6)">BottomBar · mobile</div>
+          <div style="display:flex;align-items:center;justify-content:space-around;background:rgba(8,12,16,.9);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:10px 8px">
+            <span style="font-size:11.5px;color:rgba(230,238,240,.66);padding:8px">My Day</span>
+            <span style="font-size:11.5px;color:rgba(230,238,240,.66);padding:8px">Projets</span>
+            <span style="width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 50% 40%, rgba(206,244,248,.5), rgba(206,244,248,.08) 70%);border:1px solid rgba(206,244,248,.4);box-shadow:0 0 22px rgba(206,244,248,.25)"></span>
+            <span style="font-size:11.5px;color:rgba(230,238,240,.66);padding:8px">Docs</span>
+            <span style="font-size:11.5px;color:rgba(230,238,240,.66);padding:8px">Plus</span>
+          </div>
+          <div style="font-size:12.5px;line-height:1.6;color:rgba(230,238,240,.62)">Mímir au centre, toujours atteignable au pouce. « Plus » ouvre une feuille avec les autres modules.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="cards" style="display:flex;flex-direction:column;gap:30px">
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(206,244,248,.72)">09 · Cards & badges</div>
+        <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(30px,3.4vw,42px);line-height:1.1;color:#EFF6F7">Données de l'utilisateur</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px">
+        <div style="background:linear-gradient(180deg,rgba(206,244,248,.055),rgba(255,255,255,.015));border:1px solid rgba(206,244,248,.16);border-radius:20px;padding:24px 26px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(206,244,248,.72);margin-bottom:12px">InsightCard · la voix de Mímir</div>
+          <div style="font-family:'Instrument Serif',serif;font-size:22px;line-height:1.35;color:#EFF6F7">Votre après-midi est le point de tension de la journée.</div>
+        </div>
+        <div style="background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6);margin-bottom:14px">Panel · données</div>
+          <div style="display:flex;gap:13px;align-items:flex-start;padding:10px 0;border-top:1px solid rgba(255,255,255,.05)"><span style="flex:0 0 auto;width:7px;height:7px;border-radius:50%;margin-top:6px;background:#CEF4F8;box-shadow:0 0 10px rgba(206,244,248,.8)"></span><div><div style="font-size:14px;color:#E6EEF0">Élément prioritaire</div><div style="margin-top:4px;font-size:12px;color:rgba(230,238,240,.62)">Métadonnée · source</div></div></div>
+          <div style="display:flex;gap:13px;align-items:flex-start;padding:10px 0;border-top:1px solid rgba(255,255,255,.05)"><span style="flex:0 0 auto;width:7px;height:7px;border-radius:50%;margin-top:6px;background:rgba(255,255,255,.25)"></span><div><div style="font-size:14px;color:#E6EEF0">Élément secondaire</div><div style="margin-top:4px;font-size:12px;color:rgba(230,238,240,.62)">Métadonnée · source</div></div></div>
+        </div>
+        <div style="background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:16px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6)">Badge · statut</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;padding:5px 9px;border-radius:5px;color:rgba(206,244,248,.85);border:1px solid rgba(206,244,248,.26)">● Actif</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;padding:5px 9px;border-radius:5px;color:rgba(230,238,240,.62);border:1px solid rgba(255,255,255,.12)">‖ En pause</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;padding:5px 9px;border-radius:5px;color:rgba(236,210,170,.95);border:1px solid rgba(232,199,154,.32)">! Échéance</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;padding:5px 9px;border-radius:5px;color:rgba(206,244,248,.85);border:1px solid rgba(206,244,248,.26)">✓ Connecté</span>
+          </div>
+          <div style="font-size:12.5px;line-height:1.6;color:rgba(230,238,240,.62)">Chaque statut porte un signe + un mot : jamais la couleur seule.</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(230,238,240,.62)"><span>Progress</span><span>62%</span></div>
+            <div style="height:2px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden"><div style="width:62%;height:100%;background:linear-gradient(90deg,rgba(206,244,248,.35),rgba(206,244,248,.85))"></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="conversation" style="display:flex;flex-direction:column;gap:30px">
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(206,244,248,.72)">10 · Conversation</div>
+        <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(30px,3.4vw,42px);line-height:1.1;color:#EFF6F7">Pas de bulles</h2>
+        <p style="margin:0;font-size:15px;line-height:1.7;color:rgba(230,238,240,.7);text-wrap:pretty">La conversation est organisée verticalement autour de l'avatar : demande au-dessus (petite, sobre), réponse en dessous (grande, serif). L'historique vit dans un tiroir secondaire. À terme, le texte suit la voix mot à mot.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px">
+        <div style="background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.008));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:26px;display:flex;flex-direction:column;gap:22px;align-items:center;text-align:center">
+          <div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:rgba(206,244,248,.72)">RequestEcho</span><span style="font-size:15px;color:rgba(230,238,240,.76)">Qu'est-ce que je dois faire aujourd'hui ?</span></div>
+          <div style="display:flex;align-items:flex-end;gap:3px;height:22px">{{ bars }}</div>
+          <div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:rgba(206,244,248,.72)">SpokenResponse</span><span style="font-family:'Instrument Serif',serif;font-size:22px;line-height:1.42;color:#F1F8F9">Trois choses comptent aujourd'hui<span style="display:inline-block;width:2px;height:1em;margin-left:4px;vertical-align:-.12em;background:#CEF4F8;box-shadow:0 0 10px rgba(206,244,248,.9);animation:ds-caret 1.1s steps(1,end) infinite"></span></span></div>
+        </div>
+        <div style="background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.008));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:26px;display:flex;flex-direction:column;gap:18px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6)">SourceChips · Processing</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;padding:7px 12px;border-radius:999px;background:rgba(206,244,248,.1);border:1px solid rgba(206,244,248,.34);color:#EAFBFD">Agenda</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;padding:7px 12px;border-radius:999px;background:rgba(206,244,248,.1);border:1px solid rgba(206,244,248,.34);color:#EAFBFD">Projets</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);color:rgba(230,238,240,.56)">CV v4</span>
+          </div>
+          <div style="font-size:12.5px;line-height:1.6;color:rgba(230,238,240,.62)">Les sources s'allument une à une (320ms) : l'utilisateur voit ce que Mímir consulte.</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6);padding-top:8px">SuccessPill</div>
+          <div style="display:inline-flex;align-self:flex-start;align-items:center;gap:12px;background:rgba(206,244,248,.06);border:1px solid rgba(206,244,248,.22);border-radius:999px;padding:11px 18px 11px 16px">
+            <span style="width:6px;height:6px;border-radius:50%;background:#CEF4F8;box-shadow:0 0 12px #CEF4F8"></span><span style="font-size:13.5px;color:rgba(230,238,240,.88)">Ton CV a été analysé.</span><span style="font-size:13px;color:#CEF4F8;text-decoration:underline;text-underline-offset:3px">Ouvrir</span>
+          </div>
+        </div>
+        <div style="background:linear-gradient(180deg,rgba(10,14,18,.92),rgba(6,9,12,.94));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:16px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6)">ThreadDrawer · historique</div>
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.56);margin-bottom:6px">Vous</div><div style="font-size:13.5px;line-height:1.6;color:rgba(230,238,240,.72)">Où en suis-je sur Atlas ?</div></div>
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(206,244,248,.72);margin-bottom:6px">Mímir</div><div style="font-size:13.5px;line-height:1.6;color:rgba(235,246,247,.9)">Le projet avance à 62 %. Deux objectifs dépendent de la même personne.</div></div>
+          <div style="font-size:12.5px;line-height:1.6;color:rgba(230,238,240,.62)">Ouvert à la demande, 330px, ne recouvre jamais le visage de l'avatar.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="feedback" style="display:flex;flex-direction:column;gap:30px">
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(206,244,248,.72)">11 · Feedback, loaders, notifications, modales</div>
+        <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(30px,3.4vw,42px);line-height:1.1;color:#EFF6F7">Mímir signale, il ne crie pas</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:18px">
+        <div style="background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:20px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6)">Loaders</div>
+          <div style="display:flex;align-items:center;gap:26px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:10px"><div style="display:flex;align-items:flex-end;gap:3px;height:22px">{{ barsSmall }}</div><code style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(230,238,240,.62)">VoiceBars</code></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:10px"><div style="width:28px;height:28px;border-radius:50%;border:1px solid rgba(206,244,248,.14);border-top-color:#CEF4F8;animation:ds-spin 1.2s linear infinite"></div><code style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(230,238,240,.62)">Arc</code></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:10px"><div style="width:120px;height:10px;border-radius:5px;background:rgba(255,255,255,.06);animation:ds-pulse 1.8s ease-in-out infinite"></div><code style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(230,238,240,.62)">Skeleton</code></div>
+          </div>
+          <div style="font-size:12.5px;line-height:1.6;color:rgba(230,238,240,.62)">Pendant une demande, le loader principal est l'avatar lui-même (Thinking / Processing). Les loaders locaux servent au Workspace.</div>
+        </div>
+        <div style="background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:14px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6)">Notification · Toast</div>
+          <div style="display:flex;gap:14px;align-items:flex-start;background:rgba(12,18,22,.9);border:1px solid rgba(206,244,248,.18);border-radius:14px;padding:14px 16px;box-shadow:0 18px 50px rgba(0,0,0,.45)">
+            <span style="flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 45% 40%, rgba(206,244,248,.6), rgba(206,244,248,.08) 70%);border:1px solid rgba(206,244,248,.3)"></span>
+            <div style="min-width:0"><div style="font-size:13.5px;color:#EFF6F7">Deux offres correspondent à vos critères</div><div style="margin-top:4px;font-size:12px;color:rgba(230,238,240,.62)">Job Watch · il y a 2 min</div></div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start;background:rgba(12,18,22,.9);border:1px solid rgba(232,199,154,.26);border-radius:14px;padding:14px 16px">
+            <span style="flex:0 0 auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:rgba(236,210,170,.95)">!</span>
+            <div style="min-width:0"><div style="font-size:13.5px;color:#EFF6F7">Gmail n'est plus synchronisé</div><div style="margin-top:4px;font-size:12px;color:rgba(230,238,240,.62)">Reconnecter depuis Intégrations</div></div>
+          </div>
+          <div style="font-size:12.5px;line-height:1.6;color:rgba(230,238,240,.62)">Émise par la présence mini de Mímir. Bas-droite desktop, haut mobile. Disparaît après 6 s, sauf erreur.</div>
+        </div>
+        <div style="background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:14px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,238,240,.6)">Modal · confirmation</div>
+          <div style="background:rgba(10,14,18,.96);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:12px">
+            <div style="font-family:'Instrument Serif',serif;font-size:21px;color:#EFF6F7">Oublier cet élément ?</div>
+            <div style="font-size:13px;line-height:1.55;color:rgba(230,238,240,.7)">Mímir ne l'utilisera plus dans ses réponses.</div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:4px">
+              <span style="font-size:13px;padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.1);color:rgba(230,238,240,.8)">Annuler</span>
+              <span style="font-size:13px;padding:10px 16px;border-radius:999px;border:1px solid rgba(232,176,152,.36);color:rgba(236,196,176,.95)">Oublier</span>
+            </div>
+          </div>
+          <div style="font-size:12.5px;line-height:1.6;color:rgba(230,238,240,.62)">Fond voilé 60 % + flou 8px. Focus piégé, Échap ferme, focus rendu au déclencheur.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="a11y" style="display:flex;flex-direction:column;gap:22px">
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:760px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(206,244,248,.72)">12 · Accessibilité</div>
+        <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(30px,3.4vw,42px);line-height:1.1;color:#EFF6F7">Règles non négociables</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:0 32px;border-top:1px solid rgba(255,255,255,.08)">
+        <sc-for list="{{ a11y }}" as="r" hint-placeholder-count="6">
+          <div style="padding:16px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13.5px;line-height:1.6;color:rgba(230,238,240,.78)">{{ r }}</div>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const L = 'rgba(206,244,248,';
+const MONO = "'JetBrains Mono',monospace";
+const STATES = [
+  { id:'idle', label:'Idle', code:"state='idle'", meaning:'Mímir est présent, disponible, sans interaction en cours.',
+    cues:'Halo faible centré sur le visage, respiration lente 8 s, regard atténué, 8 particules.',
+    future:'Micro-mouvements de tête, clignements espacés, regard doux vers l\u2019utilisateur.',
+    trigger:'Par défaut. Retour automatique 2,8 s après Success.' },
+  { id:'listening', label:'Listening', code:"state='listening'", meaning:'L\u2019utilisateur parle ou vient d\u2019envoyer sa demande.',
+    cues:'Contour du portrait qui s\u2019éclaire, ligne de regard nette et centrée, deux ondes entrantes, barres vocales actives.',
+    future:'Regard fixé sur l\u2019utilisateur, léger hochement, les barres suivent le micro (amplitude = niveau d\u2019entrée).',
+    trigger:'Push-to-talk enfoncé, ou envoi d\u2019un message texte (1 s).' },
+  { id:'thinking', label:'Thinking', code:"state='thinking'", meaning:'Mímir analyse la demande, sans encore toucher aux données.',
+    cues:'Le halo remonte au-dessus de la tête, arcs qui tournent vite, regard qui monte et balaie latéralement.',
+    future:'Regard qui se détourne vers le haut, expression concentrée, respiration plus courte.',
+    trigger:'Fin de l\u2019écoute, jusqu\u2019au premier appel d\u2019outil.' },
+  { id:'processing', label:'Processing', code:"state='processing'", meaning:'Mímir consulte des documents, des outils ou des intégrations.',
+    cues:'Regard éteint, balayage vertical du portrait, 10 repères en rotation, sources qui s\u2019allument sous l\u2019avatar.',
+    future:'Yeux mi-clos ou regard vers les sources, lumière qui parcourt le visage.',
+    trigger:'Chaque appel d\u2019outil (tool_use Claude). Les sources viennent de la réponse API.' },
+  { id:'responding', label:'Responding', code:"state='responding'", meaning:'Mímir parle. Voix, avatar et texte sont synchronisés.',
+    cues:'Lumière qui se réchauffe, lueur de bouche pilotée par amplitude, texte révélé mot à mot, barres vocales.',
+    future:'Lip-sync complet sur visèmes, expressions liées au contenu, regard revenu vers l\u2019utilisateur.',
+    trigger:'Premier token de la réponse en streaming.' },
+  { id:'success', label:'Success', code:"state='success'", meaning:'Une action vient d\u2019être terminée.',
+    cues:'Flash unique du contour (1,6 s), trois ondes sortantes, pastille de confirmation sous la réponse.',
+    future:'Léger sourire, hochement, retour au calme.',
+    trigger:'Fin d\u2019une action avec résultat (document analysé, résumé prêt).' }
+];
+
+class Component extends DCLogic {
+  state = { pg:'responding', amp:.6, intensity:1 };
+  renderVals() {
+    const h = React.createElement;
+    const s = this.state;
+    const mkBars = (n, hgt) => {
+      const els = [];
+      for (let i = 0; i < n; i++) els.push(h('div', { key:i, style:{ width:'2px', height:(4 + Math.abs(Math.sin(i * 1.7)) * hgt) + 'px', borderRadius:'2px', background:'#CEF4F8', opacity:.75, transformOrigin:'bottom center', animation:`ds-bar ${(.6 + (i % 6) * .11).toFixed(2)}s ease-in-out ${(i * .045).toFixed(2)}s infinite` } }));
+      return els;
+    };
+    const cur = STATES.find((x) => x.id === s.pg);
+    return {
+      toc: [['#avatar','Avatar'],['#etats','États'],['#motion','Motion'],['#couleurs','Couleurs'],['#typo','Typographie'],['#surfaces','Surfaces'],['#composants','Contrôles'],['#navigation','Navigation'],['#cards','Cards'],['#conversation','Conversation'],['#feedback','Feedback'],['#a11y','Accessibilité']].map(([href, label]) => ({ href, label })),
+      pgState: s.pg, pgAmp: s.amp, pgIntensity: s.intensity,
+      pgLabel: cur.label, pgAmpLabel: s.amp.toFixed(2), pgIntLabel: s.intensity.toFixed(1),
+      onAmp: (e) => this.setState({ amp: parseFloat(e.target.value) }),
+      onInt: (e) => this.setState({ intensity: parseFloat(e.target.value) }),
+      pgStates: STATES.map((x) => ({ label:x.label, set: () => this.setState({ pg:x.id }),
+        style:`cursor:pointer;font-family:${MONO};font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:9px 13px;border-radius:999px;transition:all .3s ease;` + (s.pg === x.id ? `background:${L}.13);border:1px solid ${L}.42);color:#EAFBFD` : 'background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);color:rgba(230,238,240,.66)') })),
+      props: [
+        { name:'state', type:"'idle' | 'listening' | 'thinking' | 'processing' | 'responding' | 'success'", now:'Sélectionne la configuration de lumière, regard et mouvement. Changement toujours interpolé (voir Motion).', later:'Piloté par la machine d\u2019état de conversation (micro, stream Claude, tool_use). Devient le paramètre d\u2019animation principal du rig de l\u2019avatar.' },
+        { name:'amplitude', type:'number 0–1 · optionnel', now:'Largeur de la lueur de bouche en Responding. Absent = oscillation automatique.', later:'Niveau RMS de la voix TTS (Listening : niveau micro), lissé à ~60 fps. Pilote l\u2019ouverture de la bouche puis les visèmes du lip-sync.' },
+        { name:'intensity', type:'number 0–1.6 · défaut 1', now:'Multiplie l\u2019opacité de tous les effets lumineux. 0 = portrait seul.', later:'Réglage utilisateur (animations réduites → 0.4), et atténuation en Workspace ou en économie d\u2019énergie.' },
+        { name:'showSlot', type:'boolean', now:'Affiche le cadre qui accepte un render. Sinon, silhouette lumineuse seule.', later:'Remplacé par media : { kind: \'image\' | \'video\' | \'rig\', src }. Le reste du composant ne change pas.' },
+        { name:'slotId', type:'string', now:'Identifiant de persistance du render placeholder (partagé sur tous les écrans).', later:'Id de l\u2019avatar choisi par l\u2019utilisateur (plusieurs apparences possibles).' },
+        { name:'showHint', type:'boolean', now:'Affiche « Déposer un render » quand le cadre est vide.', later:'Retiré en production.' }
+      ],
+      layers: [
+        { n:'1', name:'Back', body:'Halo radial (position verticale variable selon l\u2019état) et deux anneaux fixes. Donne la profondeur.' },
+        { n:'2', name:'Frame', body:'Cadre portrait 4:5 en arche. Contient le média (placeholder aujourd\u2019hui, vidéo ou rig demain). Contour lumineux = rim.' },
+        { n:'3', name:'Front', body:'Ligne de regard, lueur de bouche, balayage Processing, fondu bas. Couches à mapper sur le visage animé.' },
+        { n:'4', name:'Outer', body:'Arcs, repères, ondes, particules. Purement liés à l\u2019état, indépendants du média.' }
+      ],
+      states: STATES,
+      sizes: [
+        { name:'Stage', size:'150–480px h', use:'Écran Assistant. Remplit la hauteur libre, ne rétrécit jamais sous 150px.' },
+        { name:'Hero', size:'400px l', use:'Landing. Cycle automatique Idle → Listening → Thinking → Responding.' },
+        { name:'Companion', size:'290px l', use:'Onboarding. L\u2019état suit l\u2019étape (écoute, réflexion…).' },
+        { name:'Presence', size:'28–44px', use:'Workspace, barre mobile, toasts. Disque de lumière seul, même couleur d\u2019état.' }
+      ],
+      durations: [
+        { token:'--dur-instant', value:'150 ms', use:'Hover, focus' },
+        { token:'--dur-quick', value:'300 ms', use:'Chips, toggles, onglets' },
+        { token:'--dur-base', value:'500 ms', use:'Apparition d\u2019éléments, changement d\u2019état' },
+        { token:'--dur-slow', value:'900 ms', use:'Taille de l\u2019avatar, changement de mode' },
+        { token:'--dur-ambient', value:'3–8 s', use:'Boucles de respiration, dépend de l\u2019état' }
+      ],
+      transitions: [
+        { from:'Idle → Listening', timing:'400 ms · ease-presence', what:'Le contour s\u2019éclaire, la respiration accélère (8 s → 3,4 s), le regard devient net. Deux ondes entrent.', ui:'Barres vocales apparaissent. Le greeting s\u2019efface ; la demande s\u2019inscrit au-dessus de l\u2019avatar.' },
+        { from:'Listening → Thinking', timing:'600 ms', what:'Le halo remonte au-dessus de la tête (36 % → 22 %), le regard monte et balaie. Les arcs accélèrent.', ui:'Barres vocales s\u2019éteignent. Libellé « Réflexion ».' },
+        { from:'Thinking → Processing', timing:'500 ms', what:'Arcs remplacés par des repères, regard éteint, balayage vertical du portrait.', ui:'Les sources s\u2019allument une par une (+320 ms chacune).' },
+        { from:'Processing → Responding', timing:'700 ms', what:'La lumière se réchauffe, le halo descend vers la bouche, la bouche suit amplitude.', ui:'Sources masquées, texte révélé mot à mot (55 ms/mot, calé sur la voix à terme).' },
+        { from:'Responding → Success', timing:'600 ms · 1 fois', what:'Flash du contour 1,6 s, trois ondes sortantes.', ui:'SuccessPill apparaît sous la réponse (rise 14px, 500 ms).' },
+        { from:'Success / Responding → Idle', timing:'2,8 s de maintien puis 1,2 s', what:'Retour à la respiration lente. Aucune coupure brutale.', ui:'La réponse reste lisible, le composer revient au premier plan, suggestions réaffichées.' },
+        { from:'Assistant → Workspace', timing:'900 ms', what:'L\u2019avatar se condense en Presence dans l\u2019en-tête (même lumière, même état).', ui:'Les modules montent de 14px en fondu, décalés de 60 ms. Retour : l\u2019inverse, la Presence se déploie.' }
+      ],
+      colors: [
+        { token:'--void', value:'#04060A', ratio:'fond', use:'Fond de toutes les vues', swatch:'height:72px;background:#04060A;border-bottom:1px solid rgba(255,255,255,.06)' },
+        { token:'--deep', value:'#16282F → 0', ratio:'fond', use:'Dégradé radial d\u2019ambiance derrière l\u2019avatar', swatch:'height:72px;background:radial-gradient(circle at 50% 30%, #16282F, #04060A 80%)' },
+        { token:'--ink-strong', value:'#EFF6F7', ratio:'≈ 18:1', use:'Titres, parole de Mímir', swatch:'height:72px;background:#EFF6F7' },
+        { token:'--ink', value:'#E6EEF0', ratio:'≈ 17:1', use:'Texte courant', swatch:'height:72px;background:#E6EEF0' },
+        { token:'--ink-2', value:'ink @ 66–72 %', ratio:'≈ 7:1', use:'Texte secondaire, descriptions', swatch:'height:72px;background:rgba(230,238,240,.68)' },
+        { token:'--ink-3', value:'ink @ 56–62 %', ratio:'≈ 5:1', use:'Métadonnées. Plancher : jamais en dessous de 55 %', swatch:'height:72px;background:rgba(230,238,240,.58)' },
+        { token:'--light', value:'#CEF4F8', ratio:'≈ 16:1', use:'Accent unique : lumière de Mímir, actif, focus', swatch:'height:72px;background:#CEF4F8;box-shadow:inset 0 0 40px rgba(255,255,255,.4)' },
+        { token:'--light-warm', value:'#EEF2E4', ratio:'≈ 17:1', use:'Réservé à Responding (voix)', swatch:'height:72px;background:#EEF2E4' },
+        { token:'--caution', value:'#E8C79A', ratio:'≈ 12:1', use:'Échéances, alertes douces (toujours + « ! »)', swatch:'height:72px;background:#E8C79A' },
+        { token:'--danger', value:'#ECC4B0', ratio:'≈ 12:1', use:'Actions destructives (effacer, oublier)', swatch:'height:72px;background:#ECC4B0' }
+      ],
+      type: [
+        { token:'display', spec:'Instrument Serif 400 · clamp(42–74) / 1.02', sample:'Une intelligence qui connaît votre contexte.', style:"font-family:'Instrument Serif',serif;font-size:clamp(34px,4.4vw,56px);line-height:1.04;color:#EFF6F7" },
+        { token:'title', spec:'Instrument Serif 400 · 30–44 / 1.08', sample:'My Day', style:"font-family:'Instrument Serif',serif;font-size:40px;line-height:1.08;color:#EFF6F7" },
+        { token:'voice', spec:'Instrument Serif 400 · 20–28 / 1.44', sample:'Trois choses comptent aujourd\u2019hui.', style:"font-family:'Instrument Serif',serif;font-size:26px;line-height:1.44;color:#F1F8F9" },
+        { token:'heading', spec:'Instrument Serif 400 · 21–23 / 1.22', sample:'Atlas', style:"font-family:'Instrument Serif',serif;font-size:22px;color:#EFF6F7" },
+        { token:'body-l', spec:'DM Sans 400 · 16.5 / 1.65', sample:'Mímir tient votre journée et vos projets.', style:'font-size:16.5px;line-height:1.65;color:rgba(230,238,240,.72)' },
+        { token:'body', spec:'DM Sans 400 · 14–15 / 1.6', sample:'Relire et envoyer le brief avant ce soir.', style:'font-size:14.5px;line-height:1.6;color:#E6EEF0' },
+        { token:'meta', spec:'DM Sans 400 · 12–12.5 / 1.5', sample:'Échéance ce soir · projet Halo', style:'font-size:12.5px;color:rgba(230,238,240,.62)' },
+        { token:'label', spec:'JetBrains Mono 400 · 9.5–10.5 · +.2em · CAPS', sample:'Lecture de Mímir', style:"font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:rgba(206,244,248,.72)" },
+        { token:'data', spec:'JetBrains Mono 400 · 11–22', sample:'14:00 · 92%', style:"font-family:'JetBrains Mono',monospace;font-size:18px;color:#CEF4F8" }
+      ],
+      surfaces: [
+        { name:'glass-1 · Panel', spec:'bg: linear(180°, ink/4.5 %, ink/1.2 %) · border: 1px ink/7 % · blur 18px', demo:'height:110px;display:flex;align-items:flex-end;padding:16px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border:1px solid rgba(255,255,255,.07);backdrop-filter:blur(18px)' },
+        { name:'glass-light · Insight', spec:'bg: linear(180°, light/5.5 %, ink/1.5 %) · border: 1px light/16 %', demo:'height:110px;display:flex;align-items:flex-end;padding:16px;border-radius:18px;background:linear-gradient(180deg,rgba(206,244,248,.055),rgba(255,255,255,.015));border:1px solid rgba(206,244,248,.16)' },
+        { name:'overlay · Drawer, Modal', spec:'bg: #0A0E12 @ 92–96 % · border: 1px ink/7–10 % · blur 26px · shadow-3', demo:'height:110px;display:flex;align-items:flex-end;padding:16px;border-radius:18px;background:rgba(10,14,18,.94);border:1px solid rgba(255,255,255,.1);box-shadow:0 30px 80px rgba(0,0,0,.6)' },
+        { name:'field · Input, Composer', spec:'bg: ink/4.5 % · border: 1px ink/9 % · focus: light/45 %', demo:'height:110px;display:flex;align-items:flex-end;padding:16px;border-radius:14px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09)' }
+      ],
+      radii: [
+        { token:'--r-xs', value:'5px', use:'Badges', demo:'height:56px;border-radius:5px;border:1px solid rgba(206,244,248,.3);background:rgba(206,244,248,.04)' },
+        { token:'--r-sm', value:'8px', use:'Tags document', demo:'height:56px;border-radius:8px;border:1px solid rgba(206,244,248,.3);background:rgba(206,244,248,.04)' },
+        { token:'--r-md', value:'14px', use:'Inputs, toasts, actions', demo:'height:56px;border-radius:14px;border:1px solid rgba(206,244,248,.3);background:rgba(206,244,248,.04)' },
+        { token:'--r-lg', value:'18px', use:'Panels, cards', demo:'height:56px;border-radius:18px;border:1px solid rgba(206,244,248,.3);background:rgba(206,244,248,.04)' },
+        { token:'--r-xl', value:'20–22px', use:'Insight, modales, barre mobile', demo:'height:56px;border-radius:22px;border:1px solid rgba(206,244,248,.3);background:rgba(206,244,248,.04)' },
+        { token:'--r-pill', value:'999px', use:'Boutons, chips, composer', demo:'height:56px;border-radius:999px;border:1px solid rgba(206,244,248,.3);background:rgba(206,244,248,.04)' }
+      ],
+      lights: [
+        { token:'--shadow-1', value:'0 18px 60px rgba(0,0,0,.35)', use:'Composer, éléments flottants' },
+        { token:'--shadow-avatar', value:'0 30px 80px rgba(0,0,0,.55) + rim', use:'Cadre MimirAvatar' },
+        { token:'--glow-light', value:'0 0 40px light/18 % → 56px/30 % hover', use:'Bouton primaire, micro actif' },
+        { token:'--halo', value:'radial(42% 36% at 50% Y%, light/α, 0 72%)', use:'Derrière l\u2019avatar. α et Y dépendent de l\u2019état (voir États).' },
+        { token:'--rim', value:'0 0 0 1px light/12–30 %', use:'Contour du portrait. Monte en Listening.' },
+        { token:'--dot-glow', value:'0 0 10px light/80 %', use:'Points de priorité, statut actif, trait de nav' }
+      ],
+      spacing: [4, 8, 12, 16, 22, 28, 44, 72, 96].map((v) => ({ label: v + '', demo:`width:${Math.min(v, 72)}px;height:${v}px;max-height:96px;background:rgba(206,244,248,.14);border:1px solid rgba(206,244,248,.3);border-radius:3px` })),
+      bars: mkBars(27, 16),
+      barsSmall: mkBars(12, 14),
+      a11y: [
+        'Contraste texte ≥ 4.5:1 : aucune encre sous 55 % d\u2019opacité sur --void.',
+        'Focus visible partout : contour 1px lumière à 75 %, décalé de 3px. Jamais supprimé.',
+        'Navigation clavier complète ; Entrée envoie, Espace maintenu = push-to-talk, Échap ferme tiroir et modale.',
+        'L\u2019état de Mímir est toujours écrit (libellé mono) et annoncé via aria-live, en plus de la lumière.',
+        'prefers-reduced-motion : boucles arrêtées, intensity 0.4, transitions en fondu simple 150 ms.',
+        'Cibles tactiles ≥ 44px sur mobile ; texte courant ≥ 14px, jamais de corps sous 9.5px (labels mono uniquement).',
+        'Statuts = signe + mot (● Actif, ! Échéance), jamais la couleur seule.',
+        'La réponse vocale est toujours doublée par le texte ; sous-titres complets dans le fil de l\u2019échange.'
+      ]
+    };
+  }
+}
+
+</script>
+</body>
+</html>
