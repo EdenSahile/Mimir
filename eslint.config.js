@@ -5,7 +5,7 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['**/dist/', '**/node_modules/', '**/*.config.*', 'design_handoff_mimir/', '_archive/'] },
+  { ignores: ['**/dist/', '**/node_modules/', '**/*.config.*', 'design_handoff_mimir/', '_archive/', '.claude/hooks/'] },
 
   js.configs.recommended,
   ...tseslint.configs.recommended,

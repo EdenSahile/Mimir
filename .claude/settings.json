@@ -1,5 +1,18 @@
 {
   "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/validate-route.js",
+            "timeout": 10,
+            "statusMessage": "Validation route..."
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
