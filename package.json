@@ -1,6 +1,7 @@
 {
   "name": "mimir",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "pnpm run --parallel dev:api dev:web",
     "dev:api": "pnpm --filter @mimir/api dev",
@@ -11,6 +12,15 @@
     "db:generate": "pnpm --filter @mimir/db generate",
     "db:push": "pnpm --filter @mimir/db push",
     "db:migrate": "pnpm --filter @mimir/db migrate",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.11.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.12.0",
+    "typescript-eslint": "^8.70.1"
   }
 }

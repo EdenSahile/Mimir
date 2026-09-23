@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/validate-route.js",
+            "timeout": 10,
+            "statusMessage": "Validation route..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lint.sh",
+            "timeout": 120,
+            "statusMessage": "pnpm lint..."
+          }
+        ]
+      }
+    ]
+  }
+}
