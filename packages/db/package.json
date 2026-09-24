@@ -2,6 +2,8 @@
   "name": "@mimir/db",
   "version": "0.0.1",
   "private": true,
+  "main": "index.ts",
+  "types": "index.ts",
   "scripts": {
     "generate": "prisma generate",
     "push": "prisma db push",
