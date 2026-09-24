@@ -1,6 +1,6 @@
 ---
 name: open-pr
-description: Amène le travail terminé jusqu'à la Pull Request, sans merger. Passe un verrou de qualité bloquant (lint + typecheck + test), pousse la branche, ouvre la PR vers dev, et s'arrête là. Ne déplace aucun ticket et ne merge jamais. Utiliser quand l'utilisateur dit "ouvre la PR", "open pr", "envoie en review", "c'est fini, on pousse", "pousse", "push".
+description: Amene le travail termine jusqu'a la Pull Request, sans merger. Lance une code review, passe un verrou de qualite bloquant (lint + typecheck + test), pousse la branche, ouvre la PR vers dev. Utiliser quand l'utilisateur dit "ouvre la PR", "open pr", "envoie en review", "c'est fini, on pousse", "pousse", "push".
 ---
 
 ## Entrée
@@ -17,10 +17,11 @@ Le skill s'arrête là. Il ne merge pas, et **ne touche pas au ticket Notion** :
 
 ## Étapes
 
-1. **Vérifier le point de départ.** `git status` et branche courante. S'il reste des changements non commités, le signaler et demander — ne pas commiter à la place de l'utilisateur.
-2. **Passer le verrou.** `pnpm lint`, puis `pnpm typecheck`, puis `pnpm test`.
-3. **Pousser.** `git push -u origin <branche>`.
-4. **Ouvrir la PR.** `gh pr create --base dev --head <branche>`, titre clair et corps dérivé des commits de la branche. Afficher l'URL.
+1. **Vérifier le point de départ.** `git status` et branche courante. S'il reste des changements non commités, le signaler et demander, ne pas commiter à la place de l'utilisateur.
+2. **Code review.** Lancer `/code-review` sur le diff de la branche courante face à `dev`. Si la review remonte des défauts ⛔ (bloquants), s'arrêter et les présenter à l'utilisateur. Les défauts ⚠️ et 💡 sont signalés mais ne bloquent pas.
+3. **Passer le verrou.** `pnpm lint`, puis `pnpm typecheck`, puis `pnpm test`.
+4. **Pousser.** `git push -u origin <branche>`.
+5. **Ouvrir la PR.** `gh pr create --base dev --head <branche>`, titre clair et corps dérivé des commits de la branche. Afficher l'URL.
 
 ## Règles
 
