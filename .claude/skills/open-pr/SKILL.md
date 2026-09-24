@@ -11,7 +11,7 @@ description: Amene le travail termine jusqu'a la Pull Request, sans merger. Lanc
 
 - L'**URL de la PR** ouverte vers `dev`.
 
-Le skill s'arrête là. Il ne merge pas, et **ne touche pas au ticket Notion** : tant que rien n'est mergé ni déployé, il n'y a rien à tester — le ticket reste où il est et n'ira en `TESTING` qu'après le merge et le déploiement.
+Le skill s'arrête là. Il ne merge pas, et **ne touche pas au ticket Notion** : le ticket reste en `DOING` et ne passera en `TO TEST` qu'après le merge (via `merge-pr`). La validation fonctionnelle finale (tests manuels, smoke, visuel, responsive, accessibilité) a lieu en `TO TEST`, après le merge. Les tests automatisés, eux, sont un **quality gate avant la PR** : ils doivent passer en vert pour que la PR s'ouvre.
 
 ---
 
