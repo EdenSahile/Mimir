@@ -48,4 +48,5 @@ jobs:
           prompt: |
             Review the pull request thoroughly.
             Use gh pr view and gh pr diff to inspect the PR.
-            If there are actionable issues, submit them with gh pr review.
+            If there are blocking issues, submit them with gh pr review --request-changes.
+            If everything looks good or only minor issues, approve with gh pr review --approve.
