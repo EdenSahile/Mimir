@@ -1,50 +1,51 @@
 ---
 name: write-tests
-description: Orchestre la planification et l'ecriture des tests avant le code de production. Utiliser quand l'utilisateur dit "write-tests", "ecris les tests", "on commence les tests", "TDD".
+description: Ecrit tous les tests d'un ticket AVANT l'implementation, en lisant l'inventaire produit par test-planner et en lancant unit-test-writer. Exige l'inventaire, ne le produit pas. Utiliser quand l'utilisateur dit "write-tests", "ecris les tests", "on commence les tests", "TDD".
 ---
 
 ## Entree
 
-- Un **ticket en DOING** avec ses criteres d'acceptation (deja affiches par `start-ticket` ou lisibles dans Notion).
+- L'**inventaire des tests** du ticket : `testing/strategie-MIM-X.md`, produit en amont par `test-planner`. C'est lui qui decide quels tests ecrire.
 
 ## Sortie
 
-- La **strategie de test** validee par l'utilisateur.
 - Les **fichiers de test** ecrits et commites.
 - La **confirmation que les tests detectent l'absence du comportement** (red).
 
 ---
 
+## Regles
+
+- **Pas d'inventaire, pas de tests.** Si `testing/strategie-MIM-X.md` n'existe pas, s'arreter et demander a lancer `test-planner` d'abord. Ne jamais classer les criteres soi-meme pour enchainer.
+- **Un seul lancement de `unit-test-writer`**, pas un par critere. L'agent recoit toute la strategie d'un coup.
+- **Ne rien ecrire soi-meme**, meme « juste un petit test » : tout passe par l'agent, c'est ce qui garantit l'application de ses conventions.
+- **Les tests sont ecrits AVANT le code de production.** Jamais de code de prod avant ce skill.
+- **Les smoke tests 🔴 ne produisent pas de fichier de test.** Ils sont decrits dans l'inventaire et verifies en TO TEST.
+
 ## Etapes
 
-### 1. Recuperer les criteres d'acceptation
+### 1. Verifier l'inventaire
 
-Si les criteres ne sont pas deja dans le contexte de la conversation (affiches par `start-ticket`), les lire depuis la carte Notion du ticket courant.
+Chercher `testing/strategie-MIM-X.md` (X = numero du ticket, extrait du nom de branche `MIM-\d+`).
 
-Extraire le numero du ticket depuis le nom de branche (`MIM-\d+`).
+S'il n'existe pas : **stop**, dire de lancer `test-planner` d'abord.
 
-### 2. Appeler le test-planner
+### 2. Lire l'inventaire
 
-Dispatcher l'agent `test-planner` avec les criteres d'acceptation.
+Ouvrir le fichier et identifier :
+- Les criteres 🟢 (test auto complet).
+- La part auto des criteres 🟠.
+- Les criteres 🔴 (hors perimetre de ce skill).
 
-Le test-planner produit le tableau de strategie : classification 🟢/🟠/🔴 de chaque critere, avec le niveau de test, le fichier cible, et les verifications manuelles.
+### 3. Lancer unit-test-writer
 
-### 3. Presenter la strategie a l'utilisateur
-
-Afficher le tableau de strategie et demander validation. L'utilisateur peut :
-- Valider tel quel.
-- Demander de reclasser un critere (ex. passer un 🟢 en 🟠).
-- Ajouter ou retirer un critere.
-
-**Ne pas ecrire de tests avant la validation.**
-
-### 4. Ecrire les tests
-
-Dispatcher l'agent `unit-test-writer` avec la strategie validee (criteres 🟢 et partie auto des 🟠).
+Dispatcher l'agent `unit-test-writer` avec :
+- La strategie validee (criteres 🟢 et part auto des 🟠).
+- Les criteres d'acceptation du ticket pour le contexte.
 
 Le writer produit les fichiers `.test.ts` / `.test.tsx`.
 
-### 5. Verifier le red
+### 4. Verifier le red
 
 Executer `pnpm test` dans le workspace concerne.
 
@@ -52,7 +53,7 @@ Executer `pnpm test` dans le workspace concerne.
 - Si les tests compilent et echouent, c'est le cas classique : red confirme.
 - Si un test passe sans implementation, il y a un probleme : le test ne verifie rien d'utile. Le corriger.
 
-### 6. Commiter
+### 5. Commiter
 
 Commiter les fichiers de test avec le message :
 
@@ -68,15 +69,9 @@ Strategie de test :
 
 Le tableau de strategie dans le commit sera repris par `open-pr` dans le corps de la PR.
 
-## Regles
-
-- **Les tests sont ecrits AVANT le code de production.** C'est la regle fondamentale du TDD. Jamais de code de prod avant ce skill.
-- **La strategie est validee par l'utilisateur.** Ne jamais ecrire les tests sans validation prealable.
-- **Les smoke tests 🔴 ne produisent pas de fichier de test.** Ils sont decrits dans le tableau de strategie et verifies en TO TEST.
-
 ## Anti-patterns
 
 - Ecrire le code de production dans ce skill.
-- Ecrire les tests sans faire valider la strategie.
+- Lancer les tests sans inventaire prealable.
 - Creer des stubs vides du composant pour faire compiler les tests.
 - Ignorer les criteres d'accessibilite ou de responsive testables.
