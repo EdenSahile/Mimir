@@ -25,9 +25,20 @@ description: Merge la PR de la branche courante vers dev, puis passe le ticket N
 
 La rule `rules/git.md` interdit tout merge sans accord explicite **pour cette PR précise**.
 
-- **L'invocation de ce skill PAR L'UTILISATEUR vaut accord ponctuel pour CE merge-là, et lui seul.**
-- Ne jamais déclencher ce skill de toi-même, ni l'enchaîner sur plusieurs PR.
-- Au moindre doute sur le fait que l'utilisateur veut merger maintenant : demander avant.
+L'utilisateur doit explicitement demander le merge dans son message. Les formulations suivantes valent invocation explicite de ce skill et accord ponctuel pour **la PR de la branche courante uniquement** :
+
+- `merge-pr`
+- `merge la PR`
+- `merge cette PR`
+- `on merge`
+
+Règles impératives :
+
+- L'invocation explicite du skill par l'utilisateur vaut accord ponctuel pour **CE merge-là, et lui seul**.
+- Ne jamais déclencher ce skill de toi-même.
+- Ne jamais enchaîner automatiquement sur une autre PR.
+- Une simple mention ou discussion autour d'un merge ne vaut pas autorisation.
+- Au moindre doute sur le fait que l'utilisateur veut réellement merger maintenant, demander confirmation avant d'exécuter le merge.
 
 ## Étapes
 
