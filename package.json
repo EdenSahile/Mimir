@@ -13,7 +13,8 @@
     "db:push": "pnpm --filter @mimir/db push",
     "db:migrate": "pnpm --filter @mimir/db migrate",
     "typecheck": "pnpm -r typecheck",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "pnpm -r test"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
