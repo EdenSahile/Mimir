@@ -25,45 +25,43 @@ Le dossier `testing/` est cree s'il n'existe pas.
 
 ### Tableau de strategie
 
-Un seul tableau, une ligne par critere, dans l'ordre du ticket :
+Un seul tableau, une ligne par critere, dans l'ordre du ticket. 3 colonnes : Critere, Type, Fait.
 
 ```markdown
 ## Strategie de test — MIM-X (Titre du ticket)
 
-| Critere | Ce qu'on verifie | Testable auto ? | Pourquoi | Comment |
-|---|---|---|---|---|
-| Description du critere | Ce qu'on regarde concretement | 🟢 | Le comportement est dans le DOM / en logique pure | Unitaire test-first |
-| Description du critere | Ce qu'on regarde concretement | 🟠 | La structure est testable en auto, le rendu visuel non | Auto (classes) + smoke manuel |
-| Description du critere | Ce qu'on regarde concretement | 🔴 | Purement visuel, pas de signal testable dans le DOM | Smoke manuel |
+| Critere | Type | Fait |
+|---|---|---|
+| Description du critere | 🟢 | ✅ |
+| Description du critere | 🟠 | ✅ Auto · ⬜ Smoke |
+| Description du critere | 🔴 | ⬜ Smoke |
 ```
 
-**Ce qu'on verifie** : ce qu'on regarde concretement pour dire que le critere est rempli. Pas le critere reformule, mais le mecanisme.
+**Type** : 🟢, 🟠 ou 🔴.
 
-**Testable auto ?** : 🟢, 🟠 ou 🔴.
+**Fait** : reflete l'etat apres implementation.
+- 🟢 → `✅` (les tests auto sont toujours faits par Claude).
+- 🟠 → `✅ Auto · ⬜ Smoke` (la part auto est faite, la part manuelle reste a faire par l'utilisateur).
+- 🔴 → `⬜ Smoke` (entierement a faire par l'utilisateur).
 
-**Pourquoi** : pourquoi ce verdict. Pour un 🟠, nommer les 2 tranches (auto et manuelle). Pour un 🔴, dire pourquoi aucun test auto ne couvre.
+A la creation par le test-planner (avant implementation), toutes les cases sont `⬜`. Claude les passe en `✅` quand les tests auto sont ecrits et verts.
 
-**Comment** : comment on verifie. Pour un 🟢, le type de test (unitaire, composant). Pour un 🟠, les 2 moyens. Pour un 🔴, "smoke manuel".
+### Section finale
 
-### Recap
-
-Apres le tableau, un recap en 3 sections :
+Le fichier se termine toujours par :
 
 ```markdown
-## Recap
+## A verifier manuellement
 
-### Automatise (test-writer)
+N scenarios dans [`testing/smokes-MIM-X.md`](smokes-MIM-X.md).
+```
 
-- Critere 1 : description courte
-- Critere 2 : description courte
+Si le ticket n'a que des 🟢 :
 
-### Automatise + smoke manuel
+```markdown
+## A verifier manuellement
 
-- Critere 3 : auto sur X + smoke sur Y
-
-### Smoke manuel
-
-- Critere 4 : description courte
+Rien, tous les criteres sont couverts en auto.
 ```
 
 ## Format des smokes
