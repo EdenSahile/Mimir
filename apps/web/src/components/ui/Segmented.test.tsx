@@ -52,6 +52,17 @@ describe('Segmented', () => {
     expect(onChange).toHaveBeenCalledWith('Workspace')
   })
 
+  it('has min-height of 44px (touch target)', () => {
+    render(
+      <Segmented options={['Assistant', 'Workspace']} value="Assistant" onChange={vi.fn()} />,
+    )
+
+    const radios = screen.getAllByRole('radio')
+    radios.forEach((radio) => {
+      expect(radio.className).toMatch(/min-h-11|min-h-\[44px\]/)
+    })
+  })
+
   it('applies different classes for active and inactive options', () => {
     render(
       <Segmented options={['Assistant', 'Workspace']} value="Assistant" onChange={vi.fn()} />,
