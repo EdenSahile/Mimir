@@ -20,7 +20,7 @@ description: Ecrit tous les tests d'un ticket AVANT l'implementation, en lisant 
 - **Un seul lancement de `test-writer`**, pas un par critere. L'agent recoit toute la strategie d'un coup.
 - **Ne rien ecrire soi-meme**, meme « juste un petit test » : tout passe par l'agent, c'est ce qui garantit l'application de ses conventions.
 - **Les tests sont ecrits AVANT le code de production.** Jamais de code de prod avant ce skill.
-- **Les smoke tests 🔴 ne produisent pas de fichier de test.** Ils sont decrits dans l'inventaire et verifies en TO TEST.
+- **Les smoke tests 🔴 ne produisent pas de fichier de test.** Ils sont dans `testing/smokes-MIM-X.md` (produit par `test-planner`) et verifies en TO TEST.
 
 ## Etapes
 

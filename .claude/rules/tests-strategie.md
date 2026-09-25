@@ -1,42 +1,53 @@
 # Tests : strategie de classification
 
-Chaque critere d'acceptation d'un ticket est classe dans une des 3 categories suivantes par le `test-planner`.
+Chaque critere d'acceptation d'un ticket est classe par le `test-planner` en repondant a une seule question : **ce qu'on verifie est-il testable en unitaire / composant ?**
 
-## 🟢 Test automatise
+La reponse determine le verdict, et le verdict determine ce qui est produit.
 
-Le comportement est verifiable dans le DOM ou en logique pure. Exemples :
+## La question de tri
 
-- Presence d'un element dans le DOM
-- Interaction avec un bouton ou un formulaire
-- Navigation entre routes
-- Changement d'etat
-- Affichage conditionnel
-- Validation de donnees
-- Logique metier pure
+Pour chaque critere, se demander : **qu'est-ce que je verifie exactement ?**
+
+- **Du code a nous** (une transformation, un calcul, une decision, une validation, un comportement DOM, un changement d'etat, une interaction) → on le teste en auto.
+- **Un rendu purement visuel** (couleur exacte, fluidite d'une animation, alignement pixel, ressenti d'une transition) → on le verifie a l'oeil, pas en auto.
+
+Presence d'UI ≠ non-testable. Un composant React qui rend un bouton avec un role, une classe, un etat : c'est testable. La couleur exacte de ce bouton a l'ecran : c'est visuel.
+
+## Les 3 verdicts
+
+### 🟢 Test automatise
+
+Ce qu'on verifie est entierement testable en auto. Le test couvre le critere a 100%.
+
+Exemples : presence d'un element dans le DOM, interaction avec un bouton, changement d'etat, affichage conditionnel, validation de donnees, logique metier pure, roles et attributs ARIA.
 
 Outils : Vitest + Testing Library (composant), Vitest seul (logique pure).
 
-## 🟠 Test automatise + verification manuelle
+### 🟠 Automatise + verification manuelle
 
-Le comportement a une partie verifiable en auto et une partie qui necessite un oeil humain. Exemples :
+Ce qu'on verifie a 2 tranches distinctes : une testable en auto, une qui necessite un oeil humain. Les 2 tranches doivent etre nommees explicitement dans la strategie.
 
-- Grille CSS avec espacement precis : tester la presence du pattern en auto, verifier visuellement l'alignement
-- Animation avec parametres : tester les classes/styles appliques en auto, verifier visuellement le rendu
+Le test auto couvre la tranche structurelle. Un smoke test est produit pour la tranche visuelle.
 
-Le test automatise couvre la structure, la verification manuelle couvre le rendu.
+Exemples : un bouton avec un glow (auto : la classe de shadow est presente ; manuel : le glow a la bonne couleur et intensite). Une animation (auto : la classe de transition est appliquee ; manuel : la transition est fluide a l'ecran).
 
-## 🔴 Smoke test manuel
+### 🔴 Smoke test manuel
 
-Le comportement est purement visuel ou perceptuel et ne se verifie pas de facon fiable en auto. Exemples :
+Ce qu'on verifie est purement visuel ou perceptuel. Aucun test auto ne couvre le critere.
 
-- Absence de flash blanc au chargement
-- Fluidite d'une animation
-- Ressenti d'une transition
-- Coherence visuelle d'ensemble
-- Rendu typographique
+Exemples : absence de flash blanc au chargement, fluidite d'une animation, coherence visuelle d'ensemble, rendu typographique.
 
-Le smoke test decrit : quoi faire, quoi observer, resultat attendu.
+Un smoke test est produit avec les etapes concretes.
 
 ## Regle de decision
 
 Par defaut, un critere est 🟢. Il passe en 🟠 ou 🔴 uniquement si une partie significative de la verification ne peut pas etre automatisee. Ne jamais considerer que « UI = pas de tests ».
+
+## Ce que le tri produit
+
+Le `test-planner` produit **2 fichiers** :
+
+1. **`testing/strategie-MIM-X.md`** : le tableau de tri avec le raisonnement (ce qu'on verifie, pourquoi c'est pas auto).
+2. **`testing/smokes-MIM-X.md`** : les scenarios de verification manuelle pour les criteres 🟠 (part manuelle) et 🔴. Chaque scenario decrit : preconditions, etapes, resultat attendu, checkbox.
+
+Si le ticket n'a que des 🟢, le fichier de smokes n'est pas produit.
