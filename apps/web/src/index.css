@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
 @import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap");
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 /* Mímir — design tokens [EXACT]. */
 :root {
@@ -86,6 +90,56 @@
   --dur-slow: 900ms;
   --ease-presence: cubic-bezier(.22, 1, .36, 1);
   --ease-breath: ease-in-out;
+
+  /* shadcn semantic tokens → Mímir (dark-only, pas de .dark class) */
+  --background: #04060A;
+  --foreground: #E6EEF0;
+  --card: rgba(255,255,255,.045);
+  --card-foreground: #E6EEF0;
+  --popover: rgba(10,14,18,.94);
+  --popover-foreground: #E6EEF0;
+  --primary: rgb(206, 244, 248);
+  --primary-foreground: #041014;
+  --secondary: rgba(255,255,255,.04);
+  --secondary-foreground: rgba(230,238,240,.82);
+  --muted: rgba(255,255,255,.04);
+  --muted-foreground: rgba(230,238,240,.58);
+  --accent: rgba(255,255,255,.04);
+  --accent-foreground: #E6EEF0;
+  --destructive: #ECC4B0;
+  --border: rgba(255,255,255,.07);
+  --input: rgba(255,255,255,.09);
+  --ring: rgba(206,244,248,.75);
+  --radius: 0.875rem;
+}
+
+@theme inline {
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-heading: 'Instrument Serif', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
 }
 
 @keyframes scintillate { 0%, 100% { opacity: .12 } 50% { opacity: .5 } }
@@ -144,4 +198,10 @@ body {
 
 h1, h2, h3, h4, h5, h6, p {
   text-wrap: pretty;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
 }
