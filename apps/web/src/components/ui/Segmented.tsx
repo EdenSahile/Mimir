@@ -1,5 +1,5 @@
 import * as React from "react"
-import { cn } from "cn"
+import { cn } from "@/lib/utils"
 
 function Segmented({
   className,
@@ -27,7 +27,7 @@ function Segmented({
           role="radio"
           aria-checked={option === value ? "true" : "false"}
           className={cn(
-            "cursor-pointer rounded-[var(--r-pill)] px-[18px] py-2 text-[13px] transition-all duration-[var(--dur-instant)] outline-none select-none",
+            "min-h-11 cursor-pointer rounded-[var(--r-pill)] px-[18px] py-2 text-[13px] transition-all duration-[var(--dur-instant)] outline-none select-none",
             option === value
               ? "bg-[rgba(206,244,248,.14)] text-[var(--light-hover)]"
               : "text-[var(--ink-3)] hover:text-[var(--ink-2)]"
