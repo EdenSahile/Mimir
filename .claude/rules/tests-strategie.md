@@ -47,7 +47,9 @@ Par defaut, un critere est 🟢. Il passe en 🟠 ou 🔴 uniquement si une part
 
 Le `test-planner` produit **2 fichiers** :
 
-1. **`testing/strategie-MIM-X.md`** : le tableau de tri avec le raisonnement (ce qu'on verifie, pourquoi c'est pas auto).
+1. **`testing/strategie-MIM-X.md`** : le tableau de suivi avec 3 colonnes : Critere, Type, Fait.
+   - **Fait** : `✅` pour les tests auto (toujours faits par Claude), `✅ Auto · ⬜ Smoke` pour les 🟠, `⬜ Smoke` pour les 🔴.
+   - Le fichier se termine par une section **A verifier manuellement** qui pointe vers le fichier smokes s'il existe. Si le ticket n'a que des 🟢, la section dit « Rien, tous les criteres sont couverts en auto. »
 2. **`testing/smokes-MIM-X.md`** : les scenarios de verification manuelle pour les criteres 🟠 (part manuelle) et 🔴. Chaque scenario decrit : preconditions, etapes, resultat attendu, checkbox.
 
 Si le ticket n'a que des 🟢, le fichier de smokes n'est pas produit.
