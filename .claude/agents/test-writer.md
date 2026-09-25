@@ -1,6 +1,6 @@
 ---
-name: unit-test-writer
-description: Ecrit les fichiers de test (Vitest + Testing Library) a partir de la strategie du test-planner
+name: test-writer
+description: Ecrit les fichiers de test unitaires et d'integration (Vitest + Testing Library) a partir de la strategie du test-planner
 ---
 
 ## Entree

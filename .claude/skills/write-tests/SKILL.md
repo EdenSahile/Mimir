@@ -37,9 +37,9 @@ Ouvrir le fichier et identifier :
 - La part auto des criteres 🟠.
 - Les criteres 🔴 (hors perimetre de ce skill).
 
-### 3. Lancer unit-test-writer
+### 3. Lancer test-writer
 
-Dispatcher l'agent `unit-test-writer` avec :
+Dispatcher l'agent `test-writer` avec :
 - La strategie validee (criteres 🟢 et part auto des 🟠).
 - Les criteres d'acceptation du ticket pour le contexte.
 
