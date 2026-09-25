@@ -11,6 +11,14 @@
 | Particules en angle d'or avec derive verticale | 🟠 | ⬜ Auto · ⬜ Smoke |
 | aria-hidden="true" sur l'avatar | 🟢 | ⬜ |
 | reduced-motion : intensity 0.4, boucles arretees, etat lisible par position/teinte/libelle | 🟠 | ⬜ Auto · ⬜ Smoke |
+| MimirPresence : disque radial avec gradient et bordure | 🟠 | ⬜ Auto · ⬜ Smoke |
+| MimirPresence : respiration 5s (idle) / 1.6s (actif) | 🟢 | ⬜ |
+| StateLabel : aria-live="polite" | 🟢 | ⬜ |
+| StateLabel : texte correct par etat (Present, A l'ecoute, etc.) | 🟢 | ⬜ |
+| StateLabel : point lumineux present | 🟠 | ⬜ Auto · ⬜ Smoke |
+| VoiceBars : 27 barres rendues | 🟢 | ⬜ |
+| VoiceBars : animation decalee de 45ms par barre | 🟢 | ⬜ |
+| VoiceBars : actives uniquement en Listening et Responding | 🟢 | ⬜ |
 
 ### Raisonnement par critere
 
@@ -40,6 +48,30 @@ Attribut DOM testable directement avec Testing Library. Aucune tranche manuelle.
 
 **reduced-motion : intensity 0.4, boucles arretees, etat lisible** -- 🟠
 Auto : simuler `prefers-reduced-motion: reduce` et verifier que l'intensity passe a 0.4, que les animations en boucle sont arretees (pas de classe d'animation ou `animation: none`). Manuel : les etats restent distinguables sans mouvement, par la position du halo, la teinte, et les elements statiques.
+
+**MimirPresence : disque radial avec gradient et bordure** -- 🟠
+Auto : verifier la presence du gradient radial et de la bordure dans les styles. Manuel : le disque lumineux a le bon rendu visuel.
+
+**MimirPresence : respiration 5s (idle) / 1.6s (actif)** -- 🟢
+Auto : verifier la duree d'animation par etat (5s idle, 1.6s pour les autres).
+
+**StateLabel : aria-live="polite"** -- 🟢
+Attribut DOM testable directement avec Testing Library.
+
+**StateLabel : texte correct par etat** -- 🟢
+Verifier que chaque etat affiche le bon libelle (Present, A l'ecoute, Reflexion, Traitement des donnees, Reponse, Termine).
+
+**StateLabel : point lumineux present** -- 🟠
+Auto : verifier la presence de l'element DOM du point. Manuel : le point est lumineux et visible.
+
+**VoiceBars : 27 barres rendues** -- 🟢
+Compter les elements enfants rendus.
+
+**VoiceBars : animation decalee de 45ms par barre** -- 🟢
+Verifier que chaque barre a un `animation-delay` de `index * 45ms`.
+
+**VoiceBars : actives uniquement en Listening et Responding** -- 🟢
+Rendre le composant dans chaque etat et verifier que l'animation n'est active que pour Listening et Responding.
 
 ## A verifier manuellement
 
