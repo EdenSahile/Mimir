@@ -41,4 +41,4 @@ function Segmented({
   )
 }
 
-export { Segmented }
+export default Segmented

@@ -39,4 +39,4 @@ function Toast({
   )
 }
 
-export { Toast }
+export default Toast

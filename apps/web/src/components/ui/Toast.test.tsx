@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { Toast } from '@/components/ui/Toast'
+import Toast from '@/components/ui/Toast'
 
 describe('Toast', () => {
   beforeEach(() => {

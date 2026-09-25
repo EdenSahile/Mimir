@@ -14,7 +14,7 @@ function Chip({
   return (
     <button
       role="checkbox"
-      aria-pressed={active ? "true" : "false"}
+      aria-checked={active ? "true" : "false"}
       data-slot="chip"
       className={cn(
         "inline-flex min-h-11 cursor-pointer items-center rounded-[var(--r-pill)] border px-[18px] py-3 text-[length:var(--fs-ui)] transition-all duration-[var(--dur-base)] outline-none select-none",
@@ -31,4 +31,4 @@ function Chip({
   )
 }
 
-export { Chip }
+export default Chip

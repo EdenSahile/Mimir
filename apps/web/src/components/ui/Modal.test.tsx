@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Modal } from '@/components/ui/Modal'
+import Modal from '@/components/ui/Modal'
 
 describe('Modal', () => {
   it('has aria-modal true when open', () => {

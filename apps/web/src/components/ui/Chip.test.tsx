@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Chip } from '@/components/ui/Chip'
+import Chip from '@/components/ui/Chip'
 
 describe('Chip', () => {
   it('renders with role checkbox', () => {
@@ -9,19 +9,19 @@ describe('Chip', () => {
     expect(screen.getByRole('checkbox', { name: 'Frontend' })).toBeInTheDocument()
   })
 
-  it('has aria-pressed false by default', () => {
+  it('has aria-checked false by default', () => {
     render(<Chip>Frontend</Chip>)
 
-    expect(screen.getByRole('checkbox')).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('checkbox')).toHaveAttribute('aria-checked', 'false')
   })
 
-  it('has aria-pressed true when active', () => {
+  it('has aria-checked true when active', () => {
     render(<Chip active>Frontend</Chip>)
 
-    expect(screen.getByRole('checkbox')).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('checkbox')).toHaveAttribute('aria-checked', 'true')
   })
 
-  it('toggles aria-pressed on click', async () => {
+  it('toggles aria-checked on click', async () => {
     const user = userEvent.setup()
     const onToggle = vi.fn()
 
