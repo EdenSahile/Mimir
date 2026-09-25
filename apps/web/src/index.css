@@ -114,6 +114,8 @@
 }
 
 @theme inline {
+  --breakpoint-desktop: 760px;
+  --breakpoint-wide: 1100px;
   --font-sans: 'DM Sans', system-ui, sans-serif;
   --font-heading: 'Instrument Serif', Georgia, serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
