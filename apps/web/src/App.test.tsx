@@ -50,6 +50,7 @@ describe("Routing", () => {
           <Link to="/day">Go to Day</Link>
         </MemoryRouter>
       )
+
       expect(
         screen.getByRole("heading", { name: "Mimir" })
       ).toBeInTheDocument()
@@ -89,6 +90,7 @@ describe("Routing", () => {
           <Link to="/projects/456">Go to Project</Link>
         </MemoryRouter>
       )
+
       expect(
         screen.getByRole("heading", { name: "Projects" })
       ).toBeInTheDocument()

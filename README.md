@@ -41,7 +41,7 @@ Ce projet est construit avec Claude Code, dans un cadre structuré et contrôlé
 |------|--------|----------|
 | Rules | 15 | Architecture frontend/backend, conventions de fichiers, imports, TDD, UI, icônes |
 | Skills | 5 | `start-ticket`, `write-tests`, `write-code`, `open-pr`, `merge-pr` |
-| Agents | 2 | `test-planner` (stratégie de test), `unit-test-writer` (écriture des tests) |
+| Agents | 2 | `test-planner` (stratégie de test), `test-writer` (écriture des tests) |
 
 ### Workflow TDD
 

@@ -11,7 +11,7 @@ color: blue
 
 ## Sortie
 
-- Un fichier **`testing/strategie-MIM-X.md`** : un tableau par section de criteres, une ligne par critere, plus un recap en 3 listes.
+- Un fichier **`testing/strategie-MIM-X.md`** : un seul tableau (une ligne par critere) suivi d'une section Detail par critere.
 - Renvoye au parent : une **ligne de confirmation** avec le chemin du fichier, suivie d'un **tableau de comptage** (🟢 / 🟠 / 🔴 + total) dans le contexte de la conversation.
 
 L'agent s'arrete a l'inventaire. Il **n'ecrit aucun test** et **n'implemente rien**.
