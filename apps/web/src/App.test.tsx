@@ -15,7 +15,7 @@ function renderAtRoute(path: string) {
 const routes = [
   { path: "/", name: "Home" },
   { path: "/welcome", name: "Welcome" },
-  { path: "/mimir", name: "Mimir" },
+  { path: "/mimir", name: "MimirAvatar Playground" },
   { path: "/day", name: "Day" },
   { path: "/projects", name: "Projects" },
   { path: "/projects/123", name: "Project" },
@@ -52,7 +52,7 @@ describe("Routing", () => {
       )
 
       expect(
-        screen.getByRole("heading", { name: "Mimir" })
+        screen.getByRole("heading", { name: "MimirAvatar Playground" })
       ).toBeInTheDocument()
 
       await user.click(screen.getByRole("link", { name: "Go to Day" }))
@@ -61,7 +61,7 @@ describe("Routing", () => {
         screen.getByRole("heading", { name: "Day" })
       ).toBeInTheDocument()
       expect(
-        screen.queryByRole("heading", { name: "Mimir" })
+        screen.queryByRole("heading", { name: "MimirAvatar Playground" })
       ).not.toBeInTheDocument()
     })
 
