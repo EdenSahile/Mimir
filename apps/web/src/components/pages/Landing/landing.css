@@ -29,3 +29,10 @@
   animation-fill-mode: both;
   animation-timing-function: ease-out;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .fade {
+    animation: none;
+  }
+}

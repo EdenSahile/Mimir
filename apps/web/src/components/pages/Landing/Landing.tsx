@@ -136,11 +136,8 @@ export default function Landing() {
       </div>
 
       <footer
-        className="grid rounded-2xl"
-        style={{
-          gridTemplateColumns: '1fr auto 1fr auto 1fr',
-          background: 'rgba(255,255,255,.028)',
-        }}
+        className="grid grid-cols-1 rounded-2xl md:grid-cols-[1fr_auto_1fr_auto_1fr]"
+        style={{ background: 'rgba(255,255,255,.028)' }}
       >
         {FOOTER_COLUMNS.map((col, i) => (
           <div key={col.title} className="flex flex-col gap-2 px-6 py-5" style={{ order: i * 2 }}>
@@ -150,12 +147,12 @@ export default function Landing() {
         ))}
         <div
           data-testid="footer-separator"
-          className="w-px self-stretch bg-white/7"
+          className="hidden w-px self-stretch bg-white/7 md:block"
           style={{ order: 1 }}
         />
         <div
           data-testid="footer-separator"
-          className="w-px self-stretch bg-white/7"
+          className="hidden w-px self-stretch bg-white/7 md:block"
           style={{ order: 3 }}
         />
       </footer>
