@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom"
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
 import AppBackground from "@/components/ui/AppBackground/AppBackground"
 import Home from "@/components/pages/Home/Home"
 import Welcome from "@/components/pages/Welcome/Welcome"
@@ -11,6 +11,7 @@ import Jobs from "@/components/pages/Jobs/Jobs"
 import Memory from "@/components/pages/Memory/Memory"
 import Documents from "@/components/pages/Documents/Documents"
 import Settings from "@/components/pages/Settings/Settings"
+import NotFound from "@/components/pages/NotFound/NotFound"
 
 export function AppRoutes() {
   return (
@@ -25,7 +26,9 @@ export function AppRoutes() {
       <Route path="/jobs" element={<Jobs />} />
       <Route path="/memory" element={<Memory />} />
       <Route path="/documents" element={<Documents />} />
+      <Route path="/settings" element={<Navigate to="/settings/general" replace />} />
       <Route path="/settings/:tab" element={<Settings />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }
