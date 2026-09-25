@@ -26,39 +26,32 @@ Le fichier contient les sections suivantes :
 
 ### Tableau de strategie
 
-Un tableau par groupe de criteres (si le ticket en a plusieurs), une ligne par critere, dans l'ordre du ticket :
+Un seul tableau pour tous les criteres, une ligne par critere, dans l'ordre du ticket :
 
 ```markdown
 ## Strategie de test — MIM-X
 
-### 🟢 Tests automatises
-
-| # | Critere | Niveau | Fichier |
-|---|---------|--------|---------|
-| 1 | Description du critere | Composant | NomComposant.test.tsx |
-
-### 🟠 Tests automatises + verification manuelle
-
-| # | Critere | Test auto | Verification manuelle |
-|---|---------|-----------|----------------------|
-| 2 | Description | Ce que le test verifie | Ce que l'humain verifie |
-
-### 🔴 Smoke tests manuels
-
-| # | Critere | Verification | Resultat attendu |
-|---|---------|-------------|-----------------|
-| 3 | Description | Quoi faire | Ce qu'on doit observer |
+| # | Critere | Type | Verification | Fichier |
+|---|---------|------|--------------|---------|
+| 1 | Description du critere | Unitaire | 🟢 Auto | module.test.ts |
+| 2 | Description du critere | Composant | 🟢 Auto | Composant.test.tsx |
+| 3 | Description du critere | Integration | 🟠 Mixte | App.test.tsx |
+| 4 | Description du critere | - | 🔴 Manuel | - |
 ```
 
-Si une section est vide (aucun critere dans cette categorie), ne pas l'inclure.
+**Type** : le type de test (Unitaire, Composant, Integration). Unitaire = logique pure sans React. Composant = un composant rendu avec Testing Library. Integration = plusieurs composants ensemble, navigation, ou interaction avec un service.
 
-### Recap
+**Verification** : comment le critere est verifie. 🟢 Auto = entierement automatise. 🟠 Mixte = une partie auto + une verification manuelle. 🔴 Manuel = purement visuel/perceptuel, pas de test auto.
 
-En fin de fichier, 3 listes :
+Pour les criteres 🟠, ajouter un detail sous le tableau qui precise ce que le test auto couvre et ce que l'humain verifie. Pour les 🔴, decrire la verification manuelle (quoi faire, quoi observer, resultat attendu).
 
-- **Tests automatises** (→ `unit-test-writer`) : les criteres 🟢 et la part auto des 🟠.
-- **Verifications mixtes** : les criteres 🟠 avec leur complement manuel.
-- **Smoke tests manuels** : les criteres 🔴 avec la verification a effectuer.
+### Detail
+
+Sous le tableau, une section par critere qui le necessite :
+
+- Pour les 🟢 : une phrase decrivant ce que le test verifie.
+- Pour les 🟠 : ce que le test auto couvre + ce que l'humain verifie.
+- Pour les 🔴 : quoi faire, quoi observer, resultat attendu.
 
 ## Principes de classification
 
