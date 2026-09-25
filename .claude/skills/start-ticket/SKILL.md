@@ -5,7 +5,7 @@ description: Demarre un ticket Notion, passe en DOING, cree la branche et rappel
 
 ## Entree
 
-- L'**identifiant du ticket** (ex. `MIM-5`, `5`, ou un lien Notion).
+- L'**identifiant du ticket** (ex. `MIM-5`, `5`, ou un lien Notion), ou rien pour prendre le prochain ticket TODO par priorite.
 
 ## Sortie
 
@@ -30,9 +30,9 @@ description: Demarre un ticket Notion, passe en DOING, cree la branche et rappel
 
 1. Prendre l'identifiant fourni par l'utilisateur.
 2. Si c'est un lien Notion, l'ouvrir directement via fetch.
-3. Si c'est un numero nu (ex. `5`), chercher le ticket dont `userDefined:ID` vaut ce numero.
-4. Si c'est un identifiant prefixe (ex. `MIM-5`), extraire le numero et chercher.
-5. Si rien n'est fourni, scanner la conversation pour un ticket recemment mentionne.
+3. Si c'est un numero nu (ex. `5`), chercher le ticket dont `userDefined:ID` vaut ce numero via SQL : `SELECT url, "userDefined:ID", "Nom", "Statut", "Priorité" FROM "collection://..." WHERE "userDefined:ID" = <numero>`.
+4. Si c'est un identifiant prefixe (ex. `MIM-5`), extraire le numero et appliquer l'etape 3.
+5. **Si rien n'est fourni** : interroger la vue Kanban (`view://3e4e3935-5d30-80be-92d5-000c59a481a1`) en mode `view`. Cette vue trie par Priorite ASC puis ID ASC. La premiere carte de la colonne TODO est le prochain ticket a traiter. La proposer a l'utilisateur pour confirmation.
 6. Si rien ne correspond ou si plusieurs matchent, demander. Ne jamais deviner.
 
 ## Workflow

@@ -46,7 +46,7 @@ Ecrire le code de production en respectant :
 
 Executer `pnpm test` apres l'implementation.
 
-- Si tous les tests passent : green confirme. Commiter.
+- Si tous les tests passent : green confirme.
 - Si des tests echouent : lire les erreurs, corriger l'implementation, relancer. Ne jamais modifier un test pour le faire passer (sauf si le test a un vrai bug).
 
 ### 5. Refactoriser
@@ -80,15 +80,9 @@ pnpm test && pnpm typecheck && pnpm lint
 
 Les 3 doivent passer. Si l'un echoue, corriger et relancer.
 
-### 7. Commiter
+### 7. S'arreter et attendre
 
-Commiter le code de production avec un message Conventional Commit :
-
-```
-feat(MIM-X): implement <feature>
-```
-
-Ou `fix`, `refactor`, etc. selon la nature du changement.
+**Ne pas commiter.** Presenter a l'utilisateur un resume de ce qui a ete fait et attendre son accord explicite avant de commiter.
 
 ## Regles
 

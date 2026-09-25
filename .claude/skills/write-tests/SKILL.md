@@ -1,6 +1,6 @@
 ---
 name: write-tests
-description: Ecrit tous les tests d'un ticket AVANT l'implementation, en lisant l'inventaire produit par test-planner et en lancant unit-test-writer. Exige l'inventaire, ne le produit pas. Utiliser quand l'utilisateur dit "write-tests", "ecris les tests", "on commence les tests", "TDD".
+description: Ecrit tous les tests d'un ticket AVANT l'implementation, en lisant l'inventaire produit par test-planner et en lancant test-writer. Exige l'inventaire, ne le produit pas. Utiliser quand l'utilisateur dit "write-tests", "ecris les tests", "on commence les tests", "TDD".
 ---
 
 ## Entree
@@ -17,7 +17,7 @@ description: Ecrit tous les tests d'un ticket AVANT l'implementation, en lisant 
 ## Regles
 
 - **Pas d'inventaire, pas de tests.** Si `testing/strategie-MIM-X.md` n'existe pas, s'arreter et demander a lancer `test-planner` d'abord. Ne jamais classer les criteres soi-meme pour enchainer.
-- **Un seul lancement de `unit-test-writer`**, pas un par critere. L'agent recoit toute la strategie d'un coup.
+- **Un seul lancement de `test-writer`**, pas un par critere. L'agent recoit toute la strategie d'un coup.
 - **Ne rien ecrire soi-meme**, meme « juste un petit test » : tout passe par l'agent, c'est ce qui garantit l'application de ses conventions.
 - **Les tests sont ecrits AVANT le code de production.** Jamais de code de prod avant ce skill.
 - **Les smoke tests 🔴 ne produisent pas de fichier de test.** Ils sont decrits dans l'inventaire et verifies en TO TEST.
@@ -37,9 +37,9 @@ Ouvrir le fichier et identifier :
 - La part auto des criteres 🟠.
 - Les criteres 🔴 (hors perimetre de ce skill).
 
-### 3. Lancer unit-test-writer
+### 3. Lancer test-writer
 
-Dispatcher l'agent `unit-test-writer` avec :
+Dispatcher l'agent `test-writer` avec :
 - La strategie validee (criteres 🟢 et part auto des 🟠).
 - Les criteres d'acceptation du ticket pour le contexte.
 
