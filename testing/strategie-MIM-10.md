@@ -2,15 +2,15 @@
 
 | Critere | Type | Fait |
 |---|---|---|
-| Layout 2 colonnes desktop, 1 colonne mobile (avatar sous le texte) | 🟠 | ⬜ Auto · ⬜ Smoke |
-| H1 en Instrument Serif display (`clamp(42px,5.4vw,74px)`) | 🟠 | ⬜ Auto · ⬜ Smoke |
-| Avatar hero avec cycle Idle -> Listening -> Thinking -> Responding -> Idle | 🟢 | ⬜ |
-| Cycle arrete si `prefers-reduced-motion` | 🟢 | ⬜ |
-| "Faire connaissance" mene a `/welcome` | 🟢 | ⬜ |
-| "Voir l'assistant" mene a `/mimir` | 🟢 | ⬜ |
-| Colonne gauche en animation `rise` 900ms, avatar en `fade` 1.6s | 🟠 | ⬜ Auto · ⬜ Smoke |
-| Pied en 3 colonnes avec separateurs de 1px | 🟠 | ⬜ Auto · ⬜ Smoke |
-| Copy d'interface conforme au prototype (textes exacts) | 🟢 | ⬜ |
+| Layout 2 colonnes desktop, 1 colonne mobile (avatar sous le texte) | 🟠 | ✅ Auto · ⬜ Smoke |
+| H1 en Instrument Serif display (`clamp(42px,5.4vw,74px)`) | 🟠 | ✅ Auto · ⬜ Smoke |
+| Avatar hero avec cycle Idle -> Listening -> Thinking -> Responding -> Idle | 🟢 | ✅ |
+| Cycle arrete si `prefers-reduced-motion` | 🟢 | ✅ |
+| "Faire connaissance" mene a `/welcome` | 🟢 | ✅ |
+| "Voir l'assistant" mene a `/mimir` | 🟢 | ✅ |
+| Colonne gauche en animation `rise` 900ms, avatar en `fade` 1.6s | 🟠 | ✅ Auto · ⬜ Smoke |
+| Pied en 3 colonnes avec separateurs de 1px | 🟠 | ✅ Auto · ⬜ Smoke |
+| Copy d'interface conforme au prototype (textes exacts) | 🟢 | ✅ |
 
 ### Raisonnement par critere
 
