@@ -64,6 +64,22 @@ describe("Routing", () => {
       ).not.toBeInTheDocument()
     })
 
+    it("renders Not Found for an unknown route", () => {
+      renderAtRoute("/this-route-does-not-exist")
+
+      expect(
+        screen.getByRole("heading", { name: "Not Found" })
+      ).toBeInTheDocument()
+    })
+
+    it("redirects /settings to /settings/general", () => {
+      renderAtRoute("/settings")
+
+      expect(
+        screen.getByRole("heading", { name: "Settings" })
+      ).toBeInTheDocument()
+    })
+
     it("navigates to a route with a dynamic parameter", async () => {
       const user = userEvent.setup()
 
