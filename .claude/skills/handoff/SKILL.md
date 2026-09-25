@@ -65,6 +65,6 @@ Aucune section supplémentaire (pas de « Décisions clés », « Points de vigi
 
 ## Après l'écriture du fichier
 
-1. **Si on est sur une branche de travail** (pas `dev`/`main`) : commiter le handoff sur cette branche, pusher.
-2. **Si on est sur `dev`** : créer une branche `chore/handoff-YYYY-MM-DD`, commiter, pusher, merger dans `dev`, supprimer la branche.
-3. Ne jamais revenir sur `dev` en laissant le handoff sur une branche non mergée.
+1. **Si on est sur une branche de travail** (pas `dev`/`main`) : commiter le handoff sur cette branche.
+2. **Si on est sur `dev`** : créer une branche `chore/handoff-YYYY-MM-DD`, commiter.
+3. Ne pas pusher ni merger sans accord explicite de l'utilisateur.
