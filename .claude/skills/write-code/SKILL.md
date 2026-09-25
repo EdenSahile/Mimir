@@ -49,7 +49,38 @@ Executer `pnpm test` apres l'implementation.
 - Si tous les tests passent : green confirme. Commiter.
 - Si des tests echouent : lire les erreurs, corriger l'implementation, relancer. Ne jamais modifier un test pour le faire passer (sauf si le test a un vrai bug).
 
-### 5. Commiter
+### 5. Refactoriser
+
+Les tests sont verts. Analyser les fichiers de production modifies et determiner si un refactoring est reellement justifie.
+
+**Ne pas refactoriser pour refactoriser.** Le refactoring doit ameliorer la lisibilite, la maintenabilite ou la coherence avec l'architecture du projet, sans modifier le comportement attendu.
+
+Verifier notamment :
+
+- **Styles inline → CSS** : si un style inline est identique pour tous les elements d'une boucle, le sortir dans une classe CSS. Ne garder en inline que les valeurs dynamiques par instance (position, duree). Preferer les custom properties CSS (`--var`) pour transmettre des valeurs dynamiques a une classe.
+- **Composants** : un composant ne doit contenir que la logique qui lui est propre. Si une fonction utilitaire ne depend pas de React, elle vit hors du composant.
+- **Imports** : verifier que tous les imports internes utilisent `@/`, jamais `./` ni `../`.
+- **Duplication** : identifier les duplications significatives et extraire uniquement lorsque l'abstraction ameliore reellement la lisibilite ou la maintenabilite. Ne pas creer d'abstraction prematuree.
+- **Poids** : supprimer les variables, imports et props inutilises.
+- **Complexite** : simplifier une logique inutilement complexe lorsque cela ameliore la lisibilite sans modifier le comportement.
+
+Si aucun refactoring pertinent n'est identifie, ne modifier aucun code et poursuivre.
+
+Apres chaque modification de refactoring, relancer `pnpm test` pour confirmer que les tests restent verts.
+
+**Ne pas modifier les criteres verifies par les tests et ne pas modifier les tests simplement pour accompagner le refactoring.** Si le refactoring necessite reellement de changer la maniere dont un comportement est verifie, arreter et demander validation avant de modifier les tests.
+
+### 6. Validation finale
+
+Lancer la suite complete avant de commiter :
+
+```bash
+pnpm test && pnpm typecheck && pnpm lint
+```
+
+Les 3 doivent passer. Si l'un echoue, corriger et relancer.
+
+### 7. Commiter
 
 Commiter le code de production avec un message Conventional Commit :
 

@@ -31,19 +31,19 @@ Un tableau par groupe de criteres (si le ticket en a plusieurs), une ligne par c
 ```markdown
 ## Strategie de test — MIM-X
 
-### Tests automatises
+### 🟢 Tests automatises
 
 | # | Critere | Niveau | Fichier |
 |---|---------|--------|---------|
-| 1 | Description du critere | 🟢 Composant | NomComposant.test.tsx |
+| 1 | Description du critere | Composant | NomComposant.test.tsx |
 
-### Verifications mixtes (auto + manuelle)
+### 🟠 Tests automatises + verification manuelle
 
 | # | Critere | Test auto | Verification manuelle |
 |---|---------|-----------|----------------------|
 | 2 | Description | Ce que le test verifie | Ce que l'humain verifie |
 
-### Smoke tests manuels
+### 🔴 Smoke tests manuels
 
 | # | Critere | Verification | Resultat attendu |
 |---|---------|-------------|-----------------|
