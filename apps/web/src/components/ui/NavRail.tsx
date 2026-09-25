@@ -12,6 +12,10 @@ const NAV_ITEMS = [
   { label: "Réglages", path: "/settings" },
 ]
 
+function isActivePath(pathname: string, path: string) {
+  return pathname === path || pathname.startsWith(path + "/")
+}
+
 function NavRail({ className }: { className?: string }) {
   const location = useLocation()
   const navigate = useNavigate()
@@ -23,14 +27,14 @@ function NavRail({ className }: { className?: string }) {
         className
       )}
     >
-      <span
-        className="cursor-pointer px-[var(--s-5)] pb-[var(--s-6)] font-heading text-[18px] tracking-[.32em] text-[var(--ink-strong)]"
+      <button
+        className="cursor-pointer border-none bg-transparent px-[var(--s-5)] pb-[var(--s-6)] text-left font-heading text-[18px] tracking-[.32em] text-[var(--ink-strong)]"
         onClick={() => navigate("/")}
       >
         MÍMIR
-      </span>
+      </button>
       {NAV_ITEMS.map(({ label, path }) => {
-        const isActive = location.pathname.startsWith(path)
+        const isActive = isActivePath(location.pathname, path)
         return (
           <Link
             key={path}

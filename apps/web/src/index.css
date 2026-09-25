@@ -76,6 +76,7 @@
   --glow-primary-hover: 0 0 56px rgba(var(--light-rgb),.30);
   --glow-mic: 0 0 44px rgba(var(--light-rgb),.22);
   --dot-glow: 0 0 10px rgba(var(--light-rgb),.8);
+  --nav-glow: 0 0 8px rgba(var(--light-rgb),.9);
   --focus-ring: 1px solid rgba(var(--light-rgb),.75);
   --focus-offset: 3px;
 

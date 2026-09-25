@@ -12,6 +12,15 @@ const SHEET_ITEMS = [
 function MoreSheet({ className }: { className?: string }) {
   const [open, setOpen] = React.useState(false)
 
+  React.useEffect(() => {
+    if (!open) return
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false)
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [open])
+
   return (
     <>
       <button
