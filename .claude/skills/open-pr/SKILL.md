@@ -25,6 +25,7 @@ Le skill s'arrête là. Il ne merge pas, et **ne touche pas au ticket Notion** :
 
 ## Règles
 
+- **Toujours passer par ce skill pour ouvrir une PR.** Ne jamais lancer `gh pr create` en direct : cela court-circuite la code review, le verrou de qualité et le workflow Notion. Même si la PR semble triviale, le skill s'exécute.
 - **Le verrou est bloquant.** Au premier rouge : on s'arrête, on montre la sortie réelle de la commande, et **rien n'est poussé**. Ne jamais contourner un test qui échoue ni le désactiver pour pouvoir pousser.
 - **⛔ Ne jamais merger.** Le merge vers `dev` est une décision explicite de l'utilisateur, donnée pour CETTE PR précise (cf. la rule Git du repo). Ouvrir la PR ne vaut pas autorisation.
 - **Un seul repo à la fois** : celui de la branche courante. Ne pas pousser ni ouvrir de PR pour un autre repo.
