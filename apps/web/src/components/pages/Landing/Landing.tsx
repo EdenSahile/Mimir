@@ -131,7 +131,7 @@ export default function Landing() {
           className="fade flex items-center justify-center py-12"
           style={{ animationDuration: '1.6s' }}
         >
-          <MimirAvatar state={avatarState} size="hero" aria-hidden />
+          <MimirAvatar state={avatarState} size="hero" aria-hidden className="h-[400px]" />
         </div>
       </div>
 

@@ -13,7 +13,7 @@ function renderAtRoute(path: string) {
 }
 
 const routes = [
-  { path: "/", name: "Home" },
+  { path: "/", name: "Une intelligence qui connaît votre contexte." },
   { path: "/welcome", name: "Welcome" },
   { path: "/mimir", name: "MimirAvatar Playground" },
   { path: "/day", name: "Day" },
