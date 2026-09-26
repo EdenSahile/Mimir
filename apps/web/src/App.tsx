@@ -1,6 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
 import AppBackground from "@/components/ui/AppBackground/AppBackground"
-import Home from "@/components/pages/Home/Home"
+import Landing from "@/components/pages/Landing/Landing"
 import Welcome from "@/components/pages/Welcome/Welcome"
 import Mimir from "@/components/pages/Mimir/Mimir"
 import Day from "@/components/pages/Day/Day"
@@ -16,7 +16,7 @@ import NotFound from "@/components/pages/NotFound/NotFound"
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<Landing />} />
       <Route path="/welcome" element={<Welcome />} />
       <Route path="/mimir" element={<Mimir />} />
       <Route path="/day" element={<Day />} />
