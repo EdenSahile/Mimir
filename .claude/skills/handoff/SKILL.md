@@ -66,4 +66,4 @@ Aucune section supplémentaire (pas de « Décisions clés », « Points de vigi
 ## Après l'écriture du fichier
 
 1. **Si on est sur une branche de travail** (pas `dev`/`main`) : commiter le handoff sur cette branche.
-2. **Si on est sur `dev`** : commiter le handoff directement sur `dev` et pusher.
+2. **Si on est sur `dev`** : créer une branche `chore/handoff-YYYY-MM-DD`, commiter, pusher et ouvrir la PR vers `dev`.
