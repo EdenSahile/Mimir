@@ -115,45 +115,61 @@ export default function OuterLayer({ state, intensity, reducedMotion }: OuterLay
         ))}
       </div>
 
-      {Array.from({ length: incomingWaves.count }, (_, i) => (
-        <div
-          key={`wave-in-${i}`}
-          data-testid="wave-incoming"
-          style={{
-            position: 'absolute',
-            width: '70%',
-            aspectRatio: '1',
-            left: '15%',
-            top: '38%',
-            transform: 'translateY(-50%)',
-            borderRadius: '50%',
-            border: `1px solid rgba(var(--light-rgb), ${0.15 * intensity})`,
-            opacity: incomingVisible ? 1 : 0,
-            transition: 'opacity 500ms ease',
-            animation: reducedMotion || !incomingVisible ? 'none' : `mimir-wave-in ${incomingWaves.duration} ease-out ${i * 0.8}s infinite`,
-          }}
-        />
-      ))}
+      <div
+        data-testid="waves-incoming"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          opacity: incomingVisible ? 1 : 0,
+          transition: 'opacity 500ms ease',
+        }}
+      >
+        {Array.from({ length: incomingWaves.count }, (_, i) => (
+          <div
+            key={`wave-in-${i}`}
+            data-testid="wave-incoming"
+            style={{
+              position: 'absolute',
+              width: '70%',
+              aspectRatio: '1',
+              left: '15%',
+              top: '38%',
+              transform: 'translateY(-50%)',
+              borderRadius: '50%',
+              border: `1px solid rgba(var(--light-rgb), ${0.15 * intensity})`,
+              animation: reducedMotion ? 'none' : `mimir-wave-in ${incomingWaves.duration} ease-out ${i * 0.8}s infinite`,
+            }}
+          />
+        ))}
+      </div>
 
-      {Array.from({ length: outgoingWaves.count }, (_, i) => (
-        <div
-          key={`wave-out-${i}`}
-          data-testid="wave-outgoing"
-          style={{
-            position: 'absolute',
-            width: '70%',
-            aspectRatio: '1',
-            left: '15%',
-            top: '38%',
-            transform: 'translateY(-50%)',
-            borderRadius: '50%',
-            border: `1px solid rgba(var(--light-rgb), ${0.3 * intensity})`,
-            opacity: outgoingVisible ? 1 : 0,
-            transition: 'opacity 500ms ease',
-            animation: reducedMotion || !outgoingVisible ? 'none' : `mimir-wave-out ${outgoingWaves.duration} ease-out ${i * 0.3}s infinite`,
-          }}
-        />
-      ))}
+      <div
+        data-testid="waves-outgoing"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          opacity: outgoingVisible ? 1 : 0,
+          transition: 'opacity 500ms ease',
+        }}
+      >
+        {Array.from({ length: outgoingWaves.count }, (_, i) => (
+          <div
+            key={`wave-out-${i}`}
+            data-testid="wave-outgoing"
+            style={{
+              position: 'absolute',
+              width: '70%',
+              aspectRatio: '1',
+              left: '15%',
+              top: '38%',
+              transform: 'translateY(-50%)',
+              borderRadius: '50%',
+              border: `1px solid rgba(var(--light-rgb), ${0.3 * intensity})`,
+              animation: reducedMotion ? 'none' : `mimir-wave-out ${outgoingWaves.duration} ease-out ${i * 0.3}s infinite`,
+            }}
+          />
+        ))}
+      </div>
 
       {Array.from({ length: particleCount }, (_, i) => {
         const angle = i * GOLDEN_ANGLE

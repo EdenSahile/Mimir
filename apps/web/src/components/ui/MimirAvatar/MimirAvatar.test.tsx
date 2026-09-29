@@ -61,10 +61,11 @@ describe('MimirAvatar', () => {
     it('listening: incoming waves are visible', () => {
       render(<MimirAvatar state="listening" />)
 
+      const wavesContainer = screen.getByTestId('waves-incoming')
       const waves = screen.getAllByTestId('wave-incoming')
 
       expect(waves.length).toBeGreaterThanOrEqual(1)
-      expect(waves[0]).not.toHaveStyle({ opacity: '0' })
+      expect(wavesContainer).not.toHaveStyle({ opacity: '0' })
     })
 
     it('thinking: arcs are visible', () => {
@@ -91,10 +92,11 @@ describe('MimirAvatar', () => {
     it('success: outgoing waves are visible', () => {
       render(<MimirAvatar state="success" />)
 
+      const wavesContainer = screen.getByTestId('waves-outgoing')
       const waves = screen.getAllByTestId('wave-outgoing')
 
       expect(waves.length).toBeGreaterThanOrEqual(1)
-      expect(waves[0]).not.toHaveStyle({ opacity: '0' })
+      expect(wavesContainer).not.toHaveStyle({ opacity: '0' })
     })
 
     it('all conditional elements have transition on opacity', () => {
@@ -103,10 +105,14 @@ describe('MimirAvatar', () => {
       const arcs = screen.getByTestId('arcs')
       const landmarks = screen.getByTestId('landmarks')
       const mouth = screen.getByTestId('mouth-active')
+      const wavesIn = screen.getByTestId('waves-incoming')
+      const wavesOut = screen.getByTestId('waves-outgoing')
 
       expect(arcs.style.transition).toContain('opacity')
       expect(landmarks.style.transition).toContain('opacity')
       expect(mouth.style.transition).toContain('opacity')
+      expect(wavesIn.style.transition).toContain('opacity')
+      expect(wavesOut.style.transition).toContain('opacity')
     })
   })
 

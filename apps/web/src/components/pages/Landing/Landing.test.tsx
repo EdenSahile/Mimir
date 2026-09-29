@@ -66,7 +66,7 @@ describe('Landing', () => {
     it('starts with the avatar in idle state', () => {
       renderLanding()
 
-      expect(screen.getAllByTestId('wave-incoming')[0]).toHaveStyle({ opacity: '0' })
+      expect(screen.getByTestId('waves-incoming')).toHaveStyle({ opacity: '0' })
       expect(screen.getByTestId('arcs')).toHaveStyle({ opacity: '0' })
       expect(screen.getByTestId('mouth-active')).toHaveStyle({ opacity: '0' })
     })
@@ -78,7 +78,7 @@ describe('Landing', () => {
         vi.advanceTimersByTime(3800)
       })
 
-      expect(screen.getAllByTestId('wave-incoming')[0]).not.toHaveStyle({ opacity: '0' })
+      expect(screen.getByTestId('waves-incoming')).not.toHaveStyle({ opacity: '0' })
     })
 
     it('transitions to thinking after 7.6s', () => {
@@ -108,7 +108,7 @@ describe('Landing', () => {
         vi.advanceTimersByTime(15200)
       })
 
-      expect(screen.getAllByTestId('wave-incoming')[0]).toHaveStyle({ opacity: '0' })
+      expect(screen.getByTestId('waves-incoming')).toHaveStyle({ opacity: '0' })
       expect(screen.getByTestId('arcs')).toHaveStyle({ opacity: '0' })
       expect(screen.getByTestId('mouth-active')).toHaveStyle({ opacity: '0' })
     })
@@ -141,7 +141,7 @@ describe('Landing', () => {
         vi.advanceTimersByTime(15200)
       })
 
-      expect(screen.getAllByTestId('wave-incoming')[0]).toHaveStyle({ opacity: '0' })
+      expect(screen.getByTestId('waves-incoming')).toHaveStyle({ opacity: '0' })
       expect(screen.getByTestId('arcs')).toHaveStyle({ opacity: '0' })
       expect(screen.getByTestId('mouth-active')).toHaveStyle({ opacity: '0' })
     })
