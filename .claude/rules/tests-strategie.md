@@ -39,6 +39,12 @@ Exemples : absence de flash blanc au chargement, fluidite d'une animation, coher
 
 Un smoke test est produit avec les etapes concretes.
 
+## Critere d'integration route (test de routing)
+
+Quand un ticket cree ou deplace un composant de page (un composant rendu par une route dans `App.tsx`), le `test-planner` ajoute systematiquement un critere 🟢 : « le composant est rendu sur sa route dans l'app ». Ce test vit dans `App.test.tsx`, pas dans le fichier de test du composant. Il navigue vers la route et verifie qu'un element du composant est present dans le DOM.
+
+Ce critere couvre le branchement reel du composant dans l'arbre de routes. Sans lui, un composant peut passer tous ses tests unitaires sans jamais etre affiche dans l'app.
+
 ## Regle de decision
 
 Par defaut, un critere est 🟢. Il passe en 🟠 ou 🔴 uniquement si une partie significative de la verification ne peut pas etre automatisee. Ne jamais considerer que « UI = pas de tests ».
