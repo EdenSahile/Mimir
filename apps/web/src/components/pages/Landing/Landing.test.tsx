@@ -66,9 +66,9 @@ describe('Landing', () => {
     it('starts with the avatar in idle state', () => {
       renderLanding()
 
-      expect(screen.queryByTestId('wave-incoming')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('arcs')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('mouth-active')).not.toBeInTheDocument()
+      expect(screen.getAllByTestId('wave-incoming')[0]).toHaveStyle({ opacity: '0' })
+      expect(screen.getByTestId('arcs')).toHaveStyle({ opacity: '0' })
+      expect(screen.getByTestId('mouth-active')).toHaveStyle({ opacity: '0' })
     })
 
     it('transitions to listening after 3.8s', () => {
@@ -78,7 +78,7 @@ describe('Landing', () => {
         vi.advanceTimersByTime(3800)
       })
 
-      expect(screen.getAllByTestId('wave-incoming').length).toBeGreaterThanOrEqual(1)
+      expect(screen.getAllByTestId('wave-incoming')[0]).not.toHaveStyle({ opacity: '0' })
     })
 
     it('transitions to thinking after 7.6s', () => {
@@ -88,7 +88,7 @@ describe('Landing', () => {
         vi.advanceTimersByTime(7600)
       })
 
-      expect(screen.getByTestId('arcs')).toBeInTheDocument()
+      expect(screen.getByTestId('arcs')).not.toHaveStyle({ opacity: '0' })
     })
 
     it('transitions to responding after 11.4s', () => {
@@ -98,7 +98,7 @@ describe('Landing', () => {
         vi.advanceTimersByTime(11400)
       })
 
-      expect(screen.getByTestId('mouth-active')).toBeInTheDocument()
+      expect(screen.getByTestId('mouth-active')).not.toHaveStyle({ opacity: '0' })
     })
 
     it('returns to idle after a full cycle of 15.2s', () => {
@@ -108,9 +108,9 @@ describe('Landing', () => {
         vi.advanceTimersByTime(15200)
       })
 
-      expect(screen.queryByTestId('wave-incoming')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('arcs')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('mouth-active')).not.toBeInTheDocument()
+      expect(screen.getAllByTestId('wave-incoming')[0]).toHaveStyle({ opacity: '0' })
+      expect(screen.getByTestId('arcs')).toHaveStyle({ opacity: '0' })
+      expect(screen.getByTestId('mouth-active')).toHaveStyle({ opacity: '0' })
     })
   })
 
@@ -141,9 +141,9 @@ describe('Landing', () => {
         vi.advanceTimersByTime(15200)
       })
 
-      expect(screen.queryByTestId('wave-incoming')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('arcs')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('mouth-active')).not.toBeInTheDocument()
+      expect(screen.getAllByTestId('wave-incoming')[0]).toHaveStyle({ opacity: '0' })
+      expect(screen.getByTestId('arcs')).toHaveStyle({ opacity: '0' })
+      expect(screen.getByTestId('mouth-active')).toHaveStyle({ opacity: '0' })
     })
   })
 

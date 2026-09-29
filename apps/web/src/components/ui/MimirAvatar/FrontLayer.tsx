@@ -47,35 +47,34 @@ export default function FrontLayer({ state, amplitude, intensity }: FrontLayerPr
           transition: 'opacity 600ms ease',
         }}
       />
-      {showMouth && (
-        <div
-          data-testid="mouth-active"
-          style={{
-            position: 'absolute',
-            left: '42%',
-            right: '42%',
-            top: '47%',
-            height: '2px',
-            background: 'rgba(var(--light-warm-rgb), 0.8)',
-            transform: amplitude !== undefined ? `scaleX(${Math.max(0.2, amplitude)})` : undefined,
-            transition: 'transform 100ms ease, opacity 400ms ease',
-          }}
-        />
-      )}
-      {showSweep && (
-        <div
-          data-testid="sweep"
-          style={{
-            position: 'absolute',
-            left: '20%',
-            right: '20%',
-            height: '4%',
-            top: '4%',
-            background: 'linear-gradient(180deg, transparent, rgba(var(--light-rgb), 0.12), transparent)',
-            animation: 'mimir-sweep 2.6s ease-in-out infinite',
-          }}
-        />
-      )}
+      <div
+        data-testid="mouth-active"
+        style={{
+          position: 'absolute',
+          left: '42%',
+          right: '42%',
+          top: '47%',
+          height: '2px',
+          background: 'rgba(var(--light-warm-rgb), 0.8)',
+          transform: showMouth && amplitude !== undefined ? `scaleX(${Math.max(0.2, amplitude)})` : undefined,
+          opacity: showMouth ? 1 : 0,
+          transition: 'opacity 400ms ease, transform 100ms ease',
+        }}
+      />
+      <div
+        data-testid="sweep"
+        style={{
+          position: 'absolute',
+          left: '20%',
+          right: '20%',
+          height: '4%',
+          top: '4%',
+          background: 'linear-gradient(180deg, transparent, rgba(var(--light-rgb), 0.12), transparent)',
+          opacity: showSweep ? 1 : 0,
+          transition: 'opacity 500ms ease',
+          animation: showSweep ? 'mimir-sweep 2.6s ease-in-out infinite' : 'none',
+        }}
+      />
       <div
         style={{
           position: 'absolute',
