@@ -69,19 +69,29 @@ describe('Onboarding', () => {
   })
 
   describe('layout grille', () => {
-    it('has a grid root with 2 child sections', () => {
+    it('has a grid with 2 child sections', () => {
       const { container } = renderOnboarding()
 
-      const gridRoot = container.firstElementChild as HTMLElement
-      expect(gridRoot.children).toHaveLength(2)
+      const wrapper = container.firstElementChild as HTMLElement
+      const grid = wrapper.firstElementChild as HTMLElement
+      expect(grid.children).toHaveLength(2)
     })
 
     it('form section has max-w-[560px]', () => {
       const { container } = renderOnboarding()
 
-      const gridRoot = container.firstElementChild as HTMLElement
-      const formSection = gridRoot.children[1] as HTMLElement
+      const wrapper = container.firstElementChild as HTMLElement
+      const grid = wrapper.firstElementChild as HTMLElement
+      const formSection = grid.children[1] as HTMLElement
       expect(formSection.className).toContain('max-w-[560px]')
+    })
+
+    it('action bar is sticky at the bottom', () => {
+      renderOnboarding()
+
+      const actionBar = screen.getByTestId('onboarding-actions')
+      expect(actionBar.className).toContain('sticky')
+      expect(actionBar.className).toContain('bottom-0')
     })
   })
 
