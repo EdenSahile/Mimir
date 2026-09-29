@@ -45,7 +45,7 @@ export default function Onboarding() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
           gap: 'clamp(24px, 4vw, 64px)',
           padding: 'clamp(32px, 6vh, 72px) clamp(24px, 5vw, 80px)',
-          paddingBottom: 'clamp(80px, 12vh, 72px)',
+          paddingBottom: 'clamp(72px, 12vh, 80px)',
         }}
       >
         <div className="flex flex-col items-center gap-7">
