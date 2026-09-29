@@ -1,7 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
 import AppBackground from "@/components/ui/AppBackground/AppBackground"
 import Landing from "@/components/pages/Landing/Landing"
-import Welcome from "@/components/pages/Welcome/Welcome"
+import Onboarding from "@/components/pages/Onboarding/Onboarding"
 import Mimir from "@/components/pages/Mimir/Mimir"
 import Day from "@/components/pages/Day/Day"
 import Projects from "@/components/pages/Projects/Projects"
@@ -17,7 +17,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
-      <Route path="/welcome" element={<Welcome />} />
+      <Route path="/welcome" element={<Onboarding />} />
       <Route path="/mimir" element={<Mimir />} />
       <Route path="/day" element={<Day />} />
       <Route path="/projects" element={<Projects />} />
