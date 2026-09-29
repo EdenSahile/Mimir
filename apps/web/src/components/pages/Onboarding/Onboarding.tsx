@@ -51,7 +51,7 @@ export default function Onboarding() {
           state={step.avatarState}
           size="companion"
           aria-hidden
-          className="h-[290px]"
+          className="h-[clamp(160px,30vh,290px)]"
         />
         <div className="max-w-[300px] text-center">
           <div className="font-display text-[22px] tracking-[.3em] text-[var(--ink-strong)]">
