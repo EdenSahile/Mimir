@@ -50,49 +50,69 @@ describe('MimirAvatar', () => {
   })
 
   describe('6 etats distincts', () => {
-    it('idle: no arcs, no landmarks, no active mouth', () => {
+    it('idle: arcs, landmarks and mouth are hidden', () => {
       render(<MimirAvatar state="idle" />)
 
-      expect(screen.queryByTestId('arcs')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('landmarks')).not.toBeInTheDocument()
-      expect(screen.queryByTestId('mouth-active')).not.toBeInTheDocument()
+      expect(screen.getByTestId('arcs')).toHaveStyle({ opacity: '0' })
+      expect(screen.getByTestId('landmarks')).toHaveStyle({ opacity: '0' })
+      expect(screen.getByTestId('mouth-active')).toHaveStyle({ opacity: '0' })
     })
 
-    it('listening: incoming waves are present', () => {
+    it('listening: incoming waves are visible', () => {
       render(<MimirAvatar state="listening" />)
 
+      const wavesContainer = screen.getByTestId('waves-incoming')
       const waves = screen.getAllByTestId('wave-incoming')
 
       expect(waves.length).toBeGreaterThanOrEqual(1)
+      expect(wavesContainer).not.toHaveStyle({ opacity: '0' })
     })
 
-    it('thinking: arcs are present', () => {
+    it('thinking: arcs are visible', () => {
       render(<MimirAvatar state="thinking" />)
 
-      expect(screen.getByTestId('arcs')).toBeInTheDocument()
+      expect(screen.getByTestId('arcs')).not.toHaveStyle({ opacity: '0' })
     })
 
-    it('processing: landmarks and vertical sweep are present, gaze is off', () => {
+    it('processing: landmarks and vertical sweep are visible, gaze is off', () => {
       render(<MimirAvatar state="processing" />)
 
-      expect(screen.getByTestId('landmarks')).toBeInTheDocument()
-      expect(screen.getByTestId('sweep')).toBeInTheDocument()
+      expect(screen.getByTestId('landmarks')).not.toHaveStyle({ opacity: '0' })
+      expect(screen.getByTestId('sweep')).not.toHaveStyle({ opacity: '0' })
       expect(screen.getByTestId('gaze')).toHaveStyle({ opacity: '0' })
     })
 
-    it('responding: active mouth is present and warm tint is applied', () => {
+    it('responding: active mouth is visible and warm tint is applied', () => {
       render(<MimirAvatar state="responding" />)
 
-      expect(screen.getByTestId('mouth-active')).toBeInTheDocument()
+      expect(screen.getByTestId('mouth-active')).not.toHaveStyle({ opacity: '0' })
       expect(screen.getByTestId('layer-back')).toHaveAttribute('data-tint', 'warm')
     })
 
-    it('success: outgoing waves are present', () => {
+    it('success: outgoing waves are visible', () => {
       render(<MimirAvatar state="success" />)
 
+      const wavesContainer = screen.getByTestId('waves-outgoing')
       const waves = screen.getAllByTestId('wave-outgoing')
 
       expect(waves.length).toBeGreaterThanOrEqual(1)
+      expect(wavesContainer).not.toHaveStyle({ opacity: '0' })
+    })
+
+    it('all conditional elements have transition on opacity', () => {
+      render(<MimirAvatar state="idle" />)
+
+      const arcs = screen.getByTestId('arcs')
+      const landmarks = screen.getByTestId('landmarks')
+      const mouth = screen.getByTestId('mouth-active')
+      const wavesIn = screen.getByTestId('waves-incoming')
+      const wavesOut = screen.getByTestId('waves-outgoing')
+
+      expect(arcs.style.transition).toContain('opacity')
+      expect(landmarks.style.transition).toContain('opacity')
+      expect(mouth.style.transition).toContain('opacity')
+      expect(wavesIn.style.transition).toContain('opacity')
+      expect(wavesOut.style.transition).toContain('opacity')
     })
   })
 
