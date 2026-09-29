@@ -30,6 +30,22 @@ Cinq couches distinctes : données structurées (PostgreSQL), fichiers originaux
 
 Un projet contient ses informations, ses documents liés, ses intégrations (GitHub, etc.). Un document personnel a project_id null. Ne pas confondre repository local de développement et repository externe accessible par Mímir.
 
+### DEC-005 : Hébergement sur Vercel
+
+**Date :** 2026-09-29
+**Statut :** Validée
+
+Frontend et backend hébergés sur Vercel. Le frontend (`apps/web`) est un build statique Vite. Le backend (`apps/api`) tournera en fonctions serverless.
+
+Vercel convient parce que tout l'état de Mímir est externe (données sur Neon, fichiers sur stockage objet, auth et pgvector côté services), ce qui correspond au modèle serverless. Les blocages qui avaient forcé un autre projet (maison-buna) sur Render n'existent pas ici : pas de génération PDF via Chrome headless, pas de stockage sur disque local, pas de processus toujours allumé avec tâche planifiée en `setInterval`.
+
+Deux contraintes de conception attachées à ce choix :
+
+1. L'indexation et les embeddings (voir DEC-003) ne se font jamais en synchrone dans une requête HTTP, sous peine de dépasser la durée max d'une fonction. Ce travail passe par une tâche asynchrone (queue ou worker séparé).
+2. Le streaming SSE des réponses Claude (voir DEC-009) reste borné par la durée max d'une fonction Vercel (jusqu'à 300s en Pro, 800s en Fluid Compute), largement suffisant pour une réponse IA.
+
+Toute tâche planifiée (purge, rappel) se fait via Vercel Cron, jamais via un `setInterval` dans le serveur.
+
 ---
 
 ## Décisions ouvertes
@@ -45,12 +61,6 @@ Le fournisseur d'embeddings n'est pas choisi. Options envisagées : OpenAI text-
 **Statut :** En attente
 
 Le fournisseur de stockage des fichiers utilisateurs n'est pas choisi. Options envisagées : Cloudflare R2 (compatible S3, moins cher), AWS S3, Supabase Storage. L'interface `StorageService` dans `packages/shared` permet de changer de fournisseur sans modifier le reste du code. Pour le développement local, un stockage sur disque peut suffire temporairement.
-
-### DEC-005 : Hébergement du backend
-
-**Statut :** En attente
-
-Options envisagées : Railway, Render, Fly.io, Vercel Functions (serverless). Le choix dépendra du modèle économique et des besoins en WebSocket/SSE.
 
 ### DEC-008 : Modèle économique
 
