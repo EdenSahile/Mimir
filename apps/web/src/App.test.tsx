@@ -105,4 +105,39 @@ describe("Routing", () => {
       ).not.toBeInTheDocument()
     })
   })
+
+  describe("AppShell", () => {
+    const shellRoutes = [
+      "/mimir",
+      "/day",
+      "/projects",
+      "/news",
+      "/jobs",
+      "/memory",
+      "/documents",
+      "/settings/general",
+    ]
+
+    const noShellRoutes = ["/", "/welcome"]
+
+    it.each(shellRoutes)(
+      "renders NavRail on internal route %s",
+      (path) => {
+        renderAtRoute(path)
+
+        expect(screen.getByRole("navigation")).toBeInTheDocument()
+      }
+    )
+
+    it.each(noShellRoutes)(
+      "does not render NavRail on %s",
+      (path) => {
+        renderAtRoute(path)
+
+        expect(
+          screen.queryByRole("navigation", { name: /nav/i })
+        ).not.toBeInTheDocument()
+      }
+    )
+  })
 })

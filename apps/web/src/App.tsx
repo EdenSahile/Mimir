@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
 import AppBackground from "@/components/ui/AppBackground/AppBackground"
+import AppShell from "@/components/ui/AppShell"
 import Landing from "@/components/pages/Landing/Landing"
 import Onboarding from "@/components/pages/Onboarding/Onboarding"
 import Mimir from "@/components/pages/Mimir/Mimir"
@@ -18,16 +19,18 @@ export function AppRoutes() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path="/welcome" element={<Onboarding />} />
-      <Route path="/mimir" element={<Mimir />} />
-      <Route path="/day" element={<Day />} />
-      <Route path="/projects" element={<Projects />} />
-      <Route path="/projects/:id" element={<Project />} />
-      <Route path="/news" element={<News />} />
-      <Route path="/jobs" element={<Jobs />} />
-      <Route path="/memory" element={<Memory />} />
-      <Route path="/documents" element={<Documents />} />
-      <Route path="/settings" element={<Navigate to="/settings/general" replace />} />
-      <Route path="/settings/:tab" element={<Settings />} />
+      <Route element={<AppShell />}>
+        <Route path="/mimir" element={<Mimir />} />
+        <Route path="/day" element={<Day />} />
+        <Route path="/projects" element={<Projects />} />
+        <Route path="/projects/:id" element={<Project />} />
+        <Route path="/news" element={<News />} />
+        <Route path="/jobs" element={<Jobs />} />
+        <Route path="/memory" element={<Memory />} />
+        <Route path="/documents" element={<Documents />} />
+        <Route path="/settings" element={<Navigate to="/settings/general" replace />} />
+        <Route path="/settings/:tab" element={<Settings />} />
+      </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
   )
