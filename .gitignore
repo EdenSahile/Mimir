@@ -7,3 +7,6 @@ dist/
 .DS_Store
 .vercel
 _archive/personal-documents/
+
+# Notes de session locales, jamais versionnées
+handoffs/
