@@ -1,5 +1,5 @@
 ---
-globs: ["apps/web/**"]
+paths: ["apps/web/**"]
 ---
 
 # Imports : frontend

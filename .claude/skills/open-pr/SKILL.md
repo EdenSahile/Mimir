@@ -1,6 +1,6 @@
 ---
 name: open-pr
-description: Amene le travail termine jusqu'a la Pull Request, sans merger. Lance une code review, passe un verrou de qualite bloquant (lint + typecheck + test), pousse la branche, ouvre la PR vers dev. Utiliser quand l'utilisateur dit "ouvre la PR", "open pr", "envoie en review", "c'est fini, on pousse", "pousse", "push".
+description: Amene le travail termine jusqu'a la Pull Request, sans merger. Lance une code review, passe un verrou de qualite bloquant (lint + typecheck + test), pousse la branche, ouvre la PR vers dev. Utiliser quand l'utilisateur dit "ouvre la PR", "open pr", "envoie en review", "fini, on pousse".
 ---
 
 ## Entrée

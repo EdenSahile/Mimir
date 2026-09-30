@@ -12,7 +12,7 @@ if (toolName === 'Write' && filePath.includes('apps/api/') && filePath.includes(
       !content.includes('400')) {
     console.error(`⚠️ Route sans validation : ${filePath}`);
     console.error('Ajouter un middleware de validation (validateBody) sur chaque route qui reçoit un body.');
-    process.exit(1);
+    process.exit(2);
   }
 }
 
