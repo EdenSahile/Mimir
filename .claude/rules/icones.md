@@ -1,5 +1,5 @@
 ---
-globs: ["apps/web/**"]
+paths: ["apps/web/**"]
 ---
 
 # Icones : toujours `lucide-react`

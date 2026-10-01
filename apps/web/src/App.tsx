@@ -3,7 +3,7 @@ import AppBackground from "@/components/ui/AppBackground/AppBackground"
 import AppShell from "@/components/ui/AppShell"
 import Landing from "@/components/pages/Landing/Landing"
 import Onboarding from "@/components/pages/Onboarding/Onboarding"
-import Mimir from "@/components/pages/Mimir/Mimir"
+import Assistant from "@/components/pages/Assistant/Assistant"
 import Day from "@/components/pages/Day/Day"
 import Projects from "@/components/pages/Projects/Projects"
 import Project from "@/components/pages/Project/Project"
@@ -20,7 +20,7 @@ export function AppRoutes() {
       <Route path="/" element={<Landing />} />
       <Route path="/welcome" element={<Onboarding />} />
       <Route element={<AppShell />}>
-        <Route path="/mimir" element={<Mimir />} />
+        <Route path="/mimir" element={<Assistant />} />
         <Route path="/day" element={<Day />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/projects/:id" element={<Project />} />

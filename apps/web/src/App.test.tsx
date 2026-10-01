@@ -1,8 +1,25 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { Link, MemoryRouter } from "react-router-dom"
-import { describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { AppRoutes } from "@/App"
+
+beforeEach(() => {
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }))
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 function renderAtRoute(path: string) {
   return render(
@@ -15,7 +32,6 @@ function renderAtRoute(path: string) {
 const routes = [
   { path: "/", name: "Une intelligence qui connaît votre contexte." },
   { path: "/welcome", name: "Comment doit-on vous appeler ?" },
-  { path: "/mimir", name: "MimirAvatar Playground" },
   { path: "/day", name: "Day" },
   { path: "/projects", name: "Projects" },
   { path: "/projects/123", name: "Project" },
@@ -38,6 +54,14 @@ describe("Routing", () => {
         ).toBeInTheDocument()
       }
     )
+
+    it("renders the Assistant screen at /mimir", () => {
+      renderAtRoute("/mimir")
+
+      expect(
+        screen.getByPlaceholderText("Parlez à Mímir")
+      ).toBeInTheDocument()
+    })
   })
 
   describe("navigation", () => {
@@ -52,7 +76,7 @@ describe("Routing", () => {
       )
 
       expect(
-        screen.getByRole("heading", { name: "MimirAvatar Playground" })
+        screen.getByPlaceholderText("Parlez à Mímir")
       ).toBeInTheDocument()
 
       await user.click(screen.getByRole("link", { name: "Go to Day" }))
@@ -61,7 +85,7 @@ describe("Routing", () => {
         screen.getByRole("heading", { name: "Day" })
       ).toBeInTheDocument()
       expect(
-        screen.queryByRole("heading", { name: "MimirAvatar Playground" })
+        screen.queryByPlaceholderText("Parlez à Mímir")
       ).not.toBeInTheDocument()
     })
 

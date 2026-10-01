@@ -1,5 +1,5 @@
 ---
-globs: ["apps/api/**"]
+paths: ["apps/api/**"]
 ---
 
 # Imports : backend
