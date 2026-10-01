@@ -45,7 +45,6 @@ export default function Onboarding() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
           gap: 'clamp(24px, 4vw, 64px)',
           padding: 'clamp(32px, 6vh, 72px) clamp(24px, 5vw, 80px)',
-          paddingBottom: 'clamp(72px, 12vh, 80px)',
         }}
       >
         <div className="flex flex-col items-center gap-7">
@@ -119,37 +118,33 @@ export default function Onboarding() {
               ))}
             </div>
           )}
-        </div>
-      </div>
 
-      <div
-        className="sticky bottom-0 z-10 flex items-center gap-4 px-[clamp(24px,5vw,80px)] py-4"
-        style={{
-          background:
-            'linear-gradient(to top, var(--bg-base) 60%, transparent)',
-        }}
-        data-testid="onboarding-actions"
-      >
-        <button
-          onClick={handleNext}
-          className="cursor-pointer rounded-full border-none px-7 py-3.5 text-sm font-medium text-[var(--on-light)]"
-          style={{
-            background:
-              'linear-gradient(180deg, rgba(206,244,248,.95), rgba(176,226,232,.82))',
-          }}
-          data-testid="onboarding-continue"
-        >
-          {isLastStep ? 'Entrer dans Mímir' : 'Continuer'}
-        </button>
-        {!isLastStep && (
-          <button
-            onClick={handleNext}
-            className="cursor-pointer border-none bg-transparent text-[13.5px] text-[var(--ink-3)] underline underline-offset-4"
-            data-testid="onboarding-skip"
+          <div
+            className="flex items-center gap-4"
+            data-testid="onboarding-actions"
           >
-            Passer
-          </button>
-        )}
+            <button
+              onClick={handleNext}
+              className="cursor-pointer rounded-full border-none px-7 py-3.5 text-sm font-medium text-[var(--on-light)]"
+              style={{
+                background:
+                  'linear-gradient(180deg, rgba(206,244,248,.95), rgba(176,226,232,.82))',
+              }}
+              data-testid="onboarding-continue"
+            >
+              {isLastStep ? 'Entrer dans Mímir' : 'Continuer'}
+            </button>
+            {!isLastStep && (
+              <button
+                onClick={handleNext}
+                className="cursor-pointer border-none bg-transparent text-[13.5px] text-[var(--ink-3)] underline underline-offset-4"
+                data-testid="onboarding-skip"
+              >
+                Passer
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

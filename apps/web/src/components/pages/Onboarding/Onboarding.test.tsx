@@ -86,12 +86,14 @@ describe('Onboarding', () => {
       expect(formSection.className).toContain('max-w-[560px]')
     })
 
-    it('action bar is sticky at the bottom', () => {
-      renderOnboarding()
+    it('action bar is inside the form column', () => {
+      const { container } = renderOnboarding()
 
+      const wrapper = container.firstElementChild as HTMLElement
+      const grid = wrapper.firstElementChild as HTMLElement
+      const formSection = grid.children[1] as HTMLElement
       const actionBar = screen.getByTestId('onboarding-actions')
-      expect(actionBar.className).toContain('sticky')
-      expect(actionBar.className).toContain('bottom-0')
+      expect(formSection.contains(actionBar)).toBe(true)
     })
   })
 
