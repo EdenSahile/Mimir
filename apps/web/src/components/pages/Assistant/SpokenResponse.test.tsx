@@ -36,7 +36,7 @@ describe('SpokenResponse', () => {
     render(<SpokenResponse text={LONG_ANSWER} />)
 
     const responseZone = screen.getByTestId('spoken-response')
-    expect(responseZone).toHaveStyle({ maxHeight: '34vh' })
+    expect(responseZone.style.maxHeight).toBe('34vh')
   })
 
   it('scrolls vertically inside its own zone', () => {
