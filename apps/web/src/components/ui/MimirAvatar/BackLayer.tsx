@@ -1,4 +1,4 @@
-import type { MimirState } from '@/components/ui/MimirAvatar/mimir'
+import type { MimirState } from '@/types/mimir'
 
 const BREATH_DURATION: Record<MimirState, string | null> = {
   idle: '8s',

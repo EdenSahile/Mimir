@@ -3,7 +3,7 @@ import MimirAvatar from '@/components/ui/MimirAvatar/MimirAvatar'
 import MimirPresence from '@/components/ui/MimirAvatar/MimirPresence'
 import StateLabel from '@/components/ui/MimirAvatar/StateLabel'
 import VoiceBars from '@/components/ui/MimirAvatar/VoiceBars'
-import type { MimirState } from '@/components/ui/MimirAvatar/mimir'
+import type { MimirState } from '@/types/mimir'
 
 const STATES: MimirState[] = ['idle', 'listening', 'thinking', 'processing', 'responding', 'success']
 const SIZES = ['stage', 'hero', 'companion', 'presence'] as const

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import type { MimirState } from '@/components/ui/MimirAvatar/mimir'
+import type { MimirState } from '@/types/mimir'
 import StateLabel from '@/components/ui/MimirAvatar/StateLabel'
 
 const STATE_LABELS: Record<MimirState, string> = {

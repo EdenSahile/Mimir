@@ -1,4 +1,5 @@
-import type { AvatarMedia, MimirState } from '@/components/ui/MimirAvatar/mimir'
+import type { AvatarMedia } from '@/components/ui/MimirAvatar/mimir'
+import type { MimirState } from '@/types/mimir'
 import Placeholder from '@/components/ui/MimirAvatar/Placeholder'
 
 const RIM_ALPHA: Record<MimirState, number> = {

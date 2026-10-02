@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import MimirAvatar from '@/components/ui/MimirAvatar/MimirAvatar'
-import type { MimirState } from '@/components/ui/MimirAvatar/mimir'
+import type { MimirState } from '@/types/mimir'
 
 describe('MimirAvatar', () => {
   describe('4 couches dans un conteneur ratio 4:5', () => {

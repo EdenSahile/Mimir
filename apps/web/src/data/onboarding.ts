@@ -1,4 +1,4 @@
-import type { MimirState } from '@/components/ui/MimirAvatar/mimir'
+import type { MimirState } from '@/types/mimir'
 
 export type OnboardingStepType = 'text' | 'choice'
 

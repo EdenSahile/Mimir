@@ -1,4 +1,4 @@
-export type MimirState = 'idle' | 'listening' | 'thinking' | 'processing' | 'responding' | 'success'
+import type { MimirState } from '@/types/mimir'
 
 export type AvatarMedia =
   | { kind: 'placeholder' }
