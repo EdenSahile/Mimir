@@ -1,4 +1,4 @@
-import type { MimirState } from '@/components/ui/MimirAvatar/mimir'
+import type { MimirState } from '@/types/mimir'
 
 const GAZE_ALPHA: Record<MimirState, number> = {
   idle: 0.35,

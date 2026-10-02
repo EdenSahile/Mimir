@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import MimirAvatar from '@/components/ui/MimirAvatar/MimirAvatar'
-import type { MimirState } from '@/components/ui/MimirAvatar/mimir'
+import type { MimirState } from '@/types/mimir'
 import '@/components/pages/Landing/landing.css'
 
 const CYCLE_STATES: MimirState[] = ['idle', 'listening', 'thinking', 'responding']

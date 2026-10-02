@@ -1,4 +1,4 @@
-import type { MimirState } from '@/components/ui/MimirAvatar/mimir'
+import type { MimirState } from '@/types/mimir'
 
 const LABELS: Record<MimirState, string> = {
   idle: 'Présent',

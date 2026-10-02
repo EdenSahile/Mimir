@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { MimirState } from '@/components/ui/MimirAvatar/mimir'
+import type { MimirState } from '@/types/mimir'
 import '@/components/ui/MimirAvatar/mimirAvatar.css'
 
 const BAR_COUNT = 27
