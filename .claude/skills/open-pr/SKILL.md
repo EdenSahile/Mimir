@@ -18,7 +18,7 @@ Le skill s'arrête là. Il ne merge pas, et **ne touche pas au ticket Notion** :
 ## Étapes
 
 1. **Vérifier le point de départ.** `git status` et branche courante. S'il reste des changements non commités, le signaler et demander, ne pas commiter à la place de l'utilisateur.
-2. **Code review.** Lancer `/code-review` sur le diff de la branche courante face à `dev`. Si la review remonte des défauts ⛔ (bloquants), s'arrêter et les présenter à l'utilisateur. Les défauts ⚠️ et 💡 sont signalés mais ne bloquent pas.
+2. **Code review.** Lancer le skill `review-code` sur le diff de la branche courante face à `dev`. Si la review remonte des défauts ⛔ (bloquants), s'arrêter et les présenter à l'utilisateur. Les défauts ⚠️ et 💡 sont signalés mais ne bloquent pas.
 3. **Passer le verrou.** `pnpm lint`, puis `pnpm typecheck`, puis `pnpm test`.
 4. **Pousser.** `git push -u origin <branche>`.
 5. **Ouvrir la PR.** `gh pr create --base dev --head <branche>`, titre clair et corps dérivé des commits de la branche. Afficher l'URL.
