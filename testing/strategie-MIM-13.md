@@ -2,17 +2,17 @@
 
 | Critere | Type | Fait |
 |---|---|---|
-| Hook `useMimirConversation()` dans `logic/` | 🟢 | ⬜ |
-| L'envoi d'un message declenche la sequence complete des 6 etats | 🟢 | ⬜ |
-| Duree minimale par etat : 400ms | 🟢 | ⬜ |
-| Sources s'allument une par une en Processing (+320ms) | 🟢 | ⬜ |
-| Reponse revelee mot a mot a 55ms/mot en Responding | 🟢 | ⬜ |
-| Curseur clignotant pendant la revelation | 🟠 | ⬜ Auto · ⬜ Smoke |
-| SuccessPill apparait apres la fin de Responding | 🟢 | ⬜ |
-| Retour a idle apres 2.8s de Success | 🟢 | ⬜ |
-| `inputMode` persiste entre les envois (texte ou voix) | 🟢 | ⬜ |
-| Interruption possible : tout etat -> listening si nouvel envoi | 🟢 | ⬜ |
-| [SIMULE] Textes de reponse codes en dur (2 a 3 reponses variees) | 🟢 | ⬜ |
+| Hook `useMimirConversation()` dans `logic/` | 🟢 | ✅ |
+| L'envoi d'un message declenche la sequence complete des 6 etats | 🟢 | ✅ |
+| Duree minimale par etat : 400ms | 🟢 | ✅ |
+| Sources s'allument une par une en Processing (+320ms) | 🟢 | ✅ |
+| Reponse revelee mot a mot a 55ms/mot en Responding | 🟢 | ✅ |
+| Curseur clignotant pendant la revelation | 🟠 | ✅ Auto · ⬜ Smoke |
+| SuccessPill apparait apres la fin de Responding | 🟢 | ✅ |
+| Retour a idle apres 2.8s de Success | 🟢 | ✅ |
+| `inputMode` persiste entre les envois (texte ou voix) | 🟢 | ✅ |
+| Interruption possible : tout etat -> listening si nouvel envoi | 🟢 | ✅ |
+| [SIMULE] Textes de reponse codes en dur (2 a 3 reponses variees) | 🟢 | ✅ |
 
 ### Raisonnement par critere
 
