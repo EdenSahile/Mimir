@@ -26,16 +26,16 @@ function advanceTimers(milliseconds: number): void {
 function finishRevealAndReturnText(
   getResponse: () => string,
 ): string {
-  let revealedText = ''
+  let previousText: string | null = null
   let safety = 0
 
-  while (getResponse() !== revealedText && safety < 500) {
-    revealedText = getResponse()
+  while (getResponse() !== previousText && safety < 500) {
+    previousText = getResponse()
     advanceTimers(WORD_STEP_MS)
     safety += 1
   }
 
-  return revealedText
+  return getResponse()
 }
 
 describe('useMimirConversation', () => {
