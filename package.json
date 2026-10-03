@@ -12,6 +12,7 @@
     "db:generate": "pnpm --filter @mimir/db generate",
     "db:push": "pnpm --filter @mimir/db push",
     "db:migrate": "pnpm --filter @mimir/db migrate",
+    "db:check": "pnpm --filter @mimir/db check",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "test": "pnpm -r test"
