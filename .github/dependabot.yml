@@ -12,15 +12,16 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 10
     groups:
-      # Chaque groupe rassemble ses updates en UNE PR, y compris entre dossiers du
-      # workspace : une dépendance déclarée dans plusieurs package.json ne crée plus
-      # une PR par dossier.
+      # Un groupe rassemble ses updates en UNE PR, y compris entre dossiers du
+      # workspace (une dépendance déclarée dans plusieurs package.json ne crée pas
+      # une PR par dossier).
       minor-and-patch:
         update-types:
           - "minor"
           - "patch"
-      # Les majeures arrivent groupées dans une seule PR, à relire et décider
-      # (quitte à la fermer et traiter une majeure précise dans son propre ticket).
+      # Groupe ajouté pour que les majeures soient elles aussi dédoublonnées entre
+      # dossiers : une seule PR par semaine, à relire et décider (quitte à la fermer
+      # et traiter une majeure précise dans son propre ticket).
       major:
         update-types:
           - "major"
