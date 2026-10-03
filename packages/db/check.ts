@@ -9,6 +9,6 @@ async function main() {
 main()
   .catch((error) => {
     console.error(error)
-    process.exit(1)
+    process.exitCode = 1
   })
   .finally(() => prisma.$disconnect())
