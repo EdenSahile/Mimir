@@ -1,0 +1,32 @@
+version: 2
+updates:
+  # Dépendances npm/pnpm du monorepo : racine + workspaces apps/* et packages/*.
+  # directories (globs) couvre explicitement chaque manifest du workspace pnpm,
+  # car ce repo utilise pnpm-workspace.yaml, pas un champ "workspaces" de package.json.
+  - package-ecosystem: "npm"
+    directories:
+      - "/"
+      - "/apps/*"
+      - "/packages/*"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      # Patches et mineures regroupées en une seule PR par semaine.
+      # Les majeures restent des PR individuelles (hors groupe), à traiter une par une.
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Actions utilisées par le workflow CI (.github/workflows)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      github-actions:
+        update-types:
+          - "minor"
+          - "patch"
