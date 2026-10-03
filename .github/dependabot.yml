@@ -1,8 +1,13 @@
 version: 2
 updates:
-  # Dépendances npm/pnpm du monorepo (racine + workspaces apps/* et packages/*)
+  # Dépendances npm/pnpm du monorepo : racine + workspaces apps/* et packages/*.
+  # directories (globs) couvre explicitement chaque manifest du workspace pnpm,
+  # car ce repo utilise pnpm-workspace.yaml, pas un champ "workspaces" de package.json.
   - package-ecosystem: "npm"
-    directory: "/"
+    directories:
+      - "/"
+      - "/apps/*"
+      - "/packages/*"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
@@ -19,3 +24,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      github-actions:
+        update-types:
+          - "minor"
+          - "patch"
