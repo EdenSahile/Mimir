@@ -4,6 +4,10 @@ import { Link, MemoryRouter } from "react-router-dom"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { AppRoutes } from "@/App"
 
+vi.mock("@/lib/authClient", () => ({
+  useSession: vi.fn(() => ({ data: null, isPending: false })),
+}))
+
 beforeEach(() => {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
     matches: false,
@@ -127,6 +131,44 @@ describe("Routing", () => {
       expect(
         screen.queryByRole("heading", { name: "Projects" })
       ).not.toBeInTheDocument()
+    })
+  })
+
+  describe("auth routing", () => {
+    it("renders the login screen at /login", () => {
+      renderAtRoute("/login")
+
+      expect(
+        screen.getByRole("button", { name: /se connecter|connexion/i })
+      ).toBeInTheDocument()
+    })
+
+    it("renders the signup screen at /signup", () => {
+      renderAtRoute("/signup")
+
+      expect(
+        screen.getByRole("button", {
+          name: /s'inscrire|créer un compte|inscription/i,
+        })
+      ).toBeInTheDocument()
+    })
+
+    it("renders the public landing route without a session", () => {
+      renderAtRoute("/")
+
+      expect(
+        screen.getByRole("heading", {
+          name: "Une intelligence qui connaît votre contexte.",
+        })
+      ).toBeInTheDocument()
+    })
+
+    it("renders the public login route without a session and does not redirect", () => {
+      renderAtRoute("/login")
+
+      expect(
+        screen.getByRole("button", { name: /se connecter|connexion/i })
+      ).toBeInTheDocument()
     })
   })
 
