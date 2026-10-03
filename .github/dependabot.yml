@@ -12,12 +12,18 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 10
     groups:
-      # Patches et mineures regroupées en une seule PR par semaine.
-      # Les majeures restent des PR individuelles (hors groupe), à traiter une par une.
+      # Chaque groupe rassemble ses updates en UNE PR, y compris entre dossiers du
+      # workspace : une dépendance déclarée dans plusieurs package.json ne crée plus
+      # une PR par dossier.
       minor-and-patch:
         update-types:
           - "minor"
           - "patch"
+      # Les majeures arrivent groupées dans une seule PR, à relire et décider
+      # (quitte à la fermer et traiter une majeure précise dans son propre ticket).
+      major:
+        update-types:
+          - "major"
 
   # Actions utilisées par le workflow CI (.github/workflows)
   - package-ecosystem: "github-actions"
@@ -26,7 +32,10 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 10
     groups:
-      github-actions:
+      github-actions-minor-and-patch:
         update-types:
           - "minor"
           - "patch"
+      github-actions-major:
+        update-types:
+          - "major"
