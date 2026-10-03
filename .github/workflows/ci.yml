@@ -29,6 +29,10 @@ jobs:
     name: Claude Review
     runs-on: ubuntu-latest
     needs: tests
+    # Dependabot n'a pas accès aux secrets du repo : le token de review serait vide
+    # et le job échouerait. On le saute pour les PR dont l'auteur est Dependabot
+    # (user.login, pas github.actor qui bascule si un humain pousse sur la branche).
+    if: github.event.pull_request.user.login != 'dependabot[bot]'
     permissions:
       contents: read
       pull-requests: write
