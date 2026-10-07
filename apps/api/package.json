@@ -13,9 +13,12 @@
   "dependencies": {
     "@mimir/db": "workspace:*",
     "@mimir/shared": "workspace:*",
+    "better-auth": "^1.7.7",
+    "cors": "^2.8.6",
     "express": "^5.1.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.0",
     "@types/supertest": "^7.2.1",
     "supertest": "^7.3.0",
