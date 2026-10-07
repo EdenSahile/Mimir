@@ -26,7 +26,9 @@ beforeEach(() => {
 describe("requireAuth", () => {
   it("calls next when a session is present", async () => {
     const authenticatedSession = { user: { id: "user-1", email: "ada@mimir.app" } }
-    getSessionMock.mockResolvedValue(authenticatedSession)
+    getSessionMock.mockResolvedValue(
+      authenticatedSession as unknown as Awaited<ReturnType<typeof auth.api.getSession>>,
+    )
     const request = { headers: {} } as Request
     const response = createResponse()
     const next = vi.fn() as NextFunction

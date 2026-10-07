@@ -37,7 +37,7 @@ describe("AuthGuard", () => {
     useSessionMock.mockReturnValue({
       data: { user: { id: "user-1" } },
       isPending: false,
-    })
+    } as unknown as ReturnType<typeof useSession>)
 
     renderGuardedRoute()
 
@@ -45,7 +45,10 @@ describe("AuthGuard", () => {
   })
 
   it("redirects to the login screen when no session is present", () => {
-    useSessionMock.mockReturnValue({ data: null, isPending: false })
+    useSessionMock.mockReturnValue({
+      data: null,
+      isPending: false,
+    } as unknown as ReturnType<typeof useSession>)
 
     renderGuardedRoute()
 

@@ -22,7 +22,9 @@ describe("authClient", () => {
   it("creates the auth client with a configured baseURL", async () => {
     await import("@/lib/authClient")
 
-    const [createAuthClientConfig] = createAuthClientMock.mock.calls[0]
+    const [createAuthClientConfig] = createAuthClientMock.mock.calls[0] as unknown as [
+      { baseURL: string },
+    ]
     expect(typeof createAuthClientConfig.baseURL).toBe("string")
     expect(createAuthClientConfig.baseURL.length).toBeGreaterThan(0)
   })

@@ -41,7 +41,9 @@ describe("protected route /api/me", () => {
   })
 
   it("responds 200 with the authenticated user when a session is present", async () => {
-    getSessionMock.mockResolvedValue({ user: { id: "user-1", email: "ada@mimir.app" } })
+    getSessionMock.mockResolvedValue({
+      user: { id: "user-1", email: "ada@mimir.app" },
+    } as unknown as Awaited<ReturnType<typeof auth.api.getSession>>)
 
     const meResponse = await request(app).get("/api/me")
 
