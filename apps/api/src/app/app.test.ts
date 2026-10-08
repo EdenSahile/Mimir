@@ -8,7 +8,7 @@ vi.mock("@/config/auth.js", () => ({
   },
 }))
 
-import { app } from "@/app.js"
+import { app } from "@/app/app.js"
 import { auth } from "@/config/auth.js"
 
 const getSessionMock = vi.mocked(auth.api.getSession)
