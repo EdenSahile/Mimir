@@ -51,4 +51,21 @@ describe("Login", () => {
       })
     )
   })
+
+  it("shows an error message when signIn fails", async () => {
+    const user = userEvent.setup()
+    signInEmailMock.mockResolvedValueOnce({
+      data: null,
+      error: { code: "INVALID_EMAIL_OR_PASSWORD" },
+    } as never)
+    renderLogin()
+    await user.type(screen.getByLabelText(/e-?mail/i), "ada@mimir.app")
+    await user.type(screen.getByLabelText(/mot de passe/i), "mauvais")
+
+    await user.click(
+      screen.getByRole("button", { name: /se connecter|connexion/i })
+    )
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/incorrect/i)
+  })
 })

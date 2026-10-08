@@ -62,4 +62,21 @@ describe("Signup", () => {
       })
     )
   })
+
+  it("shows an error message when signUp fails", async () => {
+    const user = userEvent.setup()
+    signUpEmailMock.mockResolvedValueOnce({
+      data: null,
+      error: { code: "USER_ALREADY_EXISTS" },
+    } as never)
+    renderSignup()
+    await user.type(screen.getByLabelText(/e-?mail/i), "ada@mimir.app")
+    await user.type(screen.getByLabelText(/mot de passe/i), "motdepasse123")
+
+    await user.click(
+      screen.getByRole("button", { name: /s'inscrire|créer un compte|inscription/i })
+    )
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/compte existe déjà/i)
+  })
 })

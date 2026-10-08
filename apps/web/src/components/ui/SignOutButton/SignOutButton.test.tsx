@@ -33,4 +33,19 @@ describe("SignOutButton", () => {
 
     expect(signOutMock).toHaveBeenCalledOnce()
   })
+
+  it("shows an error message when signOut fails", async () => {
+    const user = userEvent.setup()
+    signOutMock.mockResolvedValueOnce({
+      data: null,
+      error: { message: "network error" },
+    } as never)
+    render(<SignOutButton />)
+
+    await user.click(
+      screen.getByRole("button", { name: /déconnexion|se déconnecter/i })
+    )
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/échoué/i)
+  })
 })
