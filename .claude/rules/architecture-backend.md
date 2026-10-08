@@ -9,7 +9,7 @@ Le decoupage est **par couche technique**, pas par domaine. Cette structure est 
 ```
 src/
 ├── index.ts          # demarrage du serveur : lit la config, ecoute. Rien d'autre.
-├── app.ts            # assemblage de l'app Express. Ne connait aucune route.
+├── app/              # assemblage de l'app Express (app.ts + app.test.ts). Ne connait aucune route.
 ├── config/           # configuration (variables d'environnement...)
 ├── middlewares/      # middlewares Express (404, erreurs, validation d'entree...)
 ├── routes/           # declaration des routes. Aucun corps de handler.
@@ -23,7 +23,7 @@ src/
 
 **`index.ts`** : le point d'entree. Il cree l'app et l'ecoute sur le port. Aucune route, aucun middleware ici.
 
-**`app.ts`** : il assemble, dans cet ordre : les middlewares globaux (`express.json()`...), le router principal, le 404, puis le middleware d'erreur. Il importe `routes` et rien de plus : **`app.ts` ne doit jamais declarer une route lui-meme**.
+**`app.ts`** : il assemble, dans cet ordre : les middlewares globaux (`express.json()`...), le router principal, le 404, puis le middleware d'erreur. Il importe `routes` et rien de plus : **`app.ts` ne doit jamais declarer une route lui-meme**. Comme il a un test, il vit dans son dossier-paire `app/` (`app/app.ts` + `app/app.test.ts`), suivant `files-backend.md` ; `index.ts`, qui n'a pas de test, reste a plat.
 
 **`routes/index.ts`** : le router principal. Il monte les routers des autres fichiers de `routes/`. C'est le seul endroit a modifier quand on branche un nouveau groupe de routes.
 
