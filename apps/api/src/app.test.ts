@@ -48,6 +48,6 @@ describe("protected route /api/me", () => {
     const meResponse = await request(app).get("/api/me")
 
     expect(meResponse.status).toBe(200)
-    expect(meResponse.body.user.email).toBe("ada@mimir.app")
+    expect(meResponse.body.email).toBe("ada@mimir.app")
   })
 })
