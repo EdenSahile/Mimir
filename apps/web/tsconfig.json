@@ -4,6 +4,8 @@
     "jsx": "react-jsx",
     "outDir": "dist",
     "rootDir": "src",
+    "declaration": false,
+    "declarationMap": false,
     "types": ["vitest/globals", "@testing-library/jest-dom/vitest"],
     "paths": {
       "@/*": ["./src/*"]

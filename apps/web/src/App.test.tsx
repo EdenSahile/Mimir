@@ -3,8 +3,27 @@ import userEvent from "@testing-library/user-event"
 import { Link, MemoryRouter } from "react-router-dom"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { AppRoutes } from "@/App"
+import { useSession } from "@/lib/authClient"
+
+vi.mock("@/lib/authClient", () => ({
+  useSession: vi.fn(),
+}))
+
+const useSessionMock = vi.mocked(useSession)
+
+const connectedSession = {
+  data: { user: { id: "user-1" } },
+  isPending: false,
+} as unknown as ReturnType<typeof useSession>
+
+const noSession = {
+  data: null,
+  isPending: false,
+} as unknown as ReturnType<typeof useSession>
 
 beforeEach(() => {
+  useSessionMock.mockReturnValue(connectedSession)
+
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
     matches: false,
     media: query,
@@ -127,6 +146,48 @@ describe("Routing", () => {
       expect(
         screen.queryByRole("heading", { name: "Projects" })
       ).not.toBeInTheDocument()
+    })
+  })
+
+  describe("auth routing", () => {
+    it("renders the login screen at /login", () => {
+      renderAtRoute("/login")
+
+      expect(
+        screen.getByRole("button", { name: /se connecter|connexion/i })
+      ).toBeInTheDocument()
+    })
+
+    it("renders the signup screen at /signup", () => {
+      renderAtRoute("/signup")
+
+      expect(
+        screen.getByRole("button", {
+          name: /s'inscrire|créer un compte|inscription/i,
+        })
+      ).toBeInTheDocument()
+    })
+
+    it("renders the public landing route without a session", () => {
+      useSessionMock.mockReturnValue(noSession)
+
+      renderAtRoute("/")
+
+      expect(
+        screen.getByRole("heading", {
+          name: "Une intelligence qui connaît votre contexte.",
+        })
+      ).toBeInTheDocument()
+    })
+
+    it("renders the public login route without a session and does not redirect", () => {
+      useSessionMock.mockReturnValue(noSession)
+
+      renderAtRoute("/login")
+
+      expect(
+        screen.getByRole("button", { name: /se connecter|connexion/i })
+      ).toBeInTheDocument()
     })
   })
 

@@ -9,5 +9,11 @@ dist/
 .vercel
 _archive/personal-documents/
 
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
 # Notes de session locales, jamais versionnées
 handoffs/
