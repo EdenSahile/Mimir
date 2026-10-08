@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
 import AppBackground from "@/components/ui/AppBackground/AppBackground"
 import AppShell from "@/components/ui/AppShell"
+import AuthGuard from "@/components/ui/AuthGuard/AuthGuard"
 import Landing from "@/components/pages/Landing/Landing"
 import Login from "@/components/pages/Login/Login"
 import Signup from "@/components/pages/Signup/Signup"
@@ -23,7 +24,7 @@ export function AppRoutes() {
       <Route path="/welcome" element={<Onboarding />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
-      <Route element={<AppShell />}>
+      <Route element={<AuthGuard><AppShell /></AuthGuard>}>
         <Route path="/mimir" element={<Assistant />} />
         <Route path="/day" element={<Day />} />
         <Route path="/projects" element={<Projects />} />

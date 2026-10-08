@@ -22,7 +22,7 @@ export default function Signup() {
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <label htmlFor="signup-email">E-mail</label>
+      <label htmlFor="signup-email">Email</label>
       <Input
         id="signup-email"
         type="email"

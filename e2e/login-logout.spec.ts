@@ -31,6 +31,7 @@ test("la connexion ouvre une session et la deconnexion la ferme", async ({ page 
   expect(cookiesAfterLogin.length, "un cookie de session doit etre pose apres login").toBeGreaterThan(0)
 
   await submitButton(page, logoutControl).click()
+  await expect(page).toHaveURL(/\/login$/)
 
   await page.goto("/mimir")
   await expect(page).toHaveURL(/\/login$/)

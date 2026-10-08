@@ -19,7 +19,7 @@ export default function Login() {
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <label htmlFor="login-email">E-mail</label>
+      <label htmlFor="login-email">Email</label>
       <Input
         id="login-email"
         type="email"
