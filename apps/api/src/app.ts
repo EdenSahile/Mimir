@@ -2,13 +2,16 @@ import cors from "cors"
 import express from "express"
 import { toNodeHandler } from "better-auth/node"
 import { auth } from "@/config/auth.js"
+import { frontendUrl } from "@/config/env/env.js"
+import { errorHandler } from "@/middlewares/errorHandler/errorHandler.js"
+import { notFound } from "@/middlewares/notFound/notFound.js"
 import { routes } from "@/routes/index.js"
 
 export const app = express()
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL ?? "http://localhost:5173",
+    origin: frontendUrl,
     credentials: true,
   }),
 )
@@ -20,3 +23,5 @@ app.all("/api/auth/*splat", toNodeHandler(auth))
 
 app.use(express.json())
 app.use(routes)
+app.use(notFound)
+app.use(errorHandler)

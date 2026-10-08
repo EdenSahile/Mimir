@@ -31,6 +31,14 @@ describe("public routes", () => {
   })
 })
 
+describe("unknown routes", () => {
+  it("responds 404 for an unmatched route", async () => {
+    const unknownResponse = await request(app).get("/does-not-exist")
+
+    expect(unknownResponse.status).toBe(404)
+  })
+})
+
 describe("protected route /api/me", () => {
   it("responds 401 when no session is present", async () => {
     getSessionMock.mockResolvedValue(null)
