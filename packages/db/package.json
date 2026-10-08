@@ -12,11 +12,12 @@
     "check": "dotenv -e ../../.env -- tsx check.ts"
   },
   "dependencies": {
-    "@prisma/client": "^6.0.0"
+    "@prisma/adapter-neon": "^7.10.0",
+    "@prisma/client": "^7.10.0"
   },
   "devDependencies": {
     "dotenv-cli": "^11.0.0",
-    "prisma": "^6.0.0",
+    "prisma": "^7.10.0",
     "tsx": "^4.19.0"
   }
 }
