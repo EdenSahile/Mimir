@@ -11,18 +11,23 @@ datasource db {
 }
 
 // ---------------------------------------------------------------------------
-// Auth
-// Les tables session, account et verification seront ajoutées par Better Auth.
-// Le modèle User ci-dessous est celui de Mímir. Better Auth s'y connectera.
+// Auth (Better Auth)
+// User est le modèle Mímir ; Better Auth s'y connecte via l'adaptateur Prisma.
+// Session, Account et Verification sont les tables attendues par Better Auth
+// (emailAndPassword : le hash du mot de passe vit dans Account.password).
 // ---------------------------------------------------------------------------
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
+  sessions         Session[]
+  accounts         Account[]
   profile          Profile?
   preferences      Preference[]
   goals            Goal[]
@@ -33,6 +38,44 @@ model User {
   userModules      UserModule[]
   userIntegrations UserIntegration[]
   memories         Memory[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 // ---------------------------------------------------------------------------

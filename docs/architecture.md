@@ -62,3 +62,10 @@ L'architecture IA de Mímir distingue :
 - API REST pour les opérations CRUD (profil, projets, documents, etc.)
 - SSE (Server-Sent Events) pour le streaming des réponses IA
 - Proxy Vite en développement (`/api` redirigé vers le backend)
+
+## Authentification
+
+- Better Auth gère l'inscription, la connexion et les sessions. Côté backend, son handler est monté sur `/api/auth/*`.
+- Ce handler est monté **avant** `express.json()` : Better Auth lit lui-même le corps brut des requêtes, et un `express.json()` placé avant le consommerait, ce qui casserait l'auth.
+- En développement, le frontend (port 5173) et l'API (port 3001) sont sur des origines différentes, donc le cookie de session est cross-origin : l'API active CORS avec les identifiants (`credentials`), et le client Better Auth renvoie le cookie sur chaque requête.
+- `GET /api/me` renvoie l'utilisateur de la session courante (l'objet utilisateur à plat), protégé par le middleware `requireAuth`. Le frontend garde ses routes internes avec `AuthGuard`, qui lit la session via `useSession` et redirige vers `/login` quand elle est absente.
