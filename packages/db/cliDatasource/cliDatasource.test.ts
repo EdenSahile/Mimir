@@ -4,7 +4,9 @@ import { resolveCliDatasourceUrl } from "./cliDatasource.js"
 const pooledUrl = "postgresql://user:pass@ep-demo-pooler.eu-central-1.aws.neon.tech/neondb"
 const localDirectUrl = "postgresql://user:pass@ep-little-boat-b2sruvec.c-6.eu-central-1.aws.neon.tech/neondb"
 const testDirectUrl = "postgresql://user:pass@ep-withered-fire-b2jm9g5v.c-6.eu-central-1.aws.neon.tech/neondb"
-const sharedDirectUrl = "postgresql://user:pass@ep-sweet-paper-b2d3bg45.c-6.eu-central-1.aws.neon.tech/neondb"
+const previewDirectUrl = "postgresql://user:pass@ep-sweet-paper-b2d3bg45.c-6.eu-central-1.aws.neon.tech/neondb"
+const sharedDirectUrl = previewDirectUrl
+const unknownDirectUrl = "postgresql://user:pass@ep-inconnue-b9x7y1z2.c-6.eu-central-1.aws.neon.tech/neondb"
 
 describe("generate, seule commande autorisee sur la connexion poolee", () => {
   it("utilise DATABASE_URL", () => {
@@ -76,5 +78,28 @@ describe("db push, restreint aux bases locale et de test", () => {
     const pushArgv = ["node", "prisma", "db", "push"]
 
     expect(() => resolveCliDatasourceUrl({ DIRECT_URL: sharedDirectUrl }, pushArgv)).toThrow(/db push/)
+  })
+})
+
+describe("migrate reset, restreint aux bases jetables", () => {
+  it("accepte la base de test", () => {
+    const resetArgv = ["node", "prisma", "migrate", "reset", "--force"]
+
+    expect(resolveCliDatasourceUrl({ DIRECT_URL: testDirectUrl }, resetArgv)).toBe(testDirectUrl)
+  })
+
+  it("accepte la base de preview, qui est jetable", () => {
+    const resetArgv = ["node", "prisma", "migrate", "reset", "--force"]
+
+    expect(resolveCliDatasourceUrl({ DIRECT_URL: previewDirectUrl }, resetArgv)).toBe(previewDirectUrl)
+  })
+
+  // Le seul rempart contre une faute de frappe sur le fichier d'environnement :
+  // migrate reset detruit tout, et aucune base hors de la liste blanche n'a a
+  // le subir.
+  it("refuse une base qui n'est pas declaree jetable", () => {
+    const resetArgv = ["node", "prisma", "migrate", "reset", "--force"]
+
+    expect(() => resolveCliDatasourceUrl({ DIRECT_URL: unknownDirectUrl }, resetArgv)).toThrow(/migrate reset/)
   })
 })

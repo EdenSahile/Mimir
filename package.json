@@ -13,6 +13,7 @@
     "db:push": "pnpm --filter @mimir/db push",
     "db:migrate": "pnpm --filter @mimir/db migrate",
     "db:deploy": "bash scripts/db-deploy.sh",
+    "db:audit": "bash scripts/db-audit.sh",
     "db:check": "pnpm --filter @mimir/db check",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
