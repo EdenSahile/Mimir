@@ -12,7 +12,7 @@
       "root": "apps/api",
       "framework": "express",
       "buildCommand": "pnpm --filter @mimir/db generate && pnpm bundle",
-      "entrypoint": "dist/index.js"
+      "entrypoint": "vercel.entry.js"
     }
   },
   "rewrites": [
