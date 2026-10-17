@@ -91,6 +91,11 @@ Cette désactivation est **temporaire et conditionnée** :
 
 **Condition bloquante avant la désactivation :** la **valeur** de `BETTER_AUTH_SECRET` en Preview doit être vérifiée différente de celle de Production, pas seulement présente. Ce secret signe les cookies de session : partagé entre les 2 environnements, il rend un cookie forgé sur un preview public valable en production. Tant que la différence n'est pas vérifiée, la protection reste active.
 
+2 réserves sur la méthode de vérification :
+
+- **Ne pas écrire les secrets de production en clair dans `/tmp`.** Un `vercel env pull` vers un chemin fixe laisse le secret sur le disque, lisible et oublié. Passer par un dossier `mktemp -d` supprimé juste après, ou par un tube.
+- **Les variables de Preview peuvent être limitées à une branche.** Un `vercel env pull` sans `--git-branch` rapporte alors la valeur d'une autre branche que celle testée, et la comparaison ne dit rien. Préciser la branche.
+
 **Règle permanente, indépendante de l'échéance ci-dessus :** `DATABASE_URL`, `BETTER_AUTH_SECRET` et le futur bucket de stockage objet sont **distincts entre Production et Preview**. Un preview ne touche jamais les données de production.
 
 ---
