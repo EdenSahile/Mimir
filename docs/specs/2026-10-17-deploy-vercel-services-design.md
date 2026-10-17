@@ -305,12 +305,14 @@ La suite e2e Playwright passe 5 tests sur 5 contre ce preview protégé, en mode
 |---|---|---|---|
 | Développement local (`pnpm dev:api`, `pnpm db:*`) | `.env` du dépôt | `ep-little-boat-b2sruvec` | base de développement |
 | Suite e2e locale et `globalSetup` | `.env.test` du dépôt | `ep-withered-fire-b2jm9g5v` | base de test, réinitialisée à chaque run |
-| Déploiements de preview | `DATABASE_URL` de l'environnement Preview sur Vercel | **inconnu** | base de preview |
+| Déploiements de preview | `DATABASE_URL` de l'environnement Preview sur Vercel | `ep-sweet-paper-b2d3bg45` | base de preview |
 | Production | `DATABASE_URL` de l'environnement Production sur Vercel | **inconnu** | base de production |
 
 **La méthode.** Un compte témoin a été créé par l'API d'un preview, puis cherché dans les 2 bases locales. Il n'est **ni** dans `ep-little-boat` **ni** dans `ep-withered-fire` : les previews écrivent donc sur une 3e branche, distincte des 2 bases locales. `.env` local ne pointe donc pas la base de production, et la question se refermait là.
 
-**Pourquoi 2 cases restent inconnues.** Les variables de Vercel sont marquées comme sensibles : `vercel env pull` les rapporte vides et `vercel env ls` affiche `Encrypted`. `vercel env run` semble les lire, mais il charge le `.env` local par-dessus, donc il renvoie la valeur locale : la méthode est inutilisable pour ce contrôle, et c'est ce qui a produit ma confusion initiale. Pour fermer le tableau, il faut lire la liste des branches et leurs endpoints dans la console Neon, et la rapprocher des bases bindées côté Vercel.
+L'endpoint de preview a été révélé par les logs du premier build qui lance `migrate deploy` : `Datasource "db": ... at "ep-sweet-paper-b2d3bg45.c-6.eu-central-1.aws.neon.tech"`, sans `-pooler`, ce qui confirme au passage que la `DIRECT_URL` de Preview est bien une connexion directe.
+
+**Pourquoi la dernière case reste inconnue.** Les variables de Vercel sont marquées comme sensibles : `vercel env pull` les rapporte vides et `vercel env ls` affiche `Encrypted`. `vercel env run` semble les lire, mais il charge le `.env` local par-dessus, donc il renvoie la valeur locale : la méthode est inutilisable pour ce contrôle, et c'est ce qui a produit ma confusion initiale. Pour fermer le tableau, il faut lire la liste des branches et leurs endpoints dans la console Neon, et la rapprocher des bases bindées côté Vercel.
 
 **Conséquence immédiate.** Les comptes de test créés par les exécutions contre un preview, dont le témoin `mapping-1792269908@mimir.test` et un `preview-...@example.com`, vivent sur la branche de preview, pas sur celle de dev. Ils n'ont donc **pas** été supprimés par le nettoyage, qui visait `.env`. Le nettoyage de cette branche demande ses identifiants, côté Neon.
 
@@ -352,6 +354,23 @@ La commande a été lancée contre la branche Neon jetable (`.env.test`), avec 2
 **Le garde-fou traverse les 2 chemins.** Il vivait d'abord dans `scripts/db-deploy.sh`, donc uniquement sur le chemin de production, alors que le `buildCommand` de preview appelle `prisma migrate deploy` directement. Et la première version de `prisma.config.ts` repliait sur `DATABASE_URL` quand `DIRECT_URL` manquait, ce qui réintroduisait le repli silencieux interdit dans `env.ts`. Le contrôle est maintenant dans `packages/db/cliDatasource/`, que `prisma.config.ts` traverse quel que soit le chemin : une commande de migration sans `DIRECT_URL`, ou avec une `DIRECT_URL` poolée, **lève**. `prisma generate` continue de fonctionner sans aucune variable, ce dont la CI dépend. 6 tests couvrent ces cas.
 
 **Note sur les e2e déjà verts.** Les 5 tests passés contre le preview ont tourné **sans** réinitialisation de base, puisque `globalSetup` n'y touche pas en mode preview, et qu'en local il échouait de toute façon sur `--skip-generate`. Les conditions n'étaient donc pas celles prévues par la conception de la suite. Sans conséquence ici, les specs créant un email neuf à chaque run, mais c'est écrit pour que personne ne lise ces 5 verts comme une validation du chemin local.
+
+### Les bases existantes ne sont pas alignées sur l'historique des migrations
+
+Le premier build de preview qui lance `migrate deploy` a échoué :
+
+```
+Applying migration `20261007183613_add_better_auth_tables`
+Error: P3018
+Database error code: 42701
+ERROR: column "emailVerified" of relation "User" already exists
+```
+
+**Diagnostic.** La branche de preview a été construite par `prisma db push`, qui applique le schéma sans rien inscrire dans `_prisma_migrations`. Les tables et les colonnes existent donc, mais l'historique ne les connaît pas : `migrate deploy` rejoue la migration 2, qui recrée une colonne déjà là. L'échec est enregistré, donc tout `migrate deploy` suivant sur cette base est bloqué jusqu'à résolution.
+
+**Portée.** Ce n'est pas un défaut du chemin de migration, qui a fait exactement son travail : il a trouvé 2 migrations, en a appliqué 1 et s'est arrêté net sur l'incohérence. C'est l'état des bases créées avant que les migrations existent. La base de production a probablement été créée de la même façon, donc le premier `pnpm db:deploy production` échouera de la même manière si rien n'est fait.
+
+**Les 2 sorties.** Soit **baseliner** chaque base, en déclarant la migration déjà appliquée (`prisma migrate resolve --applied 20261007183613_add_better_auth_tables`) puisque son effet est déjà en place, soit **réinitialiser** la base, ce qui n'est acceptable que pour la branche de preview. Les 2 demandent les identifiants de la base visée, que les variables sensibles de Vercel ne laissent pas lire : l'opération se fait depuis la console Neon, sur l'endpoint `ep-sweet-paper-b2d3bg45` pour le preview.
 
 ## Comptes de test sur la branche Neon de dev
 
