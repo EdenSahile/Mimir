@@ -169,7 +169,7 @@ CORS devient inutile en preview et en production, mais **reste en place pour l'i
 |---|---|
 | `vercel.json` | réécrit en mode `services` |
 | `apps/api/esbuild.config.mjs` | nouveau, le bundle |
-| `apps/api/package.json` | script `bundle`, esbuild en `devDependency` |
+| `apps/api/package.json` | script `bundle`, esbuild en `devDependency`, `@prisma/client` et `@prisma/adapter-neon` en `dependencies` (voir risque 2) |
 | `apps/api/src/config/env/env.ts` | dérivation preview depuis `VERCEL_URL` |
 | `apps/api/src/config/env/env.test.ts` | tests de la dérivation preview |
 | `apps/api/src/routes/healthRoutes.ts` | `/health` vers `/api/health` |
@@ -181,7 +181,6 @@ CORS devient inutile en preview et en production, mais **reste en place pour l'i
 | `testing/strategie-MIM-23.md` | 3 mentions mises à jour |
 | `docs/decisions.md` | DEC-012 et amendement DEC-011 point 2 |
 | `docs/roadmap.md` | rappel de réactivation de la protection |
-| `.gitignore` | `apps/api/dist` si absent |
 
 Fichiers explicitement **non modifiés** : `apps/api/src/index.ts`, `apps/api/src/app/app.ts`, `apps/api/src/config/auth.ts`.
 
@@ -203,6 +202,21 @@ Services est en **Beta** sur tous les plans. Si le preview échoue sur cette par
 - Le fichier généré est ignoré par git.
 
 Les détails de ce repli ne sont pas spécifiés plus loin volontairement : ils ne seront travaillés que s'il sert.
+
+## Résultat de la validation locale du bundle
+
+Le bundle a été construit et exécuté en local (`node dist/index.js` avec les variables d'environnement), avant tout déploiement. 4 des 6 risques sont levés à ce stade :
+
+| Risque | Résultat |
+|---|---|
+| 1. Bundling de Prisma | **Levé.** Prisma reste un import externe, il n'entre jamais dans le bundle. Le serveur lancé depuis le bundle atteint la vraie base : inscription en `200`, `/api/me` en `200`, `401` sans cookie, `404` sur route inconnue. |
+| 2. Résolution des externes depuis `apps/api` | **S'est matérialisé, puis corrigé.** `node dist/index.js` échouait en `ERR_MODULE_NOT_FOUND` sur `@prisma/client`. Correctif appliqué : `@prisma/client` et `@prisma/adapter-neon` déclarés dans les `dependencies` de `@mimir/api`. |
+| 4. Alias `@/` | **Levé.** esbuild résout les `paths` du `tsconfig` sans `baseUrl`. 0 alias résiduel dans la sortie. |
+| 5. Imports `.js` vers sources `.ts` | **Levé.** esbuild fait la correspondance. |
+
+Le bundle produit fait 3,5 Ko pour 123 lignes : seul notre code est inliné, `@mimir/db` compris, et les dépendances npm restent des imports.
+
+Restent à valider sur le preview : le risque 3 (esbuild et `allowBuilds` sur le build Linux), le risque 6 (commandes en monorepo pnpm) et le risque 7 (syntaxe `services` en Beta).
 
 ## Risques à valider sur le preview, par ordre de priorité
 
