@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test"
 import { prisma } from "@mimir/db"
-import { TEST_PASSWORD, fillCredentials, logoutControl, signupSubmit, submitButton, uniqueEmail } from "./helpers"
+import {
+  TEST_PASSWORD,
+  fillCredentials,
+  logoutControl,
+  signupSubmit,
+  skipsDatabaseAssertions,
+  submitButton,
+  uniqueEmail,
+} from "./helpers"
 
 // Critere 4 -- Sessions persistees en base (smokes-MIM-23.md).
 // Une ligne de session ecrite en base, reliee au User, et qui survit au reload.
@@ -17,11 +25,13 @@ test("la session est persistee en base et survit a un rechargement", async ({ pa
   await submitButton(page, signupSubmit).click()
   await expect(submitButton(page, logoutControl)).toBeVisible()
 
-  const createdUser = await prisma.user.findUnique({ where: { email } })
-  expect(createdUser).not.toBeNull()
+  if (!skipsDatabaseAssertions) {
+    const createdUser = await prisma.user.findUnique({ where: { email } })
+    expect(createdUser).not.toBeNull()
 
-  const persistedSession = await sessionModel().findFirst({ where: { userId: createdUser?.id } })
-  expect(persistedSession, "une ligne de session reliee au User doit exister").not.toBeNull()
+    const persistedSession = await sessionModel().findFirst({ where: { userId: createdUser?.id } })
+    expect(persistedSession, "une ligne de session reliee au User doit exister").not.toBeNull()
+  }
 
   await page.reload()
   await expect(submitButton(page, logoutControl)).toBeVisible()
