@@ -176,13 +176,16 @@ CORS devient inutile en preview et en production, mais **reste en place pour l'i
 | `apps/api/src/app/app.test.ts` | 2 tests mis à jour |
 | `apps/web/src/lib/authClient.ts` | suppression de `baseURL` |
 | `apps/web/src/lib/authClient.test.ts` | réécrit |
+| `apps/web/vite.config.ts` | `strictPort: true` |
 | `playwright.config.ts` | URL d'attente mise à jour |
 | `testing/strategie-MIM-23.md` | 3 mentions mises à jour |
 | `docs/decisions.md` | DEC-012 et amendement DEC-011 point 2 |
 | `docs/roadmap.md` | rappel de réactivation de la protection |
 | `.gitignore` | `apps/api/dist` si absent |
 
-Fichiers explicitement **non modifiés** : `apps/api/src/index.ts`, `apps/api/src/app/app.ts`, `apps/api/src/config/auth.ts`, `apps/web/vite.config.ts`.
+Fichiers explicitement **non modifiés** : `apps/api/src/index.ts`, `apps/api/src/app/app.ts`, `apps/api/src/config/auth.ts`.
+
+**Pourquoi `vite.config.ts` a finalement bougé.** Le proxy `/api` y existait déjà et n'avait rien à changer, mais le passage en same-origin a rendu le port du frontend significatif. Avant, `baseURL` pointait en dur sur le port 3001 et le port du serveur de dev n'avait aucune importance. Maintenant le navigateur appelle sa propre origine : si Vite se rabat sur un autre port parce que 5173 est pris, cette origine ne correspond plus à `trustedOrigins` et l'authentification casse sans message clair. `strictPort: true` fait échouer le démarrage franchement au lieu de glisser en silence.
 
 ## Réglages à faire sur Vercel, hors code
 
