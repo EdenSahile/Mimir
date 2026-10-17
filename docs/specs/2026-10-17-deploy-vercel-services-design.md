@@ -185,7 +185,8 @@ CORS devient inutile en preview et en production, mais **reste en place pour l'i
 | `package.json` | script `db:deploy` |
 | `packages/db/prisma.config.ts` | `url` du CLI délégué à `cliDatasource` |
 | `packages/db/cliDatasource/cliDatasource.ts` | nouveau, le garde-fou `DIRECT_URL` |
-| `packages/db/cliDatasource/cliDatasource.test.ts` | nouveau, 6 tests |
+| `packages/db/cliDatasource/cliDatasource.test.ts` | nouveau, 9 tests |
+| `CLAUDE.md` | `db:push` restreint aux bases locale et de test, `db:deploy` documenté |
 | `packages/db/package.json` | script `test`, vitest en `devDependency` |
 | `e2e/helpers.ts` | `skipsDatabaseAssertions` |
 | `e2e/signup.spec.ts` | assertion en base conditionnée au mode local |
@@ -326,7 +327,9 @@ Le découpage et ses motifs sont dans DEC-012. Côté code :
 | Production | `pnpm db:deploy production`, lancé à la main |
 | Local | `pnpm db:deploy .env` ou `.env.test` |
 
-`scripts/db-deploy.sh` accepte soit `production`, auquel cas il récupère les variables du projet Vercel dans un dossier `mktemp -d` supprimé à la sortie même en cas d'erreur, soit un chemin de fichier d'environnement. Il refuse de tourner si `DIRECT_URL` est absente ou si elle désigne un host `-pooler`.
+`scripts/db-deploy.sh` prend **un chemin de fichier d'environnement**, et rien d'autre. La production n'est donc pas un mode à part : c'est le même chemin de code, avec un fichier différent, ce qui évite d'annoncer un chemin de production que rien n'exercerait.
+
+**Pourquoi le fichier est fourni à la main.** La première version récupérait les variables de production depuis Vercel. Vérifié : ça ne marche pas. Les variables du projet sont marquées sensibles, donc `vercel env pull` les rapporte **vides** (`DATABASE_URL=""`), et `vercel env run` charge le `.env` local par-dessus, au point de renvoyer la même valeur pour Preview et pour Production. La promesse a été retirée plutôt que laissée en l'état. Les identifiants viennent de la console Neon, dans un dossier temporaire supprimé après usage, jamais dans le dépôt ni dans un chemin fixe.
 
 ### Procédure de déploiement en production
 
@@ -351,7 +354,11 @@ La commande a été lancée contre la branche Neon jetable (`.env.test`), avec 2
 | Application sur une base vide | Schéma vidé, puis `pnpm db:deploy .env.test` : `Applying migration 20261003060106_init`, `Applying migration 20261007183613_add_better_auth_tables`, tables recréées et interrogeables |
 | Idempotence | Relancée aussitôt : « No pending migrations to apply » |
 
-**Le garde-fou traverse les 2 chemins.** Il vivait d'abord dans `scripts/db-deploy.sh`, donc uniquement sur le chemin de production, alors que le `buildCommand` de preview appelle `prisma migrate deploy` directement. Et la première version de `prisma.config.ts` repliait sur `DATABASE_URL` quand `DIRECT_URL` manquait, ce qui réintroduisait le repli silencieux interdit dans `env.ts`. Le contrôle est maintenant dans `packages/db/cliDatasource/`, que `prisma.config.ts` traverse quel que soit le chemin : une commande de migration sans `DIRECT_URL`, ou avec une `DIRECT_URL` poolée, **lève**. `prisma generate` continue de fonctionner sans aucune variable, ce dont la CI dépend. 6 tests couvrent ces cas.
+**Le garde-fou traverse les 2 chemins, et le défaut est inversé.** La première version reposait sur une liste de commandes de migration, donc sur une liste qui se périme : une commande future touchant au schéma serait passée par `DATABASE_URL` sans que personne y pense. Le défaut est maintenant l'exigence de la connexion directe, et seul `generate` est explicitement autorisé sur la connexion poolée, parce qu'il ne se connecte à rien.
+
+**`db push` est restreint par base.** C'est la cause racine de la divergence : appliqué sur une base partagée, il modifie le schéma sans rien inscrire dans `_prisma_migrations`. Le contrôle ne porte donc pas seulement sur la connexion empruntée mais sur la **cible** : `db push` n'est accepté que sur la base de développement local et sur celle de test, nommées par leur endpoint, et lève sur toute autre. `CLAUDE.md` le dit aussi en clair, puisque `pnpm db:push` y est documenté.
+
+**Détail historique.** Il vivait d'abord dans `scripts/db-deploy.sh`, donc uniquement sur le chemin de production, alors que le `buildCommand` de preview appelle `prisma migrate deploy` directement. Et la première version de `prisma.config.ts` repliait sur `DATABASE_URL` quand `DIRECT_URL` manquait, ce qui réintroduisait le repli silencieux interdit dans `env.ts`. Le contrôle est maintenant dans `packages/db/cliDatasource/`, que `prisma.config.ts` traverse quel que soit le chemin : une commande de migration sans `DIRECT_URL`, ou avec une `DIRECT_URL` poolée, **lève**. `prisma generate` continue de fonctionner sans aucune variable, ce dont la CI dépend. 6 tests couvrent ces cas.
 
 **Note sur les e2e déjà verts.** Les 5 tests passés contre le preview ont tourné **sans** réinitialisation de base, puisque `globalSetup` n'y touche pas en mode preview, et qu'en local il échouait de toute façon sur `--skip-generate`. Les conditions n'étaient donc pas celles prévues par la conception de la suite. Sans conséquence ici, les specs créant un email neuf à chaque run, mais c'est écrit pour que personne ne lise ces 5 verts comme une validation du chemin local.
 
@@ -370,7 +377,21 @@ ERROR: column "emailVerified" of relation "User" already exists
 
 **Portée.** Ce n'est pas un défaut du chemin de migration, qui a fait exactement son travail : il a trouvé 2 migrations, en a appliqué 1 et s'est arrêté net sur l'incohérence. C'est l'état des bases créées avant que les migrations existent. La base de production a probablement été créée de la même façon, donc le premier `pnpm db:deploy production` échouera de la même manière si rien n'est fait.
 
-**Les 2 sorties.** Soit **baseliner** chaque base, en déclarant la migration déjà appliquée (`prisma migrate resolve --applied 20261007183613_add_better_auth_tables`) puisque son effet est déjà en place, soit **réinitialiser** la base, ce qui n'est acceptable que pour la branche de preview. Les 2 demandent les identifiants de la base visée, que les variables sensibles de Vercel ne laissent pas lire : l'opération se fait depuis la console Neon, sur l'endpoint `ep-sweet-paper-b2d3bg45` pour le preview.
+**Décision pour la base de preview : réinitialisation, pas baselining.** `migrate resolve --applied` est une **affirmation non vérifiée** : il déclare la migration appliquée sans comparer quoi que ce soit. Or la base vient de `db push`, dont le résultat peut différer de ce que produisent les migrations sur les index, les contraintes, les valeurs par défaut ou l'ordre des énumérations. La réinitialisation rend l'historique vrai au lieu de le déclarer. Et un preview qui tourne sur une base rafistolée ne teste plus ce que la production fera, ce qui annule l'intérêt du dispositif. Le coût est nul : cette base ne contient que des comptes de test, dont ceux que le nettoyage n'a pas pu atteindre.
+
+**Pour la production, la dérive se mesure avant de décider.** Baseliner sans comparer serait un pari : si le schéma de production ne correspond pas aux migrations, la déclaration pose une bombe à retardement que la migration suivante déclenchera. L'ordre est donc : mesurer la dérive, compter les lignes réelles, puis décider.
+
+```bash
+# 1. la derive entre le schema reel et ce que produisent les migrations
+cd packages/db
+pnpm exec prisma migrate diff \
+  --from-url "$DIRECT_URL_PROD" \
+  --to-schema-datamodel prisma/schema.prisma
+```
+
+Si la base est vide, ou ne contient que des essais, elle est réinitialisée elle aussi : l'historique devient honnête partout pour zéro coût, et cette fenêtre se referme définitivement dès que de vrais documents arrivent. Baseliner une base vide pour éviter une réinitialisation serait absurde.
+
+Les 2 opérations demandent les identifiants de la base visée, que les variables sensibles de Vercel ne laissent pas lire : ils viennent de la console Neon.
 
 ## Comptes de test sur la branche Neon de dev
 

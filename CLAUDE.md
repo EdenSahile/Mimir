@@ -34,9 +34,12 @@ pnpm dev               # Lancer frontend + backend en parallèle
 pnpm dev:api           # Lancer uniquement le backend
 pnpm dev:web           # Lancer uniquement le frontend
 pnpm db:generate       # Générer le client Prisma
-pnpm db:push           # Pousser le schéma vers la base
+pnpm db:push           # Pousser le schéma vers la base (local et test UNIQUEMENT)
 pnpm db:migrate        # Créer une migration
+pnpm db:deploy <.env>  # Appliquer les migrations en attente sur la base du fichier
 ```
+
+`db:push` applique le schéma sans rien inscrire dans l'historique des migrations : la base se retrouve désalignée, et le `db:deploy` suivant échoue sur un objet déjà existant. Il ne s'utilise donc que sur la base de développement local et sur celle de test, jamais sur preview ni sur production, où le schéma ne change que par une migration. Le contrôle est automatique : `packages/db/cliDatasource` refuse un `db push` dont la cible n'est pas l'une de ces 2 bases.
 
 ## Principes
 
