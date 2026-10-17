@@ -56,9 +56,39 @@ L'authentification (inscription, connexion, sessions) passe par Better Auth, ave
 Deux points de câblage non évidents :
 
 1. Le handler Better Auth est monté sur `/api/auth/*`, **avant** `express.json()`. Better Auth lit le corps brut des requêtes : un `express.json()` placé avant le viderait et casserait l'authentification.
-2. En développement, le frontend (port 5173) et l'API (port 3001) sont sur des origines différentes, donc le cookie de session est cross-origin. L'API active CORS avec `credentials`, et le client Better Auth renvoie le cookie sur chaque requête.
+2. ~~En développement, le frontend (port 5173) et l'API (port 3001) sont sur des origines différentes, donc le cookie de session est cross-origin. L'API active CORS avec `credentials`, et le client Better Auth renvoie le cookie sur chaque requête.~~
+
+   **Amendé le 2026-10-17 par DEC-012.** Le développement n'est plus cross-origin. Le client Better Auth n'a plus de `baseURL` : il tape la même origine, et le proxy de `vite.config.ts` renvoie `/api` vers le port 3001. Le navigateur ne parle donc qu'au port 5173. CORS reste en place pour l'instant, mais devient inutile dans les 3 environnements et sera retiré dans un second temps.
 
 `GET /api/me` expose l'utilisateur de la session courante (réponse à plat, l'objet utilisateur directement), protégé par `requireAuth`. Côté frontend, `AuthGuard` garde les routes internes et redirige vers `/login` sans session.
+
+### DEC-012 : 1 projet Vercel, 2 services, authentification same-origin
+
+**Date :** 2026-10-17
+**Statut :** Validée
+**Amende :** DEC-011 point 2
+
+DEC-005 tranchait l'hébergement sur Vercel sans trancher la topologie. Elle est fixée ici : **1 seul projet Vercel contenant 2 services** au sens de Vercel Services, `web` avec pour racine `apps/web` et `api` avec pour racine `apps/api`. Les 2 sont construits séparément mais déployés ensemble, derrière un domaine unique et une URL de preview unique.
+
+Les backends d'un projet Services tournent comme des Vercel Functions sur Fluid Compute, ce qui reste conforme à DEC-005 : le modèle d'exécution serverless ne change pas, seule la déclaration change.
+
+L'alternative écartée était 2 projets Vercel séparés, avec un domaine par projet et `VITE_API_URL` côté frontend. Motif du rejet : elle impose CORS et des cookies cross-site en production, soit précisément la complexité que le domaine unique supprime.
+
+**Conséquence sur l'authentification.** Le frontend et l'API partagent la même origine. `baseURL` disparaît du client Better Auth, qui tape alors son chemin par défaut `/api/auth` sur la même origine, là où le serveur monte déjà le handler. Le développement devient same-origin lui aussi via le proxy Vite, d'où l'amendement de DEC-011 point 2.
+
+**Conséquence sur les URLs de preview.** Les URLs de preview sont générées par déploiement, donc des variables fixes ne peuvent pas les couvrir. `FRONTEND_URL` et `BETTER_AUTH_URL` restent des variables fixes en production, et ne sont dérivées de `VERCEL_URL` (avec `https://` ajouté à la main, cette variable ne portant pas le protocole) que lorsque `VERCEL_ENV` vaut `preview`. Ne pas dériver la production de `VERCEL_URL` : elle porte l'URL `*.vercel.app` propre au déploiement et non le domaine personnalisé, ce qui enverrait cookies et origines de confiance sur le mauvais hôte. `trustedOrigins` suit cette même valeur.
+
+#### Deployment Protection sur les previews : désactivation temporaire et conditionnée
+
+La protection standard est **désactivée sur les previews**, parce que `VERCEL_URL` est documentée comme inutilisable avec elle, et parce qu'un second cookie d'authentification sur le même hôte rendrait indéchiffrable le test du cookie de session same-origin.
+
+Cette désactivation est **temporaire et conditionnée** :
+
+- Elle vaut **uniquement pour valider MIM-37**, et **tant qu'aucune donnée réelle n'existe sur la branche Neon de développement**. Mímir stocke des documents personnels (`Document`, `Memory`, `Message`) : un preview public n'est donc pas anodin, et la condition expire d'elle-même dès que du réel entre en base.
+- **Échéance de réactivation : avant la première fonctionnalité qui touche des documents** (stockage objet, voir DEC-003 et DEC-004). Le rappel est posé sur la ligne « Upload de fichiers vers le stockage objet » de la phase 3 de la roadmap.
+- À cette échéance, bascule sur l'option conservatrice : valider `VERCEL_BRANCH_URL` comme source d'URL de preview à la place de `VERCEL_URL`, et câbler `VERCEL_AUTOMATION_BYPASS_SECRET` dans `playwright.config.ts` pour que les tests scriptés traversent la protection.
+
+**Règle permanente, indépendante de l'échéance ci-dessus :** `DATABASE_URL`, `BETTER_AUTH_SECRET` et le futur bucket de stockage objet sont **distincts entre Production et Preview**. Un preview ne touche jamais les données de production.
 
 ---
 

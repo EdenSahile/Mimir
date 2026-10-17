@@ -52,3 +52,4 @@ pnpm db:migrate        # Créer une migration
 - `docs/data-model.md` : schéma de données
 - `docs/roadmap.md` : phases de développement
 - `docs/decisions.md` : registre des décisions (prises et ouvertes)
+- `docs/specs/` : specs de conception, 1 fichier par chantier (`AAAA-MM-JJ-<sujet>-design.md`)
