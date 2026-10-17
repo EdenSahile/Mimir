@@ -180,7 +180,10 @@ CORS devient inutile en preview et en production, mais **reste en place pour l'i
 | `apps/web/src/lib/authClient.test.ts` | réécrit |
 | `apps/web/vite.config.ts` | `strictPort: true` |
 | `playwright.config.ts` | URL d'attente mise à jour, mode preview avec contournement de protection |
-| `e2e/globalSetup.ts` | pas de reset de base en mode preview |
+| `e2e/globalSetup.ts` | pas de reset de base en mode preview, `--skip-generate` retiré |
+| `scripts/db-deploy.sh` | nouveau, les migrations de production |
+| `package.json` | script `db:deploy` |
+| `packages/db/prisma.config.ts` | `url` du CLI sur `DIRECT_URL` |
 | `e2e/helpers.ts` | `skipsDatabaseAssertions` |
 | `e2e/signup.spec.ts` | assertion en base conditionnée au mode local |
 | `e2e/session-persistence.spec.ts` | assertion en base conditionnée au mode local |
@@ -253,6 +256,10 @@ Le tableau de validation locale ne couvre que ce qui est observable sur une mach
 
 Les points 4 et 5 sont les 2 plus probables : ce sont ceux que la validation locale ne pouvait structurellement pas couvrir, puisque le `node_modules` local est complet et la machine n'est pas Linux.
 
+## Risque consigné, non corrigé dans MIM-37
+
+**Tous les previews partagent une seule branche Neon de dev.** Un preview qui applique une migration destructive casse les autres previews ouverts, et le développement local pointé sur la même branche. Le risque est faible aujourd'hui, une seule branche de travail vivant à la fois, et réel dès que plusieurs branches vivent en parallèle. Le correctif de fond est une branche Neon éphémère par déploiement de preview, traité hors MIM-37.
+
 ## Séquence de validation sur le preview
 
 1. `/api/health` répond.
@@ -286,6 +293,40 @@ Error: [ENTRYPOINT_NOT_FOUND] Service "api" has entrypoint "dist/index.js" but t
 Les 7 points de la section précédente sont levés, dont les 2 jugés les plus probables : le client Prisma est tracé dans la fonction déployée, et aucun binaire de moteur n'est réclamé. L'en-tête `access-control-allow-origin` renvoyant l'hôte du preview confirme que `frontendUrl` a bien été dérivée de `VERCEL_URL`. Le plan B n'a pas servi.
 
 La suite e2e Playwright passe 5 tests sur 5 contre ce preview protégé, en mode `PREVIEW_URL`.
+
+## Migrations
+
+Le découpage et ses motifs sont dans DEC-012. Côté code :
+
+| Environnement | Chemin |
+|---|---|
+| Preview | `prisma migrate deploy` dans le `buildCommand` du service `api`, derrière `[ "$VERCEL_ENV" = "preview" ]` |
+| Production | `pnpm db:deploy production`, lancé à la main |
+| Local | `pnpm db:deploy .env` ou `.env.test` |
+
+`scripts/db-deploy.sh` accepte soit `production`, auquel cas il récupère les variables du projet Vercel dans un dossier `mktemp -d` supprimé à la sortie même en cas d'erreur, soit un chemin de fichier d'environnement. Il refuse de tourner si `DIRECT_URL` est absente ou si elle désigne un host `-pooler`.
+
+### Procédure de déploiement en production
+
+Dans cet ordre, et pas un autre :
+
+1. **Migrer** : `pnpm db:deploy production`. Les migrations partent sur la connexion directe, pas sur le pooler.
+2. **Vérifier** : la sortie liste les migrations appliquées. En cas de doute, rejouer la commande, qui est idempotente et répond « No pending migrations to apply ».
+3. **Promouvoir** le déploiement de production depuis Vercel.
+
+Le code part donc toujours sur un schéma déjà migré.
+
+### Résultat de l'exercice de la commande de production
+
+La commande a été lancée contre la branche Neon jetable (`.env.test`), avec 2 vérifications :
+
+| Vérification | Résultat |
+|---|---|
+| Connexion directe réellement empruntée | `Datasource "db": ... at "ep-withered-fire-b2jm9g5v.c-6.eu-central-1.aws.neon.tech"`, sans `-pooler` |
+| Le garde-fou `DIRECT_URL` sert | Avec un `DIRECT_URL` pointant un host inexistant, la commande échoue en `P1000` au lieu de retomber sur le pooler |
+| Migrations appliquées | 2 migrations trouvées, « No pending migrations to apply » sur une base déjà à jour |
+
+**Ce qui restait à prouver** : l'application des 2 migrations sur une base vide, qui demande un `prisma migrate reset` sur la branche jetable.
 
 ## Comptes de test sur la branche Neon de dev
 

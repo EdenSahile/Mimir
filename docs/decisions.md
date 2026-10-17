@@ -78,6 +78,23 @@ L'alternative écartée était 2 projets Vercel séparés, avec un domaine par p
 
 **Conséquence sur les URLs de preview.** Les URLs de preview sont générées par déploiement, donc des variables fixes ne peuvent pas les couvrir. `FRONTEND_URL` et `BETTER_AUTH_URL` restent des variables fixes en production, et ne sont dérivées de `VERCEL_URL` (avec `https://` ajouté à la main, cette variable ne portant pas le protocole) que lorsque `VERCEL_ENV` vaut `preview`. Ne pas dériver la production de `VERCEL_URL` : elle porte l'URL `*.vercel.app` propre au déploiement et non le domaine personnalisé, ce qui enverrait cookies et origines de confiance sur le mauvais hôte. `trustedOrigins` suit cette même valeur.
 
+#### Migrations : automatiques en preview, délibérées en production
+
+Preview et production n'ont pas le même profil de risque. La base de preview est jetable, celle de production contiendra des documents personnels. Les 2 environnements ne suivent donc pas le même chemin :
+
+- **Preview** : `prisma migrate deploy` dans le `buildCommand` du service `api`, conditionné à `VERCEL_ENV === "preview"`. Aucune friction, et un preview teste toujours le code contre son propre schéma.
+- **Production** : **pas dans le build**. Une commande versionnée du dépôt, `pnpm db:deploy production`, lancée délibérément avant de promouvoir le déploiement.
+
+Les 2 alternatives ont été écartées pour des motifs symétriques. **Migrer dans le build partout** mettrait la production en migration automatique à chaque merge : si la migration passe et que le build échoue ensuite, la base est migrée sans que le code correspondant soit en ligne. **Sortir la migration du build partout** mettrait une étape manuelle là où on veut zéro friction, et poserait un problème d'ordre, puisque c'est le push qui déclenche le déploiement : il faudrait migrer avant que le code soit en ligne.
+
+Le défaut connu de ce choix est que le chemin de production n'est exercé par aucun preview, et c'est exactement ce genre d'écart qui a produit le trou initial, `prisma generate` présent et `migrate deploy` absent. 3 conditions le ferment :
+
+1. La commande de production est **scriptée et versionnée** (`scripts/db-deploy.sh`), jamais tapée de mémoire.
+2. Elle est **exercée au moins une fois** contre une branche Neon jetable, résultat consigné dans la spec.
+3. La **procédure de déploiement en production est écrite** dans la spec, dans l'ordre : migrer, vérifier, promouvoir.
+
+**Les migrations ne passent pas par l'URL poolée.** PgBouncer en mode transaction supporte mal les verrous consultatifs et les instructions de session dont les migrations ont besoin. `DIRECT_URL`, la connexion directe de Neon, est donc obligatoire, et existe dans les 2 environnements Vercel. Relevé en vérifiant ce point : sur Prisma 7.10, `directUrl` déclaré dans `prisma.config.ts` **n'était pas emprunté** par `migrate deploy`, qui se connectait au host poolé. `prisma.config.ts` pointe désormais son `url` sur `DIRECT_URL`, ce fichier ne servant qu'au CLI Prisma. `scripts/db-deploy.sh` refuse de tourner si `DIRECT_URL` est absente ou si elle désigne un host `-pooler`.
+
 #### Deployment Protection sur les previews : maintenue
 
 La protection standard **reste active sur les previews**, en production comme en preview. Mímir stocke des documents personnels (`Document`, `Memory`, `Message`) : un preview public donnerait accès à ces données à quiconque possède l'URL, et une URL de preview circule par nature dans les PR, les notifications et les historiques de navigateur.

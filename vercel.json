@@ -11,7 +11,7 @@
     "api": {
       "root": "apps/api",
       "framework": "express",
-      "buildCommand": "pnpm --filter @mimir/db generate && pnpm bundle",
+      "buildCommand": "pnpm --filter @mimir/db generate && if [ \"$VERCEL_ENV\" = \"preview\" ]; then pnpm --filter @mimir/db exec prisma migrate deploy; fi && pnpm bundle",
       "entrypoint": "vercel.entry.js"
     }
   },

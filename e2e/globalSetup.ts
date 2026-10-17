@@ -16,8 +16,10 @@ export default function globalSetup() {
   // chaque run, les specs restent donc idempotentes sans reset.
   if (process.env.PREVIEW_URL) return
 
-  execSync(
-    "pnpm --filter @mimir/db exec dotenv -e ../../.env.test -- prisma migrate reset --force --skip-generate",
-    { stdio: "inherit" }
-  )
+  // --skip-generate n'existe plus sur migrate reset depuis Prisma 7 : la
+  // commande sortait en code 1 en affichant son aide, donc le reset n'avait
+  // jamais lieu.
+  execSync("pnpm --filter @mimir/db exec dotenv -e ../../.env.test -- prisma migrate reset --force", {
+    stdio: "inherit",
+  })
 }
