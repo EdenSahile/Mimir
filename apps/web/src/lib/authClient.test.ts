@@ -19,14 +19,16 @@ beforeEach(() => {
 })
 
 describe("authClient", () => {
-  it("creates the auth client with a configured baseURL", async () => {
+  // Pas de baseURL : le client tape la meme origine sur son chemin par defaut
+  // /api/auth, ou le serveur monte deja le handler. En dev, le proxy de
+  // vite.config.ts renvoie /api vers le port 3001 (voir DEC-012).
+  it("creates the auth client without a baseURL so it stays same-origin", async () => {
     await import("@/lib/authClient")
 
     const [createAuthClientConfig] = createAuthClientMock.mock.calls[0] as unknown as [
-      { baseURL: string },
+      { baseURL?: string } | undefined,
     ]
-    expect(typeof createAuthClientConfig.baseURL).toBe("string")
-    expect(createAuthClientConfig.baseURL.length).toBeGreaterThan(0)
+    expect(createAuthClientConfig?.baseURL).toBeUndefined()
   })
 
   it("exposes useSession, signIn, signUp and signOut", async () => {
