@@ -19,7 +19,7 @@ de login est un composant de page rendu par une route dans `App.tsx`.
 | Connexion / deconnexion fonctionnelle | 🟠 | ⬜ Auto · ⬜ Smoke |
 | Sessions persistees en base | 🔴 | ⬜ Smoke |
 | Middleware d'auth sur les routes protegees | 🟢 | ⬜ |
-| Routes publiques accessibles sans auth (`/health`, landing, login) | 🟢 | ⬜ |
+| Routes publiques accessibles sans auth (`/api/health`, landing, login) | 🟢 | ⬜ |
 | Client auth cote frontend (Better Auth React) | 🟢 | ⬜ |
 | Redirection vers login si non authentifie | 🟢 | ⬜ |
 | [ROUTE] L'ecran de connexion est rendu sur sa route (`/login`) | 🟢 | ⬜ |
@@ -66,10 +66,10 @@ reponse 401 et `next()` non appele. On teste avec un `req`/`res`/`next` simules
 (et la lecture de session mockee), sans serveur ni base. On verifie aussi qu'une
 route protegee d'exemple (`/api/me`) passe par le middleware. Entierement couvert.
 
-**Routes publiques accessibles sans auth (`/health`, landing, login)** -- 🟢
-Cote backend : un appel (supertest sur l'app Express) a `/health` renvoie 200
+**Routes publiques accessibles sans auth (`/api/health`, landing, login)** -- 🟢
+Cote backend : un appel (supertest sur l'app Express) a `/api/health` renvoie 200
 sans authentification et ne passe pas par `requireAuth` (pas de base requise pour
-`/health`). Cote frontend : la garde laisse passer les routes publiques (landing,
+`/api/health`). Cote frontend : la garde laisse passer les routes publiques (landing,
 login) sans session, sans rediriger. Accessibilite verifiable en auto, au niveau
 app/composant.
 

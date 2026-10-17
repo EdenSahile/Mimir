@@ -18,14 +18,14 @@ beforeEach(() => {
 })
 
 describe("public routes", () => {
-  it("responds 200 on /health without authentication", async () => {
-    const healthResponse = await request(app).get("/health")
+  it("responds 200 on /api/health without authentication", async () => {
+    const healthResponse = await request(app).get("/api/health")
 
     expect(healthResponse.status).toBe(200)
   })
 
-  it("does not read the session for the public /health route", async () => {
-    await request(app).get("/health")
+  it("does not read the session for the public /api/health route", async () => {
+    await request(app).get("/api/health")
 
     expect(getSessionMock).not.toHaveBeenCalled()
   })

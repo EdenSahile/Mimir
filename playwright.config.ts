@@ -31,7 +31,7 @@ export default defineConfig({
   webServer: [
     {
       command: "pnpm exec dotenv run -f .env.test -- pnpm dev:api",
-      url: "http://localhost:3001/health",
+      url: "http://localhost:3001/api/health",
       reuseExistingServer: false,
       timeout: 120_000,
     },
