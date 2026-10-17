@@ -9,12 +9,16 @@ export default function Signup() {
         idPrefix="signup"
         submitLabel="Créer un compte"
         onSubmit={({ email, password }) => {
+          // Better Auth exige un name ; on dérive de la partie locale de l'email
           const name = email.split("@")[0]
           return signUp.email({ email, password, name })
         }}
       />
-      <p>
-        Déjà un compte ? <Link to="/login">Se connecter</Link>
+      <p className="mt-4 text-center text-sm text-muted-foreground">
+        Déjà un compte ?{" "}
+        <Link to="/login" className="text-primary underline hover:text-primary/80">
+          Se connecter
+        </Link>
       </p>
     </>
   )

@@ -10,8 +10,11 @@ export default function Login() {
         submitLabel="Se connecter"
         onSubmit={({ email, password }) => signIn.email({ email, password })}
       />
-      <p>
-        Pas encore de compte ? <Link to="/signup">Créer un compte</Link>
+      <p className="mt-4 text-center text-sm text-muted-foreground">
+        Pas encore de compte ?{" "}
+        <Link to="/signup" className="text-primary underline hover:text-primary/80">
+          Créer un compte
+        </Link>
       </p>
     </>
   )
