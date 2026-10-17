@@ -173,16 +173,24 @@ CORS devient inutile en preview et en production, mais **reste en place pour l'i
 | `apps/api/src/config/env/env.ts` | dérivation preview depuis `VERCEL_URL` |
 | `apps/api/src/config/env/env.test.ts` | tests de la dérivation preview |
 | `apps/api/src/routes/healthRoutes.ts` | `/health` vers `/api/health` |
-| `apps/api/src/app/app.test.ts` | 2 tests mis à jour |
+| `apps/api/src/app/app.test.ts` | 2 tests mis à jour, 1 test ajouté sur `x-powered-by` |
+| `apps/api/src/app/app.ts` | `app.disable("x-powered-by")` |
+| `apps/api/vercel.entry.js` | nouveau, la passerelle d'entrypoint |
 | `apps/web/src/lib/authClient.ts` | suppression de `baseURL` |
 | `apps/web/src/lib/authClient.test.ts` | réécrit |
 | `apps/web/vite.config.ts` | `strictPort: true` |
-| `playwright.config.ts` | URL d'attente mise à jour |
+| `playwright.config.ts` | URL d'attente mise à jour, mode preview avec contournement de protection |
+| `e2e/globalSetup.ts` | pas de reset de base en mode preview |
+| `e2e/helpers.ts` | `skipsDatabaseAssertions` |
+| `e2e/signup.spec.ts` | assertion en base conditionnée au mode local |
+| `e2e/session-persistence.spec.ts` | assertion en base conditionnée au mode local |
 | `testing/strategie-MIM-23.md` | 3 mentions mises à jour |
 | `docs/decisions.md` | DEC-012 et amendement DEC-011 point 2 |
-| `docs/roadmap.md` | rappel de réactivation de la protection |
+| `docs/roadmap.md` | rappel de réactivation retiré, DEC-012 ne désactive plus rien |
 
-Fichiers explicitement **non modifiés** : `apps/api/src/index.ts`, `apps/api/src/app/app.ts`, `apps/api/src/config/auth.ts`.
+Fichiers explicitement **non modifiés** : `apps/api/src/index.ts`, `apps/api/src/config/auth.ts`.
+
+**Pourquoi `app.ts` a finalement bougé.** Un en-tête `x-powered-by: Express` était visible sur les réponses du preview. Express l'envoie par défaut et il ne sert qu'à renseigner un attaquant sur la stack à cibler. `app.disable("x-powered-by")` le supprime, avec un test dans `app.test.ts`.
 
 **Pourquoi `vite.config.ts` a finalement bougé.** Le proxy `/api` y existait déjà et n'avait rien à changer, mais le passage en same-origin a rendu le port du frontend significatif. Avant, `baseURL` pointait en dur sur le port 3001 et le port du serveur de dev n'avait aucune importance. Maintenant le navigateur appelle sa propre origine : si Vite se rabat sur un autre port parce que 5173 est pris, cette origine ne correspond plus à `trustedOrigins` et l'authentification casse sans message clair. `strictPort: true` fait échouer le démarrage franchement au lieu de glisser en silence.
 
@@ -191,7 +199,7 @@ Fichiers explicitement **non modifiés** : `apps/api/src/index.ts`, `apps/api/sr
 1. **Passer le réglage Framework du projet sur « Services ».** Build and Deployment Settings. Vérifié dans la documentation Vercel : « A project builds as services only when this setting is selected and a `services` key is present in `vercel.json` », et « If either is missing, Vercel falls back to its default framework detection and ignores your services configuration ». La contrainte vaut bien pour le modèle `services` courant, pas seulement pour l'ancien `experimentalServices`. C'est le réglage le plus déterminant de la liste : sans lui, le `vercel.json` est ignoré en silence et le déploiement ressemble à l'ancien, sans api.
 2. **Vérifier que l'accès aux variables d'environnement système est activé.** Sans cette case, `VERCEL_ENV` et `VERCEL_URL` n'existent pas, et la dérivation de preview tombe sur le repli de développement.
 3. **Vider les réglages de build du tableau de bord.** Le projet porte aujourd'hui un Build Command, un Output Directory et un Install Command définis au niveau du projet. En mode `services`, ces champs appartiennent aux services, et des réglages de tableau de bord concurrents peuvent prendre le dessus.
-4. **Désactiver Standard Deployment Protection sur les previews.** Vérifié empiriquement : un appel sur le dernier preview renvoie un `302` vers `vercel.com/sso-api`. Conditions, condition bloquante et échéance de réactivation dans DEC-012.
+4. **Laisser Deployment Protection active, et créer un secret de contournement pour l'automatisation.** Deployment Protection → Protection Bypass for Automation → créer un secret, nommé pour son usage (« Playwright »). Vercel l'expose alors aux déploiements sous `VERCEL_AUTOMATION_BYPASS_SECRET`, et il faut **redéployer** pour qu'un déploiement existant le reçoive. Le même secret est déclaré en secret de dépôt GitHub, `Settings → Secrets and variables → Actions`, pour que la CI puisse viser un preview. Il n'entre jamais dans le dépôt. Motif du maintien de la protection dans DEC-012.
 5. **Aucune variable à ajouter, mais une valeur à vérifier.** Preview n'a volontairement ni `FRONTEND_URL` ni `BETTER_AUTH_URL` : la dérivation depuis `VERCEL_URL` les remplace. Production garde les siennes. En revanche la **valeur** de `BETTER_AUTH_SECRET` doit être vérifiée différente entre Preview et Production, condition bloquante de DEC-012. Méthode sans afficher le secret : `vercel env pull` dans chaque environnement vers 2 fichiers du dossier temporaire, puis comparer les empreintes des 2 lignes et supprimer les fichiers.
 
 ## Plan B si Services échoue
@@ -252,6 +260,58 @@ Les points 4 et 5 sont les 2 plus probables : ce sont ceux que la validation loc
 3. La connexion aboutit.
 4. Le cookie de session est bien posé sur le domaine du preview.
 5. `/api/me` renvoie l'utilisateur avec ce cookie.
+
+## Résultat du premier déploiement
+
+Le premier preview a échoué en 2 secondes, avant tout build :
+
+```
+Error: [ENTRYPOINT_NOT_FOUND] Service "api" has entrypoint "dist/index.js" but that path does not exist.
+```
+
+**Ce que ça apprend.** Vercel résout l'`entrypoint` d'un service **avant** le build, contre le contenu du dépôt. Or `dist/index.js` est un artefact produit par le build. Ce n'est pas un mauvais chemin, c'est une poule et un œuf, et aucun réglage de chemin ne le résout. L'erreur apprend aussi que le mode `services` était bien actif : elle n'aurait pas pu nommer le service `api`.
+
+**La passerelle.** `apps/api/vercel.entry.js`, versionné, 1 ligne utile qui importe `./dist/index.js`. Le fichier existe dans le dépôt, donc la validation passe ; l'import n'est résolu qu'à l'exécution, quand `dist` existe. Le traçage de fichiers de Vercel a suivi l'import : la fonction déployée contient bien le bundle.
+
+**La séquence de validation, protection active**, via `vercel curl --deployment` :
+
+| Étape | Résultat |
+|---|---|
+| `/api/health` | `200`, `{"status":"ok","service":"mimir-api"}` |
+| Inscription | `200`, utilisateur créé en base |
+| Cookie de session | `__Secure-better-auth.session_token`, domaine du preview, `Secure`, `HttpOnly`, `SameSite=Lax` |
+| Connexion | `200` |
+| `/api/me` avec cookie | `200`. Sans cookie : `401`. Route `/api` inconnue : `404`. `/` : `200 text/html` |
+
+Les 7 points de la section précédente sont levés, dont les 2 jugés les plus probables : le client Prisma est tracé dans la fonction déployée, et aucun binaire de moteur n'est réclamé. L'en-tête `access-control-allow-origin` renvoyant l'hôte du preview confirme que `frontendUrl` a bien été dérivée de `VERCEL_URL`. Le plan B n'a pas servi.
+
+La suite e2e Playwright passe 5 tests sur 5 contre ce preview protégé, en mode `PREVIEW_URL`.
+
+## Comptes de test sur la branche Neon de dev
+
+Les tests créent de vrais utilisateurs sur la base de la branche de dev. Pour pouvoir les distinguer et les supprimer, **tout compte de test utilise le domaine `@mimir.test`**, que `uniqueEmail()` de `e2e/helpers.ts` produit déjà, avec un préfixe qui nomme le scénario (`signup-`, `session-`, `login-`). Aucun compte de test n'utilise un autre domaine.
+
+Nettoyage, à lancer avec les variables de la branche visée :
+
+```bash
+pnpm --filter @mimir/db exec prisma db execute --stdin <<< "DELETE FROM \"user\" WHERE email LIKE '%@mimir.test';"
+```
+
+Les lignes liées (`session`, `account`) partent avec, les clés étrangères étant en cascade.
+
+## Option différée : supprimer le bundle au lieu de le faire tenir
+
+Le bundle esbuild n'existe que pour l'alias `@/` dans `apps/api` et pour `@mimir/db` et `@mimir/shared`, qui exposent du TypeScript source. En passant `apps/api` en imports relatifs et en faisant produire du JavaScript compilé à ces 2 paquets, l'entrypoint devient un fichier source présent dans le dépôt et les risques alias, imports `.js`, externes pnpm et esbuild/`allowBuilds` disparaissent tous.
+
+Coût mesuré : environ 45 fichiers. 2 `package.json` et 2 configs de build pour les paquets, puis les 31 fichiers de `apps/api/src/` qui importent en `@/`, tests compris, et le retrait de l'alias aux 4 endroits où il est câblé. Ça annule la rule `imports-backend` pour tout le backend.
+
+Différé, mais pas pour le motif « Services sortira de Beta » : la résolution de l'entrypoint avant le build est très probablement un comportement voulu, pas un défaut de Beta, donc la sortie de Beta ne rendra pas `vercel.entry.js` inutile. Les déclencheurs réels sont :
+
+- le bundle recasse ;
+- un nouveau paquet du workspace est importé par l'API ;
+- un 3e service est ajouté.
+
+Une partie se détache et vaut par elle-même, indépendamment du bundle : faire produire du JavaScript compilé à `packages/db` et `packages/shared`, soit 4 fichiers. Ça ne supprime pas la passerelle et ne doit pas être présenté comme tel.
 
 ## Découpage des commits
 

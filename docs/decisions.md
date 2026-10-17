@@ -78,25 +78,20 @@ L'alternative écartée était 2 projets Vercel séparés, avec un domaine par p
 
 **Conséquence sur les URLs de preview.** Les URLs de preview sont générées par déploiement, donc des variables fixes ne peuvent pas les couvrir. `FRONTEND_URL` et `BETTER_AUTH_URL` restent des variables fixes en production, et ne sont dérivées de `VERCEL_URL` (avec `https://` ajouté à la main, cette variable ne portant pas le protocole) que lorsque `VERCEL_ENV` vaut `preview`. Ne pas dériver la production de `VERCEL_URL` : elle porte l'URL `*.vercel.app` propre au déploiement et non le domaine personnalisé, ce qui enverrait cookies et origines de confiance sur le mauvais hôte. `trustedOrigins` suit cette même valeur.
 
-#### Deployment Protection sur les previews : désactivation temporaire et conditionnée
+#### Deployment Protection sur les previews : maintenue
 
-La protection standard est **désactivée sur les previews**, parce que `VERCEL_URL` est documentée comme inutilisable avec elle, et parce qu'un second cookie d'authentification sur le même hôte rendrait indéchiffrable le test du cookie de session same-origin.
+La protection standard **reste active sur les previews**, en production comme en preview. Mímir stocke des documents personnels (`Document`, `Memory`, `Message`) : un preview public donnerait accès à ces données à quiconque possède l'URL, et une URL de preview circule par nature dans les PR, les notifications et les historiques de navigateur.
 
-Cette désactivation est **temporaire et conditionnée** :
+**Pourquoi cette décision a changé.** La version initiale de DEC-012 désactivait la protection sur les previews, de façon temporaire et conditionnée, sur une prémisse jamais testée : que la protection empêchait de valider l'authentification, parce que `VERCEL_URL` est documentée comme inutilisable avec elle et qu'un second cookie d'authentification sur le même hôte brouillerait le test du cookie de session. La validation de MIM-37 a montré que la prémisse était fausse. Le mécanisme découvert : `vercel curl --deployment <url>` génère un jeton de contournement et l'envoie dans l'en-tête `x-vercel-protection-bypass`, ce qui traverse la protection sans la lever. La séquence complète (`/api/health`, inscription, connexion, cookie de session, `/api/me`) est passée **protection active**, et le cookie `__Secure-better-auth.session_token` est resté parfaitement distinct du cookie SSO de Vercel. L'exemption n'a donc jamais servi, et une exemption morte finit par être utilisée : elle est supprimée plutôt que conditionnée.
 
-- Elle vaut **uniquement pour valider MIM-37**, et **tant qu'aucune donnée réelle n'existe sur la branche Neon de développement**. Mímir stocke des documents personnels (`Document`, `Memory`, `Message`) : un preview public n'est donc pas anodin, et la condition expire d'elle-même dès que du réel entre en base.
-- **Échéance de réactivation : le jour même, dès que la séquence de validation de MIM-37 est verte.** Pas « avant la première fonctionnalité qui touche des documents » : une fenêtre ouverte de plusieurs semaines est une fenêtre qu'on oublie de refermer. La protection se rallume dans la même session que la validation.
-- Le rappel posé sur la ligne « Upload de fichiers vers le stockage objet » de la phase 3 de la roadmap reste comme filet, au cas où la réactivation du jour même serait manquée. Ce n'est pas l'échéance, c'est le dernier rattrapage possible.
-- À la réactivation, bascule sur l'option conservatrice : valider `VERCEL_BRANCH_URL` comme source d'URL de preview à la place de `VERCEL_URL`, et câbler `VERCEL_AUTOMATION_BYPASS_SECRET` dans `playwright.config.ts` pour que les tests scriptés traversent la protection.
+**Conséquence sur les tests automatisés.** Playwright ne passe pas par le CLI : il utilise le mécanisme HTTP documenté. `playwright.config.ts` lit `PREVIEW_URL` et `VERCEL_AUTOMATION_BYPASS_SECRET`, et envoie 2 en-têtes sur chaque requête, `x-vercel-protection-bypass` avec le secret et `x-vercel-set-bypass-cookie: true` pour que les navigations du navigateur qui suivent passent aussi. Sans le secret, la configuration échoue au démarrage avec la cause, au lieu de laisser 5 tests échouer sur une page de connexion. Le secret n'entre jamais dans le dépôt : il est créé dans Deployment Protection → Protection Bypass for Automation, d'où Vercel l'expose aux déploiements comme variable système, et il est déclaré en secret de dépôt GitHub pour la CI.
 
-**Condition bloquante avant la désactivation :** la **valeur** de `BETTER_AUTH_SECRET` en Preview doit être vérifiée différente de celle de Production, pas seulement présente. Ce secret signe les cookies de session : partagé entre les 2 environnements, il rend un cookie forgé sur un preview public valable en production. Tant que la différence n'est pas vérifiée, la protection reste active.
+**Règle permanente :** `DATABASE_URL`, `BETTER_AUTH_SECRET` et le futur bucket de stockage objet sont **distincts entre Production et Preview**. Un preview ne touche jamais les données de production.
 
-2 réserves sur la méthode de vérification :
+`BETTER_AUTH_SECRET` mérite une justification propre, parce que le raisonnement « les sessions sont en base, donc un secret partagé est sans effet » est faux. Ce secret signe aussi des jetons **sans état** : vérification d'email, réinitialisation de mot de passe, et un éventuel plugin JWT plus tard. Partagé entre Preview et Production, il donne à toute personne ayant accès aux previews une clé de signature valable en production. 2 réserves sur la méthode de comparaison :
 
 - **Ne pas écrire les secrets de production en clair dans `/tmp`.** Un `vercel env pull` vers un chemin fixe laisse le secret sur le disque, lisible et oublié. Passer par un dossier `mktemp -d` supprimé juste après, ou par un tube.
 - **Les variables de Preview peuvent être limitées à une branche.** Un `vercel env pull` sans `--git-branch` rapporte alors la valeur d'une autre branche que celle testée, et la comparaison ne dit rien. Préciser la branche.
-
-**Règle permanente, indépendante de l'échéance ci-dessus :** `DATABASE_URL`, `BETTER_AUTH_SECRET` et le futur bucket de stockage objet sont **distincts entre Production et Preview**. Un preview ne touche jamais les données de production.
 
 ---
 

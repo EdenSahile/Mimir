@@ -22,7 +22,6 @@
 ## Phase 3 : Documents
 
 - [ ] Upload de fichiers vers le stockage objet
-  - ⚠️ **Filet de rattrapage : vérifier que Deployment Protection est bien réactivée sur les previews.** DEC-012 la désactive le temps de valider MIM-37 et impose de la rallumer le jour même, dès la validation verte. Si elle est encore désactivée en arrivant ici, c'est que la réactivation a été manquée : la rallumer avant de toucher au stockage objet, basculer sur `VERCEL_BRANCH_URL` et câbler `VERCEL_AUTOMATION_BYPASS_SECRET` dans `playwright.config.ts`.
 - [ ] Parsing de documents (PDF, DOCX)
 - [ ] Indexation vectorielle (pgvector)
 - [ ] Recherche sémantique dans les conversations
