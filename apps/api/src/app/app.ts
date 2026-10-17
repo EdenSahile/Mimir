@@ -9,6 +9,10 @@ import { routes } from "@/routes/index.js"
 
 export const app = express()
 
+// Express annonce sa presence dans x-powered-by par defaut. Ca ne sert qu'a
+// renseigner un attaquant sur la stack a cibler.
+app.disable("x-powered-by")
+
 app.use(
   cors({
     origin: frontendUrl,

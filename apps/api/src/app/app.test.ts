@@ -31,6 +31,14 @@ describe("public routes", () => {
   })
 })
 
+describe("response headers", () => {
+  it("does not advertise the server technology in x-powered-by", async () => {
+    const healthResponse = await request(app).get("/api/health")
+
+    expect(healthResponse.headers["x-powered-by"]).toBeUndefined()
+  })
+})
+
 describe("unknown routes", () => {
   it("responds 404 for an unmatched route", async () => {
     const unknownResponse = await request(app).get("/does-not-exist")
