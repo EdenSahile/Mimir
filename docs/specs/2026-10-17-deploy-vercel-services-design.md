@@ -183,7 +183,10 @@ CORS devient inutile en preview et en production, mais **reste en place pour l'i
 | `e2e/globalSetup.ts` | pas de reset de base en mode preview, `--skip-generate` retiré |
 | `scripts/db-deploy.sh` | nouveau, les migrations de production |
 | `package.json` | script `db:deploy` |
-| `packages/db/prisma.config.ts` | `url` du CLI sur `DIRECT_URL` |
+| `packages/db/prisma.config.ts` | `url` du CLI délégué à `cliDatasource` |
+| `packages/db/cliDatasource/cliDatasource.ts` | nouveau, le garde-fou `DIRECT_URL` |
+| `packages/db/cliDatasource/cliDatasource.test.ts` | nouveau, 6 tests |
+| `packages/db/package.json` | script `test`, vitest en `devDependency` |
 | `e2e/helpers.ts` | `skipsDatabaseAssertions` |
 | `e2e/signup.spec.ts` | assertion en base conditionnée au mode local |
 | `e2e/session-persistence.spec.ts` | assertion en base conditionnée au mode local |
@@ -294,6 +297,23 @@ Les 7 points de la section précédente sont levés, dont les 2 jugés les plus 
 
 La suite e2e Playwright passe 5 tests sur 5 contre ce preview protégé, en mode `PREVIEW_URL`.
 
+## Cartographie des bases Neon
+
+Établie par expérience, pas par lecture de configuration, après une contradiction dans mes propres comptes rendus sur l'identité des branches.
+
+| Qui | Variable lue | Endpoint Neon | Rôle réel |
+|---|---|---|---|
+| Développement local (`pnpm dev:api`, `pnpm db:*`) | `.env` du dépôt | `ep-little-boat-b2sruvec` | base de développement |
+| Suite e2e locale et `globalSetup` | `.env.test` du dépôt | `ep-withered-fire-b2jm9g5v` | base de test, réinitialisée à chaque run |
+| Déploiements de preview | `DATABASE_URL` de l'environnement Preview sur Vercel | **inconnu** | base de preview |
+| Production | `DATABASE_URL` de l'environnement Production sur Vercel | **inconnu** | base de production |
+
+**La méthode.** Un compte témoin a été créé par l'API d'un preview, puis cherché dans les 2 bases locales. Il n'est **ni** dans `ep-little-boat` **ni** dans `ep-withered-fire` : les previews écrivent donc sur une 3e branche, distincte des 2 bases locales. `.env` local ne pointe donc pas la base de production, et la question se refermait là.
+
+**Pourquoi 2 cases restent inconnues.** Les variables de Vercel sont marquées comme sensibles : `vercel env pull` les rapporte vides et `vercel env ls` affiche `Encrypted`. `vercel env run` semble les lire, mais il charge le `.env` local par-dessus, donc il renvoie la valeur locale : la méthode est inutilisable pour ce contrôle, et c'est ce qui a produit ma confusion initiale. Pour fermer le tableau, il faut lire la liste des branches et leurs endpoints dans la console Neon, et la rapprocher des bases bindées côté Vercel.
+
+**Conséquence immédiate.** Les comptes de test créés par les exécutions contre un preview, dont le témoin `mapping-1792269908@mimir.test` et un `preview-...@example.com`, vivent sur la branche de preview, pas sur celle de dev. Ils n'ont donc **pas** été supprimés par le nettoyage, qui visait `.env`. Le nettoyage de cette branche demande ses identifiants, côté Neon.
+
 ## Migrations
 
 Le découpage et ses motifs sont dans DEC-012. Côté code :
@@ -326,7 +346,12 @@ La commande a été lancée contre la branche Neon jetable (`.env.test`), avec 2
 | Le garde-fou `DIRECT_URL` sert | Avec un `DIRECT_URL` pointant un host inexistant, la commande échoue en `P1000` au lieu de retomber sur le pooler |
 | Migrations appliquées | 2 migrations trouvées, « No pending migrations to apply » sur une base déjà à jour |
 
-**Ce qui restait à prouver** : l'application des 2 migrations sur une base vide, qui demande un `prisma migrate reset` sur la branche jetable.
+| Application sur une base vide | Schéma vidé, puis `pnpm db:deploy .env.test` : `Applying migration 20261003060106_init`, `Applying migration 20261007183613_add_better_auth_tables`, tables recréées et interrogeables |
+| Idempotence | Relancée aussitôt : « No pending migrations to apply » |
+
+**Le garde-fou traverse les 2 chemins.** Il vivait d'abord dans `scripts/db-deploy.sh`, donc uniquement sur le chemin de production, alors que le `buildCommand` de preview appelle `prisma migrate deploy` directement. Et la première version de `prisma.config.ts` repliait sur `DATABASE_URL` quand `DIRECT_URL` manquait, ce qui réintroduisait le repli silencieux interdit dans `env.ts`. Le contrôle est maintenant dans `packages/db/cliDatasource/`, que `prisma.config.ts` traverse quel que soit le chemin : une commande de migration sans `DIRECT_URL`, ou avec une `DIRECT_URL` poolée, **lève**. `prisma generate` continue de fonctionner sans aucune variable, ce dont la CI dépend. 6 tests couvrent ces cas.
+
+**Note sur les e2e déjà verts.** Les 5 tests passés contre le preview ont tourné **sans** réinitialisation de base, puisque `globalSetup` n'y touche pas en mode preview, et qu'en local il échouait de toute façon sur `--skip-generate`. Les conditions n'étaient donc pas celles prévues par la conception de la suite. Sans conséquence ici, les specs créant un email neuf à chaque run, mais c'est écrit pour que personne ne lise ces 5 verts comme une validation du chemin local.
 
 ## Comptes de test sur la branche Neon de dev
 
