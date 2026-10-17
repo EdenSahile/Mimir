@@ -294,10 +294,12 @@ Les tests créent de vrais utilisateurs sur la base de la branche de dev. Pour p
 Nettoyage, à lancer avec les variables de la branche visée :
 
 ```bash
-pnpm --filter @mimir/db exec prisma db execute --stdin <<< "DELETE FROM \"user\" WHERE email LIKE '%@mimir.test';"
+cd packages/db
+echo 'DELETE FROM "User" WHERE email LIKE '"'"'%@mimir.test'"'"';' \
+  | pnpm exec dotenv -e ../../.env -- prisma db execute --stdin
 ```
 
-Les lignes liées (`session`, `account`) partent avec, les clés étrangères étant en cascade.
+Les lignes liées (`Session`, `Account`) partent avec, les clés étrangères étant en cascade. 2 pièges relevés en l'exécutant : la table est `"User"`, avec la majuscule du modèle Prisma et donc les guillemets obligatoires, et le `dotenv` de `packages/db` est en version 8, qui attend `-e fichier --` là où celui de la racine est en version 11 et attend `run -f fichier --`.
 
 ## Option différée : supprimer le bundle au lieu de le faire tenir
 
