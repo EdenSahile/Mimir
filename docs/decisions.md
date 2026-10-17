@@ -85,8 +85,11 @@ La protection standard est **désactivée sur les previews**, parce que `VERCEL_
 Cette désactivation est **temporaire et conditionnée** :
 
 - Elle vaut **uniquement pour valider MIM-37**, et **tant qu'aucune donnée réelle n'existe sur la branche Neon de développement**. Mímir stocke des documents personnels (`Document`, `Memory`, `Message`) : un preview public n'est donc pas anodin, et la condition expire d'elle-même dès que du réel entre en base.
-- **Échéance de réactivation : avant la première fonctionnalité qui touche des documents** (stockage objet, voir DEC-003 et DEC-004). Le rappel est posé sur la ligne « Upload de fichiers vers le stockage objet » de la phase 3 de la roadmap.
-- À cette échéance, bascule sur l'option conservatrice : valider `VERCEL_BRANCH_URL` comme source d'URL de preview à la place de `VERCEL_URL`, et câbler `VERCEL_AUTOMATION_BYPASS_SECRET` dans `playwright.config.ts` pour que les tests scriptés traversent la protection.
+- **Échéance de réactivation : le jour même, dès que la séquence de validation de MIM-37 est verte.** Pas « avant la première fonctionnalité qui touche des documents » : une fenêtre ouverte de plusieurs semaines est une fenêtre qu'on oublie de refermer. La protection se rallume dans la même session que la validation.
+- Le rappel posé sur la ligne « Upload de fichiers vers le stockage objet » de la phase 3 de la roadmap reste comme filet, au cas où la réactivation du jour même serait manquée. Ce n'est pas l'échéance, c'est le dernier rattrapage possible.
+- À la réactivation, bascule sur l'option conservatrice : valider `VERCEL_BRANCH_URL` comme source d'URL de preview à la place de `VERCEL_URL`, et câbler `VERCEL_AUTOMATION_BYPASS_SECRET` dans `playwright.config.ts` pour que les tests scriptés traversent la protection.
+
+**Condition bloquante avant la désactivation :** la **valeur** de `BETTER_AUTH_SECRET` en Preview doit être vérifiée différente de celle de Production, pas seulement présente. Ce secret signe les cookies de session : partagé entre les 2 environnements, il rend un cookie forgé sur un preview public valable en production. Tant que la différence n'est pas vérifiée, la protection reste active.
 
 **Règle permanente, indépendante de l'échéance ci-dessus :** `DATABASE_URL`, `BETTER_AUTH_SECRET` et le futur bucket de stockage objet sont **distincts entre Production et Preview**. Un preview ne touche jamais les données de production.
 

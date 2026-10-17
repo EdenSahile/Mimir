@@ -188,10 +188,11 @@ Fichiers explicitement **non modifiés** : `apps/api/src/index.ts`, `apps/api/sr
 
 ## Réglages à faire sur Vercel, hors code
 
-1. **Désactiver Standard Deployment Protection sur les previews.** Vérifié empiriquement : un appel sur le dernier preview renvoie un `302` vers `vercel.com/sso-api`. Conditions et échéance de réactivation dans DEC-012.
+1. **Passer le réglage Framework du projet sur « Services ».** Build and Deployment Settings. Vérifié dans la documentation Vercel : « A project builds as services only when this setting is selected and a `services` key is present in `vercel.json` », et « If either is missing, Vercel falls back to its default framework detection and ignores your services configuration ». La contrainte vaut bien pour le modèle `services` courant, pas seulement pour l'ancien `experimentalServices`. C'est le réglage le plus déterminant de la liste : sans lui, le `vercel.json` est ignoré en silence et le déploiement ressemble à l'ancien, sans api.
 2. **Vérifier que l'accès aux variables d'environnement système est activé.** Sans cette case, `VERCEL_ENV` et `VERCEL_URL` n'existent pas, et la dérivation de preview tombe sur le repli de développement.
 3. **Vider les réglages de build du tableau de bord.** Le projet porte aujourd'hui un Build Command, un Output Directory et un Install Command définis au niveau du projet. En mode `services`, ces champs appartiennent aux services, et des réglages de tableau de bord concurrents peuvent prendre le dessus.
-4. **Aucune variable à ajouter.** Preview n'a volontairement ni `FRONTEND_URL` ni `BETTER_AUTH_URL` : la dérivation depuis `VERCEL_URL` les remplace. Production garde les siennes.
+4. **Désactiver Standard Deployment Protection sur les previews.** Vérifié empiriquement : un appel sur le dernier preview renvoie un `302` vers `vercel.com/sso-api`. Conditions, condition bloquante et échéance de réactivation dans DEC-012.
+5. **Aucune variable à ajouter, mais une valeur à vérifier.** Preview n'a volontairement ni `FRONTEND_URL` ni `BETTER_AUTH_URL` : la dérivation depuis `VERCEL_URL` les remplace. Production garde les siennes. En revanche la **valeur** de `BETTER_AUTH_SECRET` doit être vérifiée différente entre Preview et Production, condition bloquante de DEC-012. Méthode sans afficher le secret : `vercel env pull` dans chaque environnement vers 2 fichiers du dossier temporaire, puis comparer les empreintes des 2 lignes et supprimer les fichiers.
 
 ## Plan B si Services échoue
 
@@ -227,6 +228,22 @@ Restent à valider sur le preview : le risque 3 (esbuild et `allowBuilds` sur le
 5. **Les imports en `.js` vers des sources `.ts`.** Le backend est en NodeNext et écrit `@/config/auth.js` pour un fichier `auth.ts`. esbuild doit faire cette correspondance. C'est typiquement ce qui casse en premier.
 6. **Les commandes d'installation et de build en monorepo pnpm.** Le comportement exact de `pnpm install` et de `pnpm build` depuis la racine d'un service dans un workspace pnpm demande une itération possible sur les commandes.
 7. **La syntaxe `services` elle-même**, du fait de la Beta.
+
+## À vérifier au premier déploiement
+
+Le tableau de validation locale ne couvre que ce qui est observable sur une machine de développement. Les points ci-dessous ne se voient **que** sur Vercel, et chacun est une cause d'échec plausible du premier preview. Les vérifier dans cet ordre, qui suit celui du build puis de la requête.
+
+| # | À vérifier | Comment le constater | Si ça casse |
+|---|---|---|---|
+| 1 | Le réglage Framework du projet est sur « Services » | Les logs de build montrent 2 builds distincts, `web` et `api`. Un seul build signifie que le `vercel.json` est ignoré | Repasser le réglage, redéployer. C'est un échec silencieux, pas une erreur |
+| 2 | esbuild s'installe malgré `allowBuilds: false` | Les logs de build du service `api` passent `pnpm bundle` sans `Cannot find module esbuild` ni erreur de binaire de plateforme | Autoriser `esbuild` dans `allowBuilds` de `pnpm-workspace.yaml`, ou le remplacer par `pnpm dlx esbuild` |
+| 3 | `prisma generate` s'exécute dans le build du service `api` | Les logs montrent la sortie de `prisma generate` avant celle d'esbuild | Le `buildCommand` du service ne s'exécute pas depuis la racine du workspace, le `--filter` ne résout rien. Passer par un script de `apps/api` |
+| 4 | Le client Prisma généré est présent dans la fonction déployée | Un appel à une route qui touche la base, pas `/api/health`. Une erreur de client non généré au runtime signe l'absence | Le traçage de fichiers de Vercel suit mal les liens symboliques de pnpm. Déclarer le client via `includeFiles`, qui n'est pas un champ de service mais une clé de `functions` scopée au service d'après la référence de configuration |
+| 5 | Le runtime Linux n'attend pas de binaire de moteur Prisma | Même appel que le point 4 | `@prisma/adapter-neon` est en pur JavaScript et n'est pas censé réclamer de moteur. Si une erreur de binaire apparaît quand même, ajouter `binaryTargets` dans le `generator` du schéma pour la cible Linux de Vercel |
+| 6 | Le rewrite `/api/(.*)` n'est pas avalé par le catch-all SPA | `/api/health` renvoie du JSON, pas le `index.html` du frontend | Les rewrites de premier niveau sont ordonnés : vérifier que la règle `/api/(.*)` précède bien le catch-all |
+| 7 | Le cookie de session est posé sur l'hôte du preview, avec `Secure` | Les en-têtes `Set-Cookie` de la réponse de connexion : domaine du preview, `Secure`, `HttpOnly`, `SameSite=Lax` | Un domaine absent ou un `Secure` manquant renvoie à `BETTER_AUTH_URL` : la dérivation depuis `VERCEL_URL` n'a pas eu lieu, donc le point 2 des réglages Vercel (variables système) n'est pas en place |
+
+Les points 4 et 5 sont les 2 plus probables : ce sont ceux que la validation locale ne pouvait structurellement pas couvrir, puisque le `node_modules` local est complet et la machine n'est pas Linux.
 
 ## Séquence de validation sur le preview
 

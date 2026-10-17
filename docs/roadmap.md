@@ -22,7 +22,7 @@
 ## Phase 3 : Documents
 
 - [ ] Upload de fichiers vers le stockage objet
-  - ⚠️ **Avant cette tâche : réactiver Deployment Protection sur les previews.** Elle est désactivée depuis MIM-37 pour valider l'authentification, et cette tâche est l'échéance fixée par DEC-012. Basculer alors sur `VERCEL_BRANCH_URL` et câbler `VERCEL_AUTOMATION_BYPASS_SECRET` dans `playwright.config.ts`.
+  - ⚠️ **Filet de rattrapage : vérifier que Deployment Protection est bien réactivée sur les previews.** DEC-012 la désactive le temps de valider MIM-37 et impose de la rallumer le jour même, dès la validation verte. Si elle est encore désactivée en arrivant ici, c'est que la réactivation a été manquée : la rallumer avant de toucher au stockage objet, basculer sur `VERCEL_BRANCH_URL` et câbler `VERCEL_AUTOMATION_BYPASS_SECRET` dans `playwright.config.ts`.
 - [ ] Parsing de documents (PDF, DOCX)
 - [ ] Indexation vectorielle (pgvector)
 - [ ] Recherche sémantique dans les conversations
