@@ -44,6 +44,14 @@ Ce qui a réellement protégé la base, dans l'ordre : l'utilisateur n'a pas fou
 
 À retenir pour tout garde-fou futur : un contrôle écrit par celui qu'il est censé contraindre ne vaut que ce que vaut l'information qu'il contient, et cette information venait ici d'une supposition. Le contrôle réel reste la détention des identifiants.
 
+#### Les 2 rotations de secrets, qui n'ont pas la même cause
+
+À ne pas confondre, parce qu'elles protègent de 2 choses différentes et ne se déclenchent pas pour les mêmes raisons.
+
+**1. Rotation de `BETTER_AUTH_SECRET`, en Production et en Preview.** Cause : la même valeur était déclarée dans les 2 portées, donc un jeton signé depuis un preview valait en production. Ce secret signe aussi des jetons sans état, vérification d'email et réinitialisation de mot de passe, que la base ne peut pas révoquer. Faite maintenant parce que la rotation déconnecte les sessions existantes, et que les seules sessions existantes sont celles des comptes de test : la fenêtre se referme dès le premier utilisateur réel. Production d'abord, Preview ensuite, pour que l'interruption de la procédure à n'importe quel moment laisse la production sur une valeur neuve et jamais partagée. Prise en compte au prochain déploiement, les variables étant injectées au build.
+
+**2. Rotation des mots de passe des rôles Neon, sur les 3 branches.** Cause : les endpoints des 3 branches figurent dans l'historique d'un dépôt public, celui de production via le commit `7330824`. Un endpoint n'est pas un identifiant, mais c'est la moitié d'une chaîne de connexion : le mot de passe devient le seul élément qui protège l'accès, donc il est renouvelé. Sans rapport avec l'authentification de l'application.
+
 #### Exposition de l'endpoint de production, et décision
 
 Le commit `7330824` est poussé sur un dépôt public : l'endpoint de la branche de production figure donc dans l'historique. **Décision de l'utilisateur : ni réécriture de l'historique, ni recréation de la branche Neon.** Motif : un endpoint n'est pas un identifiant, il ne donne accès à rien seul, et une réécriture d'historique serait cosmétique puisque les objets restent accessibles par leur SHA. Le seul élément réellement sensible est le mot de passe, et **les mots de passe des 3 branches Neon sont mis en rotation**. Le sujet est clos, il n'a pas à être rouvert.
@@ -449,7 +457,9 @@ ERROR: column "emailVerified" of relation "User" already exists
 
 Les 2 mesures sont en lecture seule et sont lancées **par l'utilisateur**, qui en transmet la sortie : un agent n'a pas d'identifiants de production (rule `bases-et-identifiants`).
 
-Les variables sont passées dans le shell, pour une seule commande, et ne touchent jamais le disque : un fichier d'identifiants reste lisible tant qu'il existe (rule `bases-et-identifiants`).
+Les variables sont passées dans le shell, pour une seule commande, et ne touchent jamais le disque : un fichier d'identifiants reste lisible tant qu'il existe (rule `bases-et-identifiants`). Pour la production, les mesures se font depuis la console du fournisseur, l'agent n'ayant pas d'identifiants.
+
+**Lister les tables avant de les compter.** La base de production vient d'un `db push` à un état de schéma inconnu, et sa migration 2 a échoué : une requête de comptage qui nomme les 11 tables attendues échoue **en entier** si une seule manque, et rend une erreur au lieu d'une mesure. L'ordre est donc : lister ce qui existe, puis compter. Même motif que tout le reste de ce ticket, ne rien supposer sur l'état d'une base.
 
 ```bash
 # 1. la derive entre le schema reel et ce que produisent les migrations
@@ -483,6 +493,10 @@ Le fichier de schéma est donc exactement ce que produisent les 2 migrations. Me
 Si la base est vide, ou ne contient que des essais, elle est réinitialisée elle aussi : l'historique devient honnête partout pour zéro coût, et cette fenêtre se referme définitivement dès que de vrais documents arrivent. Baseliner une base vide pour éviter une réinitialisation serait absurde.
 
 Les 2 opérations demandent les identifiants de la base visée, que les variables sensibles de Vercel ne laissent pas lire : ils viennent de la console Neon.
+
+### La liste de nettoyage est un repli
+
+La suppression ciblée des comptes de test en production ne sert **que** s'il y a quelque chose à garder dans cette base. Si les mesures montrent 0 dans `Document`, `Message` et `Memory`, et uniquement des comptes de test dans `User`, la production est réinitialisée : l'historique des migrations redevient honnête partout, la ligne en échec disparaît, et la liste de suppression devient sans objet. Elle n'est donc pas le plan principal.
 
 ## Comptes de test sur la branche Neon de dev
 
