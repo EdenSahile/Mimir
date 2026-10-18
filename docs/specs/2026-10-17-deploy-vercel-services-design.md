@@ -9,7 +9,7 @@
 
 Vérifié par l'utilisateur dans la console Neon. La branche Neon que `DATABASE_URL` de l'environnement **Preview** désigne sur Vercel est la branche de **production**. Il n'existe pas de branche de preview distincte.
 
-**Depuis quand.** `vercel env ls` date l'entrée Preview de `DATABASE_URL`, `DIRECT_URL` et `BETTER_AUTH_SECRET` d'il y a 1 jour, contre 9 jours pour les entrées Production. Les previews n'écrivent donc en production que depuis la création de ces entrées, et non depuis l'origine du projet. À noter aussi, contre une idée répandue dans ce ticket : il y a bien **2 entrées distinctes** par variable, une par portée. Il n'y a donc rien à dédoubler, c'est la **valeur** de l'entrée Preview qui est à changer.
+**Depuis quand.** L'API Vercel date les 3 entrées Preview du **2026-10-16 entre 15:55 et 15:59**, contre le 2026-10-08 pour les 5 entrées Production. Les previews n'écrivent donc en production que depuis la création de ces entrées, et non depuis l'origine du projet. À noter aussi, contre une idée répandue dans ce ticket : il y a bien **2 entrées distinctes** par variable, une par portée. Il n'y a donc rien à dédoubler, c'est la **valeur** de l'entrée Preview qui est à changer.
 
 Ce que ça implique, et qui doit être traité avant toute suite :
 
@@ -171,7 +171,7 @@ await build({
 
 Avec, dans `apps/api/package.json`, un script `"bundle": "node esbuild.config.mjs"` et **esbuild déclaré en `devDependency` explicite de `@mimir/api`**, sans dépendre de l'esbuild transitif de Vite.
 
-`target: "node24"` suit le Node 24 du dépôt (`apps/api` cible Node 24, et Node 24 est la version par défaut sur Vercel). **Non vérifié dans les réglages du projet** : la version Node configurée côté tableau de bord n'a pas été lue.
+`target: "node24"` suit le Node 24 du dépôt. **Vérifié** le 2026-10-18 par `vercel project inspect` : le projet est sur `Node.js Version 24.x`, donc le bundle et le runtime concordent.
 
 ### `prisma generate` dans le build
 
@@ -269,9 +269,9 @@ Fichiers explicitement **non modifiés** : `apps/api/src/index.ts`, `apps/api/sr
 
 ## Réglages à faire sur Vercel, hors code
 
-1. **Passer le réglage Framework du projet sur « Services ».** Build and Deployment Settings. Vérifié dans la documentation Vercel : « A project builds as services only when this setting is selected and a `services` key is present in `vercel.json` », et « If either is missing, Vercel falls back to its default framework detection and ignores your services configuration ». La contrainte vaut bien pour le modèle `services` courant, pas seulement pour l'ancien `experimentalServices`. C'est le réglage le plus déterminant de la liste : sans lui, le `vercel.json` est ignoré en silence et le déploiement ressemble à l'ancien, sans api.
+1. **Le réglage Framework : la documentation et l'observation se contredisent, et l'observation gagne.** La base de connaissances Vercel affirme qu'« a project builds as services only when this setting is selected and a `services` key is present in `vercel.json` », et que si l'un des 2 manque, « Vercel falls back to its default framework detection and ignores your services configuration ». **Mesuré le 2026-10-18 par `vercel project inspect` : le Framework Preset du projet vaut `Other`**, et les déploiements ont pourtant bien construit 2 services distincts, la première erreur nommant même `Service "api"`. La présence de la clé `services` a donc suffi. Rien à changer, et la citation de la documentation est conservée ici pour mémoire : elle décrit une contrainte qui ne s'est pas vérifiée sur ce projet. Le cas de figure à surveiller reste l'inverse, un déploiement qui ne montrerait qu'un seul build.
 2. **Vérifier que l'accès aux variables d'environnement système est activé.** Sans cette case, `VERCEL_ENV` et `VERCEL_URL` n'existent pas, et la dérivation de preview tombe sur le repli de développement.
-3. **Vider les réglages de build du tableau de bord.** Le projet porte **probablement** un Build Command, un Output Directory et un Install Command définis au niveau du projet, héritage de la configuration d'avant le mode `services`. **À lire dans le tableau de bord avant d'agir** : ces valeurs n'ont pas été vérifiées à la source. En mode `services`, ces champs appartiennent aux services, et des réglages de tableau de bord concurrents peuvent prendre le dessus.
+3. **Vider les réglages de build du projet, par hygiène et non par nécessité.** Valeurs lues le 2026-10-18 par `vercel project inspect` : Build Command `pnpm --filter @mimir/web build`, Output Directory `apps/web/dist`, Install Command `pnpm install --frozen-lockfile`, Root Directory `.`. Les 3 premières sont l'héritage de la configuration d'avant le mode `services`. **Elles se sont révélées inertes** : les logs montrent que c'est le `buildCommand` du service `web` qui a tourné, `pnpm build` depuis `apps/web`, et non la commande du projet. Ma mise en garde initiale, « des réglages de tableau de bord concurrents peuvent prendre le dessus », n'est donc pas vérifiée ici. Les vider reste utile pour qu'un lecteur ne croie pas qu'elles gouvernent le build. En mode `services`, ces champs appartiennent aux services, et des réglages de tableau de bord concurrents peuvent prendre le dessus.
 4. **Laisser Deployment Protection active, et créer un secret de contournement pour l'automatisation.** Deployment Protection → Protection Bypass for Automation → créer un secret, nommé pour son usage (« Playwright »). Vercel l'expose alors aux déploiements sous `VERCEL_AUTOMATION_BYPASS_SECRET`, et il faut **redéployer** pour qu'un déploiement existant le reçoive. Le même secret est déclaré en secret de dépôt GitHub, `Settings → Secrets and variables → Actions`, pour que la CI puisse viser un preview. Il n'entre jamais dans le dépôt. Motif du maintien de la protection dans DEC-012.
 5. **Aucune variable à ajouter, mais une valeur à vérifier.** Preview n'a volontairement ni `FRONTEND_URL` ni `BETTER_AUTH_URL` : la dérivation depuis `VERCEL_URL` les remplace. Production garde les siennes. En revanche la **valeur** de `BETTER_AUTH_SECRET` doit être vérifiée différente entre Preview et Production, condition bloquante de DEC-012. Méthode sans afficher le secret : `vercel env pull` dans chaque environnement vers 2 fichiers du dossier temporaire, puis comparer les empreintes des 2 lignes et supprimer les fichiers.
 
@@ -390,6 +390,25 @@ L'endpoint de la branche C a été révélé par les logs du premier build qui l
 **Pourquoi la dernière case reste inconnue.** Les variables de Vercel sont marquées comme sensibles : `vercel env pull` les rapporte vides et `vercel env ls` affiche `Encrypted`. `vercel env run` semble les lire, mais il charge le `.env` local par-dessus, donc il renvoie la valeur locale : la méthode est inutilisable pour ce contrôle, et c'est ce qui a produit ma confusion initiale. Pour fermer le tableau, il faut lire la liste des branches et leurs endpoints dans la console Neon, et la rapprocher des bases bindées côté Vercel.
 
 **Conséquence immédiate.** Les comptes de test créés par les exécutions contre un preview, dont le témoin `mapping-1792269908@mimir.test` et un `preview-...@example.com`, vivent sur la **branche de production**. Ils n'ont donc **pas** été supprimés par le nettoyage, qui visait la branche A. Leur suppression se fait depuis la console Neon, et seulement après que les previews aient été basculés sur leur propre branche, pour ne pas en recréer aussitôt.
+
+## Métadonnées des variables Vercel
+
+Relevées le 2026-10-18 par l'API Vercel, le CLI n'exposant ni le marquage de sensibilité ni la limitation à une branche git.
+
+| Variable | Portée | Type | Branche git | Créée le |
+|---|---|---|---|---|
+| `DATABASE_URL` | preview | sensitive | aucune | 2026-10-16 15:55 |
+| `DIRECT_URL` | preview | sensitive | aucune | 2026-10-16 15:58 |
+| `BETTER_AUTH_SECRET` | preview | sensitive | aucune | 2026-10-16 15:59 |
+| `DATABASE_URL` | production | sensitive | aucune | 2026-10-08 16:53 |
+| `DIRECT_URL` | production | sensitive | aucune | 2026-10-08 16:53 |
+| `BETTER_AUTH_SECRET` | production | sensitive | aucune | 2026-10-08 16:58 |
+| `FRONTEND_URL` | production | sensitive | aucune | 2026-10-08 17:11 |
+| `BETTER_AUTH_URL` | production | sensitive | aucune | 2026-10-08 17:32 |
+
+3 constats. **Il n'existe que ces 8 variables** : le geste de copie du 2026-10-16 n'a touché que les 3 entrées Preview, et aucune autre variable n'a été créée par mégarde. **Aucune n'est limitée à une branche git**, donc la portée affichée est la portée réelle. Et **les 8 sont de type `sensitive`**.
+
+**Ce que « sensitive » implique, et qui a induit en erreur hier soir.** Vercel masque définitivement la valeur d'une variable sensible après enregistrement : elle est illisible pour le propriétaire du projet comme pour un outil, dans le tableau de bord comme par l'API. C'est pourquoi `vercel env pull` rapporte `DATABASE_URL=""` au lieu d'échouer, et pourquoi la cartographie des bases ne pouvait pas être établie par là. Sur ces variables, personne ne lit les valeurs, seulement les métadonnées : la seule source d'identité d'une base est la console du fournisseur.
 
 ## Migrations
 
