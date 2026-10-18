@@ -15,25 +15,43 @@
 // pense a elle.
 const POOLED_CONNECTION_COMMANDS = ["generate"]
 
+// Les 2 commandes qui modifient ou detruisent un schema sont restreintes par
+// liste blanche de hosts. Les listes sont declarees par l'environnement et non
+// par le code : un endpoint est la moitie d'une chaine de connexion, et ce
+// depot est public.
+//
 // db push applique le schema sans rien inscrire dans _prisma_migrations : la
 // base se retrouve desalignee de l'historique des migrations, et le
 // migrate deploy suivant echoue en P3018 sur un objet deja existant. C'est
-// arrive sur la base de preview. La commande reste donc cantonnee aux bases
-// dont personne d'autre ne depend.
-const PUSH_ALLOWED_HOSTS = ["ep-little-boat-b2sruvec", "ep-withered-fire-b2jm9g5v"]
+// arrive sur la base de preview, qui est donc hors de cette liste tout en
+// restant dans celle du reset : le reset y est le moyen de rendre l'historique
+// vrai, la ou db push ne ferait que l'ecarter davantage.
+//
+// migrate reset detruit toutes les donnees : c'est le dernier rempart contre
+// une faute de frappe sur un fichier d'environnement.
+//
+// Liste absente vaut refus. C'est ce qui protege la production par
+// construction : son environnement n'a aucune raison de porter ces variables.
+const PUSH_ALLOWED_HOSTS_VARIABLE = "PRISMA_PUSH_ALLOWED_HOSTS"
+const RESET_ALLOWED_HOSTS_VARIABLE = "PRISMA_RESET_ALLOWED_HOSTS"
 
-// migrate reset detruit toutes les donnees. Seules les bases jetables le
-// subissent, et la production n'y figure volontairement pas : avec le mauvais
-// fichier d'environnement, une faute de frappe suffirait. La base de preview y
-// est, elle, parce que le reset y est le moyen de rendre son historique vrai,
-// la ou db push ne ferait que l'ecarter davantage.
-// A revoir quand les previews auront une branche Neon ephemere par
-// deploiement : les endpoints deviendront dynamiques et cette liste ne pourra
-// plus les nommer.
-const RESET_ALLOWED_HOSTS = [...PUSH_ALLOWED_HOSTS, "ep-sweet-paper-b2d3bg45"]
+function assertHostAllowed(
+  env: Record<string, string | undefined>,
+  variableName: string,
+  host: string,
+  commandName: string,
+): void {
+  const declaredHosts = (env[variableName] ?? "")
+    .split(",")
+    .map((declaredHost) => declaredHost.trim())
+    .filter((declaredHost) => declaredHost.length > 0)
 
-function isAllowedHost(host: string, allowedHosts: string[]): boolean {
-  return allowedHosts.some((allowedHost) => host.startsWith(allowedHost))
+  if (declaredHosts.length === 0) {
+    throw new Error(`${commandName} requires ${variableName} to declare which databases may be targeted`)
+  }
+  if (!declaredHosts.some((declaredHost) => host.startsWith(declaredHost))) {
+    throw new Error(`${commandName} is not allowed on ${host}: it is not listed in ${variableName}`)
+  }
 }
 
 function hostOf(url: string): string {
@@ -45,7 +63,11 @@ function hostOf(url: string): string {
 }
 
 export function resolveCliDatasourceUrl(env: Record<string, string | undefined>, argv: string[]): string {
-  if (argv.some((argument) => POOLED_CONNECTION_COMMANDS.includes(argument))) {
+  const connectsToNothing =
+    argv.some((argument) => POOLED_CONNECTION_COMMANDS.includes(argument)) ||
+    argv.includes("--help") ||
+    argv.includes("-h")
+  if (connectsToNothing) {
     return env.DATABASE_URL ?? ""
   }
 
@@ -59,12 +81,12 @@ export function resolveCliDatasourceUrl(env: Record<string, string | undefined>,
 
   const host = hostOf(directUrl)
 
-  if (argv.includes("push") && !isAllowedHost(host, PUSH_ALLOWED_HOSTS)) {
-    throw new Error(`db push is only allowed on the local and test databases, not on ${host}: use a migration instead`)
+  if (argv.includes("push")) {
+    assertHostAllowed(env, PUSH_ALLOWED_HOSTS_VARIABLE, host, "db push")
   }
 
-  if (argv.includes("reset") && !isAllowedHost(host, RESET_ALLOWED_HOSTS)) {
-    throw new Error(`migrate reset is only allowed on disposable databases, not on ${host}`)
+  if (argv.includes("reset")) {
+    assertHostAllowed(env, RESET_ALLOWED_HOSTS_VARIABLE, host, "migrate reset")
   }
 
   return directUrl

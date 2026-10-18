@@ -185,7 +185,9 @@ CORS devient inutile en preview et en production, mais **reste en place pour l'i
 | `package.json` | script `db:deploy` |
 | `packages/db/prisma.config.ts` | `url` du CLI délégué à `cliDatasource` |
 | `packages/db/cliDatasource/cliDatasource.ts` | nouveau, le garde-fou `DIRECT_URL` |
-| `packages/db/cliDatasource/cliDatasource.test.ts` | nouveau, 12 tests |
+| `packages/db/cliDatasource/cliDatasource.test.ts` | nouveau, 13 tests |
+| `packages/db/prisma.config.ts` | `shadowDatabaseUrl` pour `migrate diff --from-migrations` |
+| `.env.example` | les 2 listes blanches documentées |
 | `packages/db/audit.ts` | nouveau, la mesure en lecture seule |
 | `scripts/db-audit.sh` | nouveau, `pnpm db:audit` |
 | `.claude/rules/bases-et-identifiants.md` | nouveau, identifiants et actes d'exploitation |
@@ -313,14 +315,14 @@ La suite e2e Playwright passe 5 tests sur 5 contre ce preview protégé, en mode
 
 | Qui | Variable lue | Endpoint Neon | Rôle réel |
 |---|---|---|---|
-| Développement local (`pnpm dev:api`, `pnpm db:*`) | `.env` du dépôt | `ep-little-boat-b2sruvec` | base de développement |
-| Suite e2e locale et `globalSetup` | `.env.test` du dépôt | `ep-withered-fire-b2jm9g5v` | base de test, réinitialisée à chaque run |
-| Déploiements de preview | `DATABASE_URL` de l'environnement Preview sur Vercel | `ep-sweet-paper-b2d3bg45` | base de preview |
+| Développement local (`pnpm dev:api`, `pnpm db:*`) | `.env` du dépôt | branche A | base de développement |
+| Suite e2e locale et `globalSetup` | `.env.test` du dépôt | branche B | base de test, réinitialisée à chaque run |
+| Déploiements de preview | `DATABASE_URL` de l'environnement Preview sur Vercel | branche C | base de preview |
 | Production | `DATABASE_URL` de l'environnement Production sur Vercel | **inconnu** | base de production |
 
-**La méthode.** Un compte témoin a été créé par l'API d'un preview, puis cherché dans les 2 bases locales. Il n'est **ni** dans `ep-little-boat` **ni** dans `ep-withered-fire` : les previews écrivent donc sur une 3e branche, distincte des 2 bases locales. `.env` local ne pointe donc pas la base de production, et la question se refermait là.
+**La méthode.** Un compte témoin a été créé par l'API d'un preview, puis cherché dans les 2 bases locales. Il n'est **ni** dans la branche A **ni** dans la branche B : les previews écrivent donc sur une 3e branche, distincte des 2 bases locales. `.env` local ne pointe donc pas la base de production, et la question se refermait là.
 
-L'endpoint de preview a été révélé par les logs du premier build qui lance `migrate deploy` : `Datasource "db": ... at "ep-sweet-paper-b2d3bg45.c-6.eu-central-1.aws.neon.tech"`, sans `-pooler`, ce qui confirme au passage que la `DIRECT_URL` de Preview est bien une connexion directe.
+L'endpoint de la branche C a été révélé par les logs du premier build qui lance `migrate deploy`, et il n'a **pas** de suffixe `-pooler`, ce qui confirme au passage que la `DIRECT_URL` de Preview est bien une connexion directe. Les endpoints eux-mêmes ne sont pas écrits ici : ce dépôt est public, et un endpoint est la moitié d'une chaîne de connexion. Les 3 noms réels se lisent dans la console Neon, ou dans `.env` et `.env.test`, qui ne sont pas suivis par git.
 
 **Pourquoi la dernière case reste inconnue.** Les variables de Vercel sont marquées comme sensibles : `vercel env pull` les rapporte vides et `vercel env ls` affiche `Encrypted`. `vercel env run` semble les lire, mais il charge le `.env` local par-dessus, donc il renvoie la valeur locale : la méthode est inutilisable pour ce contrôle, et c'est ce qui a produit ma confusion initiale. Pour fermer le tableau, il faut lire la liste des branches et leurs endpoints dans la console Neon, et la rapprocher des bases bindées côté Vercel.
 
@@ -356,7 +358,7 @@ La commande a été lancée contre la branche Neon jetable (`.env.test`), avec 2
 
 | Vérification | Résultat |
 |---|---|
-| Connexion directe réellement empruntée | `Datasource "db": ... at "ep-withered-fire-b2jm9g5v.c-6.eu-central-1.aws.neon.tech"`, sans `-pooler` |
+| Connexion directe réellement empruntée | `Datasource "db"` annonce le host de la branche B **sans** suffixe `-pooler` |
 | Le garde-fou `DIRECT_URL` sert | Avec un `DIRECT_URL` pointant un host inexistant, la commande échoue en `P1000` au lieu de retomber sur le pooler |
 | Migrations appliquées | 2 migrations trouvées, « No pending migrations to apply » sur une base déjà à jour |
 
@@ -364,6 +366,8 @@ La commande a été lancée contre la branche Neon jetable (`.env.test`), avec 2
 | Idempotence | Relancée aussitôt : « No pending migrations to apply » |
 
 **Le garde-fou traverse les 2 chemins, et le défaut est inversé.** La première version reposait sur une liste de commandes de migration, donc sur une liste qui se périme : une commande future touchant au schéma serait passée par `DATABASE_URL` sans que personne y pense. Le défaut est maintenant l'exigence de la connexion directe, et seul `generate` est explicitement autorisé sur la connexion poolée, parce qu'il ne se connecte à rien.
+
+**Les listes blanches sont déclarées par l'environnement, pas par le code.** `PRISMA_PUSH_ALLOWED_HOSTS` et `PRISMA_RESET_ALLOWED_HOSTS` portent des préfixes de host, dans les fichiers d'environnement non suivis par git : ce dépôt est public, et un endpoint est la moitié d'une chaîne de connexion. **Liste absente vaut refus**, ce qui protège la production par construction, son environnement n'ayant aucune raison de porter ces variables. `.env.example` les documente avec des valeurs factices.
 
 **`migrate reset` est restreint aux bases jetables.** C'est la seule commande vraiment destructive, et elle n'avait aucune restriction : avec le mauvais fichier d'environnement, une faute de frappe suffisait. Sa liste blanche contient le développement local, le test et le preview, et **pas la production**. Elle est plus large que celle de `db push`, qui exclut le preview : `db push` y créerait une divergence de plus, alors que le reset y est précisément le moyen de rendre l'historique vrai. Limite assumée : `prisma db execute` exécute du SQL arbitraire et ne peut pas être restreint de cette façon.
 
@@ -396,16 +400,36 @@ ERROR: column "emailVerified" of relation "User" already exists
 
 Les 2 mesures sont en lecture seule et sont lancées **par l'utilisateur**, qui en transmet la sortie : un agent n'a pas d'identifiants de production (rule `bases-et-identifiants`).
 
+Les variables sont passées dans le shell, pour une seule commande, et ne touchent jamais le disque : un fichier d'identifiants reste lisible tant qu'il existe (rule `bases-et-identifiants`).
+
 ```bash
 # 1. la derive entre le schema reel et ce que produisent les migrations
 cd packages/db
-pnpm exec dotenv -e <fichier> -- bash -c 'pnpm exec prisma migrate diff \
-  --from-url "$DIRECT_URL" \
-  --to-schema-datamodel prisma/schema.prisma'
+DATABASE_URL="..." DIRECT_URL="..." pnpm exec prisma migrate diff \
+  --from-config-datasource \
+  --to-schema prisma/schema.prisma
 
 # 2. le volume reel et l'etat de l'historique des migrations
-pnpm db:audit <fichier>
+cd ../..
+DATABASE_URL="..." DIRECT_URL="..." pnpm db:audit
 ```
+
+**Les noms d'options ont changé sur Prisma 7**, et la version naïve de ces commandes n'existe plus : `--to-schema-datamodel` est devenu `--to-schema`, et `--from-url` a disparu au profit de `--from-config-datasource`, qui lit la base par `prisma.config.ts`, donc par `DIRECT_URL`. Vérifié en lisant l'aide de la commande installée, après l'avoir vue échouer.
+
+### La mesure de production est rigoureuse, parce que l'historique et le schéma sont d'accord
+
+`migrate diff --from-config-datasource --to-schema` compare la production au **fichier de schéma**, alors que la décision de baselining porte sur l'**historique des migrations**. Les 2 ne coïncident que si `schema.prisma` et `prisma/migrations` sont d'accord entre eux, ce que rien ne garantit : c'est précisément leur désaccord qui produit un P3018. Vérifié cette nuit sur une base jetable, sans toucher à la production :
+
+```bash
+SHADOW_DATABASE_URL="<base jetable>" pnpm exec prisma migrate diff \
+  --from-migrations ./prisma/migrations \
+  --to-schema prisma/schema.prisma --exit-code
+→ No difference detected.        (code de sortie 0)
+```
+
+Le fichier de schéma est donc exactement ce que produisent les 2 migrations. Mesurer la production contre le schéma équivaut à la mesurer contre l'historique, et la décision de demain repose sur une comparaison et non sur une supposition.
+
+2 effets de bord de cette vérification, consignés parce qu'ils se reproduiront : `migrate diff --from-migrations` exige `datasource.shadowDatabaseUrl` dans `prisma.config.ts`, ajouté et laissé vide par défaut puisque Prisma **réinitialise** cette base ; et la base jetable utilisée comme base d'ombre en est ressortie avec un schéma mais sans historique, donc en `P3005`, ce qui a demandé un `migrate reset` pour la remettre d'aplomb. Ne pas utiliser comme base d'ombre une base dont on veut garder le contenu.
 
 Si la base est vide, ou ne contient que des essais, elle est réinitialisée elle aussi : l'historique devient honnête partout pour zéro coût, et cette fenêtre se referme définitivement dès que de vrais documents arrivent. Baseliner une base vide pour éviter une réinitialisation serait absurde.
 

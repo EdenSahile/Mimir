@@ -2,14 +2,20 @@ import { describe, expect, it } from "vitest"
 import { resolveCliDatasourceUrl } from "./cliDatasource.js"
 
 const pooledUrl = "postgresql://user:pass@ep-demo-pooler.eu-central-1.aws.neon.tech/neondb"
-const localDirectUrl = "postgresql://user:pass@ep-little-boat-b2sruvec.c-6.eu-central-1.aws.neon.tech/neondb"
-const testDirectUrl = "postgresql://user:pass@ep-withered-fire-b2jm9g5v.c-6.eu-central-1.aws.neon.tech/neondb"
-const previewDirectUrl = "postgresql://user:pass@ep-sweet-paper-b2d3bg45.c-6.eu-central-1.aws.neon.tech/neondb"
-const sharedDirectUrl = previewDirectUrl
-const unknownDirectUrl = "postgresql://user:pass@ep-inconnue-b9x7y1z2.c-6.eu-central-1.aws.neon.tech/neondb"
+const localDirectUrl = "postgresql://user:pass@ep-locale.c-6.eu-central-1.aws.neon.tech/neondb"
+const testDirectUrl = "postgresql://user:pass@ep-de-test.c-6.eu-central-1.aws.neon.tech/neondb"
+const previewDirectUrl = "postgresql://user:pass@ep-de-preview.c-6.eu-central-1.aws.neon.tech/neondb"
+const productionDirectUrl = "postgresql://user:pass@ep-de-production.c-6.eu-central-1.aws.neon.tech/neondb"
 
-describe("generate, seule commande autorisee sur la connexion poolee", () => {
-  it("utilise DATABASE_URL", () => {
+// Les listes blanches sont declarees par l'environnement, pas par le code : les
+// endpoints d'un projet n'ont rien a faire dans un depot public.
+const disposableHosts = {
+  PRISMA_PUSH_ALLOWED_HOSTS: "ep-locale,ep-de-test",
+  PRISMA_RESET_ALLOWED_HOSTS: "ep-locale,ep-de-test,ep-de-preview",
+}
+
+describe("l'aide et generate ne se connectent a rien", () => {
+  it("utilise DATABASE_URL pour generate", () => {
     const generateArgv = ["node", "prisma", "generate"]
 
     expect(resolveCliDatasourceUrl({ DATABASE_URL: pooledUrl, DIRECT_URL: localDirectUrl }, generateArgv)).toBe(
@@ -17,12 +23,17 @@ describe("generate, seule commande autorisee sur la connexion poolee", () => {
     )
   })
 
-  // La CI lance prisma generate sans aucune variable de base : generate ne se
-  // connecte a rien, donc leur absence ne doit pas le casser.
-  it("tolere l'absence totale de variables", () => {
+  // La CI lance prisma generate sans aucune variable de base.
+  it("tolere l'absence totale de variables pour generate", () => {
     const generateArgv = ["node", "prisma", "generate"]
 
     expect(resolveCliDatasourceUrl({}, generateArgv)).toBe("")
+  })
+
+  it("tolere l'absence de variables sur --help", () => {
+    const helpArgv = ["node", "prisma", "migrate", "diff", "--help"]
+
+    expect(resolveCliDatasourceUrl({}, helpArgv)).toBe("")
   })
 })
 
@@ -59,47 +70,59 @@ describe("toute autre commande exige la connexion directe", () => {
   })
 })
 
-describe("db push, restreint aux bases locale et de test", () => {
-  it("accepte la base de developpement local", () => {
+describe("db push, restreint aux hosts declares", () => {
+  it("accepte un host de la liste", () => {
     const pushArgv = ["node", "prisma", "db", "push"]
 
-    expect(resolveCliDatasourceUrl({ DIRECT_URL: localDirectUrl }, pushArgv)).toBe(localDirectUrl)
-  })
-
-  it("accepte la base de test", () => {
-    const pushArgv = ["node", "prisma", "db", "push"]
-
-    expect(resolveCliDatasourceUrl({ DIRECT_URL: testDirectUrl }, pushArgv)).toBe(testDirectUrl)
+    expect(resolveCliDatasourceUrl({ ...disposableHosts, DIRECT_URL: testDirectUrl }, pushArgv)).toBe(testDirectUrl)
   })
 
   // db push applique le schema sans rien inscrire dans _prisma_migrations :
   // c'est ce qui a desaligne la base de preview de l'historique des migrations.
-  it("refuse une base partagee, meme avec une connexion directe valide", () => {
+  // Le preview est donc hors de SA liste, tout en restant dans celle du reset.
+  it("refuse un host hors de sa liste, meme avec une connexion directe valide", () => {
     const pushArgv = ["node", "prisma", "db", "push"]
 
-    expect(() => resolveCliDatasourceUrl({ DIRECT_URL: sharedDirectUrl }, pushArgv)).toThrow(/db push/)
+    expect(() => resolveCliDatasourceUrl({ ...disposableHosts, DIRECT_URL: previewDirectUrl }, pushArgv)).toThrow(
+      /db push/,
+    )
+  })
+
+  it("refuse quand aucune liste n'est declaree", () => {
+    const pushArgv = ["node", "prisma", "db", "push"]
+
+    expect(() => resolveCliDatasourceUrl({ DIRECT_URL: localDirectUrl }, pushArgv)).toThrow(
+      /PRISMA_PUSH_ALLOWED_HOSTS/,
+    )
   })
 })
 
-describe("migrate reset, restreint aux bases jetables", () => {
-  it("accepte la base de test", () => {
+describe("migrate reset, restreint aux hosts declares", () => {
+  it("accepte un host de la liste", () => {
     const resetArgv = ["node", "prisma", "migrate", "reset", "--force"]
 
-    expect(resolveCliDatasourceUrl({ DIRECT_URL: testDirectUrl }, resetArgv)).toBe(testDirectUrl)
-  })
-
-  it("accepte la base de preview, qui est jetable", () => {
-    const resetArgv = ["node", "prisma", "migrate", "reset", "--force"]
-
-    expect(resolveCliDatasourceUrl({ DIRECT_URL: previewDirectUrl }, resetArgv)).toBe(previewDirectUrl)
+    expect(resolveCliDatasourceUrl({ ...disposableHosts, DIRECT_URL: previewDirectUrl }, resetArgv)).toBe(
+      previewDirectUrl,
+    )
   })
 
   // Le seul rempart contre une faute de frappe sur le fichier d'environnement :
-  // migrate reset detruit tout, et aucune base hors de la liste blanche n'a a
-  // le subir.
-  it("refuse une base qui n'est pas declaree jetable", () => {
+  // migrate reset detruit tout.
+  it("refuse un host hors de sa liste", () => {
     const resetArgv = ["node", "prisma", "migrate", "reset", "--force"]
 
-    expect(() => resolveCliDatasourceUrl({ DIRECT_URL: unknownDirectUrl }, resetArgv)).toThrow(/migrate reset/)
+    expect(() => resolveCliDatasourceUrl({ ...disposableHosts, DIRECT_URL: productionDirectUrl }, resetArgv)).toThrow(
+      /migrate reset/,
+    )
+  })
+
+  // Liste absente, donc refus : l'environnement de production n'a aucune raison
+  // de la porter, et c'est ce qui le protege par construction.
+  it("refuse quand aucune liste n'est declaree", () => {
+    const resetArgv = ["node", "prisma", "migrate", "reset", "--force"]
+
+    expect(() => resolveCliDatasourceUrl({ DIRECT_URL: testDirectUrl }, resetArgv)).toThrow(
+      /PRISMA_RESET_ALLOWED_HOSTS/,
+    )
   })
 })

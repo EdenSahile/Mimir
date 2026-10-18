@@ -13,5 +13,10 @@ export default defineConfig({
     // migration n'a pas de connexion directe, sont dans cliDatasource.
     url: resolveCliDatasourceUrl(process.env, process.argv),
     directUrl: process.env.DIRECT_URL,
+    // Exigee par migrate diff --from-migrations, qui rejoue les migrations sur
+    // une base vide pour obtenir le schema qu'elles produisent. Prisma la
+    // reinitialise, donc elle ne vaut que pour une base jetable, et reste
+    // absente par defaut.
+    shadowDatabaseUrl: process.env.SHADOW_DATABASE_URL,
   },
 })
