@@ -78,6 +78,22 @@ L'alternative écartée était 2 projets Vercel séparés, avec un domaine par p
 
 **Conséquence sur les URLs de preview.** Les URLs de preview sont générées par déploiement, donc des variables fixes ne peuvent pas les couvrir. `FRONTEND_URL` et `BETTER_AUTH_URL` restent des variables fixes en production, et ne sont dérivées de `VERCEL_URL` (avec `https://` ajouté à la main, cette variable ne portant pas le protocole) que lorsque `VERCEL_ENV` vaut `preview`. Ne pas dériver la production de `VERCEL_URL` : elle porte l'URL `*.vercel.app` propre au déploiement et non le domaine personnalisé, ce qui enverrait cookies et origines de confiance sur le mauvais hôte. `trustedOrigins` suit cette même valeur.
 
+#### Constat du 2026-10-18 : Preview et Production désignent la même base
+
+Vérifié dans la console Neon : la branche que `DATABASE_URL` de l'environnement **Preview** désigne est la branche de **production**. Il n'existe pas de branche de preview distincte.
+
+**Ce que ça annule.** La sous-section « Migrations » ci-dessous découpe le traitement entre preview et production. Ce découpage **ne produit aucun effet** tant que les 2 environnements pointent la même base : `migrate deploy` conditionné à `VERCEL_ENV === "preview"` a tourné 2 fois contre la production, et seul son échec sur `column "emailVerified" already exists` a empêché une modification de schéma non décidée. De même, la phrase « la base de preview est jetable », qui justifiait de migrer automatiquement en preview, était fausse.
+
+**Ce que ça ne change pas.** Le raisonnement sur les 2 profils de risque reste valable, et c'est même lui qui est bafoué ici. Il redevient applicable dès que les previews ont leur propre branche Neon, ce qui est le préalable à toute remise en service du dispositif.
+
+**La cause.** Une branche nommée par son rôle dans Vercel au lieu de son identité chez le fournisseur. D'où les 2 règles suivantes.
+
+**L'identité d'une base cible se vérifie dans la console du fournisseur, jamais d'après le nom d'une variable d'environnement.** Un nom de variable dit quel environnement la lit, pas quelle base elle désigne.
+
+**Un garde-fou que l'agent peut éditer est un pense-bête, pas un contrôle.** L'agent qui écrit le verrou détient aussi la clé. Les contrôles réels sont ceux que l'utilisateur détient : les identifiants, et la vérification à la source. Corollaire absolu : **l'endpoint de production n'entre dans aucune liste blanche, ni `reset`, ni `push`, jamais.** Une opération qui l'exigerait est refusée et signalée.
+
+**Préalable à la reprise.** Une branche Neon dédiée au preview, créée depuis la production, puis des variables Vercel déclarées par environnement avec des valeurs distinctes, `BETTER_AUTH_SECRET` compris. Le correctif de fond, une branche éphémère par déploiement, passe en priorité.
+
 #### Migrations : automatiques en preview, délibérées en production
 
 Preview et production n'ont pas le même profil de risque. La base de preview est jetable, celle de production contiendra des documents personnels. Les 2 environnements ne suivent donc pas le même chemin :

@@ -5,6 +5,33 @@
 **Branche :** `chore/MIM-37-deploy-vercel-services`
 **Décisions liées :** DEC-005 (hébergement Vercel), DEC-011 (Better Auth, point 2 amendé), DEC-012 (nouvelle)
 
+## Constat du 2026-10-18 : la « base de preview » était la base de production
+
+Vérifié par l'utilisateur dans la console Neon. La branche Neon que `DATABASE_URL` de l'environnement **Preview** désigne sur Vercel est la branche de **production**. Il n'existe pas de branche de preview distincte.
+
+Ce que ça implique, et qui doit être traité avant toute suite :
+
+1. Les déploiements de preview **lisent et écrivent dans la base de production**.
+2. Les comptes créés pendant la validation (inscriptions manuelles, compte témoin, comptes des 2 exécutions e2e) sont **dans la base de production**.
+3. Le `P3009` qui bloque les builds est une ligne de migration en échec dans l'historique de la **production**.
+4. Les 2 builds de preview qui ont lancé `prisma migrate deploy` l'ont donc lancé **contre la production**. La tentative du 2026-10-17 à 20:48 UTC a échoué sur `column "emailVerified" already exists`, et c'est cet échec qui a protégé la base : si elle était passée, un build de preview aurait modifié la production sans qu'aucune décision soit prise.
+5. **La section « Migrations » de cette spec et la décision correspondante de DEC-012 sont annulées en fait** : « migrer en preview, jamais en production » ne veut rien dire tant que les 2 désignent la même base.
+6. Si Deployment Protection avait été désactivée comme la première version de DEC-012 le prévoyait, une inscription ouverte écrivant dans la production aurait été exposée publiquement.
+
+**La cause.** Une branche a été nommée par son **rôle dans Vercel** (« la variable s'appelle Preview, donc c'est la base de preview ») au lieu de son **identité chez le fournisseur**. Toute la cartographie, les garde-fous et le dispositif de migration ont été construits sur ce nom, jamais sur une vérification.
+
+### Les 2 règles qui manquaient
+
+**L'identité d'une base cible se vérifie dans la console du fournisseur, jamais d'après le nom d'une variable d'environnement.** Un nom de variable dit quel environnement la lit, pas quelle base elle désigne. Les 2 ne coïncident que si quelqu'un l'a vérifié.
+
+**Un garde-fou que l'agent peut éditer est un pense-bête, pas un contrôle.** L'agent qui écrit le verrou détient aussi la clé : il peut élargir une liste blanche aussi facilement qu'il l'a écrite. Les seuls contrôles réels sont ceux que l'utilisateur détient, les identifiants et la vérification à la source. Démonstration dans cette session même : la liste blanche codée en dur du commit `7330824` contenait **l'endpoint de production** pour `migrate reset`, présenté comme « le dernier rempart ». Ce qui a réellement protégé la base, c'est que l'utilisateur n'a pas fourni les identifiants, puis que le passage en variables d'environnement a hérité de fichiers qui ne listent que les bases de développement et de test.
+
+**Règle absolue qui en découle : l'endpoint de production n'entre dans aucune liste blanche, ni `reset`, ni `push`, jamais.** Si une opération exige de l'y ajouter, elle est refusée et signalée.
+
+### Correctif de fond
+
+Le ticket « une branche Neon éphémère par déploiement de preview » n'est plus une amélioration pour plus tard : c'est **le correctif de fond de ce constat**, et il passe en priorité. Tant qu'il n'est pas fait, une branche Neon de preview créée à la main depuis la production tient le rôle.
+
 ## Problème
 
 Le frontend est déployé sur Vercel et accessible. Le backend Express ne l'est pas. Conséquence : toute fonctionnalité qui appelle l'API ne marche pas en production, l'authentification comprise. MIM-23 est en `TO TEST` et reste bloqué par ce point.
@@ -110,7 +137,7 @@ await build({
 
 Avec, dans `apps/api/package.json`, un script `"bundle": "node esbuild.config.mjs"` et **esbuild déclaré en `devDependency` explicite de `@mimir/api`**, sans dépendre de l'esbuild transitif de Vite.
 
-Node 24 est la version configurée sur le projet Vercel, d'où `target: "node24"`.
+`target: "node24"` suit le Node 24 du dépôt (`apps/api` cible Node 24, et Node 24 est la version par défaut sur Vercel). **Non vérifié dans les réglages du projet** : la version Node configurée côté tableau de bord n'a pas été lue.
 
 ### `prisma generate` dans le build
 
@@ -210,7 +237,7 @@ Fichiers explicitement **non modifiés** : `apps/api/src/index.ts`, `apps/api/sr
 
 1. **Passer le réglage Framework du projet sur « Services ».** Build and Deployment Settings. Vérifié dans la documentation Vercel : « A project builds as services only when this setting is selected and a `services` key is present in `vercel.json` », et « If either is missing, Vercel falls back to its default framework detection and ignores your services configuration ». La contrainte vaut bien pour le modèle `services` courant, pas seulement pour l'ancien `experimentalServices`. C'est le réglage le plus déterminant de la liste : sans lui, le `vercel.json` est ignoré en silence et le déploiement ressemble à l'ancien, sans api.
 2. **Vérifier que l'accès aux variables d'environnement système est activé.** Sans cette case, `VERCEL_ENV` et `VERCEL_URL` n'existent pas, et la dérivation de preview tombe sur le repli de développement.
-3. **Vider les réglages de build du tableau de bord.** Le projet porte aujourd'hui un Build Command, un Output Directory et un Install Command définis au niveau du projet. En mode `services`, ces champs appartiennent aux services, et des réglages de tableau de bord concurrents peuvent prendre le dessus.
+3. **Vider les réglages de build du tableau de bord.** Le projet porte **probablement** un Build Command, un Output Directory et un Install Command définis au niveau du projet, héritage de la configuration d'avant le mode `services`. **À lire dans le tableau de bord avant d'agir** : ces valeurs n'ont pas été vérifiées à la source. En mode `services`, ces champs appartiennent aux services, et des réglages de tableau de bord concurrents peuvent prendre le dessus.
 4. **Laisser Deployment Protection active, et créer un secret de contournement pour l'automatisation.** Deployment Protection → Protection Bypass for Automation → créer un secret, nommé pour son usage (« Playwright »). Vercel l'expose alors aux déploiements sous `VERCEL_AUTOMATION_BYPASS_SECRET`, et il faut **redéployer** pour qu'un déploiement existant le reçoive. Le même secret est déclaré en secret de dépôt GitHub, `Settings → Secrets and variables → Actions`, pour que la CI puisse viser un preview. Il n'entre jamais dans le dépôt. Motif du maintien de la protection dans DEC-012.
 5. **Aucune variable à ajouter, mais une valeur à vérifier.** Preview n'a volontairement ni `FRONTEND_URL` ni `BETTER_AUTH_URL` : la dérivation depuis `VERCEL_URL` les remplace. Production garde les siennes. En revanche la **valeur** de `BETTER_AUTH_SECRET` doit être vérifiée différente entre Preview et Production, condition bloquante de DEC-012. Méthode sans afficher le secret : `vercel env pull` dans chaque environnement vers 2 fichiers du dossier temporaire, puis comparer les empreintes des 2 lignes et supprimer les fichiers.
 
@@ -273,7 +300,7 @@ L'ordre est donc : mesurer (`prisma migrate diff` et `pnpm db:audit`), décider 
 
 ## Risque consigné, non corrigé dans MIM-37
 
-**Tous les previews partagent une seule branche Neon de dev.** Un preview qui applique une migration destructive casse les autres previews ouverts, et le développement local pointé sur la même branche. Le risque est faible aujourd'hui, une seule branche de travail vivant à la fois, et réel dès que plusieurs branches vivent en parallèle. Le correctif de fond est une branche Neon éphémère par déploiement de preview, traité hors MIM-37.
+**Version initiale de ce risque, fausse sur l'essentiel** : « tous les previews partagent une seule branche Neon de dev ». La branche partagée n'est pas celle de développement, c'est celle de **production**, et le risque n'est pas « faible aujourd'hui » mais réalisé. Voir le constat en tête de cette spec. Conservé ici pour montrer qu'un risque consigné sur la mauvaise base donne une fausse assurance : il a été écrit, relu et jugé acceptable, alors qu'il décrivait une situation qui n'existait pas.
 
 ## Séquence de validation sur le preview
 
@@ -313,20 +340,22 @@ La suite e2e Playwright passe 5 tests sur 5 contre ce preview protégé, en mode
 
 Établie par expérience, pas par lecture de configuration, après une contradiction dans mes propres comptes rendus sur l'identité des branches.
 
-| Qui | Variable lue | Endpoint Neon | Rôle réel |
+| Qui | Variable lue | Branche Neon | Rôle réel |
 |---|---|---|---|
 | Développement local (`pnpm dev:api`, `pnpm db:*`) | `.env` du dépôt | branche A | base de développement |
 | Suite e2e locale et `globalSetup` | `.env.test` du dépôt | branche B | base de test, réinitialisée à chaque run |
-| Déploiements de preview | `DATABASE_URL` de l'environnement Preview sur Vercel | branche C | base de preview |
-| Production | `DATABASE_URL` de l'environnement Production sur Vercel | **inconnu** | base de production |
+| Déploiements de preview | `DATABASE_URL` de l'environnement Preview sur Vercel | branche C | **base de production** |
+| Production | `DATABASE_URL` de l'environnement Production sur Vercel | très probablement la branche C | base de production |
 
-**La méthode.** Un compte témoin a été créé par l'API d'un preview, puis cherché dans les 2 bases locales. Il n'est **ni** dans la branche A **ni** dans la branche B : les previews écrivent donc sur une 3e branche, distincte des 2 bases locales. `.env` local ne pointe donc pas la base de production, et la question se refermait là.
+Aucun endpoint de production n'existe dans les fichiers locaux du dépôt, `.env` et `.env.test` ne portant que les branches A et B.
 
-L'endpoint de la branche C a été révélé par les logs du premier build qui lance `migrate deploy`, et il n'a **pas** de suffixe `-pooler`, ce qui confirme au passage que la `DIRECT_URL` de Preview est bien une connexion directe. Les endpoints eux-mêmes ne sont pas écrits ici : ce dépôt est public, et un endpoint est la moitié d'une chaîne de connexion. Les 3 noms réels se lisent dans la console Neon, ou dans `.env` et `.env.test`, qui ne sont pas suivis par git.
+**La méthode, et sa limite.** Un compte témoin a été créé par l'API d'un preview, puis cherché dans les 2 bases locales. Il n'est **ni** dans la branche A **ni** dans la branche B : les previews écrivent donc sur une 3e branche, distincte des 2 bases locales. Ça établissait une seule chose, que `.env` local ne pointe pas la base de production. Ça n'établissait **pas** ce qu'était la branche C, et c'est pourtant ce qui a été écrit ici : « base de preview », d'après le nom de la variable Vercel qui la désigne. L'identité réelle a été lue dans la console Neon par l'utilisateur, et c'est la production. Une case laissée « inconnue » dans un tableau n'est pas un trou neutre : tant qu'elle l'est, aucune ligne du tableau ne peut être présentée comme établie.
+
+L'endpoint de la branche C a été révélé par les logs du premier build qui lance `migrate deploy`, et il n'a **pas** de suffixe `-pooler`, ce qui confirme au passage que la `DIRECT_URL` lue en preview est bien une connexion directe. Elle pointe la production. Les endpoints eux-mêmes ne sont pas écrits ici : ce dépôt est public, et un endpoint est la moitié d'une chaîne de connexion. Les 3 noms réels se lisent dans la console Neon, ou dans `.env` et `.env.test`, qui ne sont pas suivis par git.
 
 **Pourquoi la dernière case reste inconnue.** Les variables de Vercel sont marquées comme sensibles : `vercel env pull` les rapporte vides et `vercel env ls` affiche `Encrypted`. `vercel env run` semble les lire, mais il charge le `.env` local par-dessus, donc il renvoie la valeur locale : la méthode est inutilisable pour ce contrôle, et c'est ce qui a produit ma confusion initiale. Pour fermer le tableau, il faut lire la liste des branches et leurs endpoints dans la console Neon, et la rapprocher des bases bindées côté Vercel.
 
-**Conséquence immédiate.** Les comptes de test créés par les exécutions contre un preview, dont le témoin `mapping-1792269908@mimir.test` et un `preview-...@example.com`, vivent sur la branche de preview, pas sur celle de dev. Ils n'ont donc **pas** été supprimés par le nettoyage, qui visait `.env`. Le nettoyage de cette branche demande ses identifiants, côté Neon.
+**Conséquence immédiate.** Les comptes de test créés par les exécutions contre un preview, dont le témoin `mapping-1792269908@mimir.test` et un `preview-...@example.com`, vivent sur la **branche de production**. Ils n'ont donc **pas** été supprimés par le nettoyage, qui visait la branche A. Leur suppression se fait depuis la console Neon, et seulement après que les previews aient été basculés sur leur propre branche, pour ne pas en recréer aussitôt.
 
 ## Migrations
 
