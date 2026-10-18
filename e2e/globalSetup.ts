@@ -11,8 +11,15 @@ loadEnv({ path: envTestPath, override: true })
 // migrations sur une base vide. dotenv-cli charge .env.test dans le process
 // Prisma (le package @mimir/db ne lit que process.env).
 export default function globalSetup() {
-  execSync(
-    "pnpm --filter @mimir/db exec dotenv -e ../../.env.test -- prisma migrate reset --force --skip-generate",
-    { stdio: "inherit" }
-  )
+  // Contre un preview, la base est celle de la branche Neon de dev : la vider
+  // serait destructeur et hors de propos. Les emails de test sont uniques a
+  // chaque run, les specs restent donc idempotentes sans reset.
+  if (process.env.PREVIEW_URL) return
+
+  // --skip-generate n'existe plus sur migrate reset depuis Prisma 7 : la
+  // commande sortait en code 1 en affichant son aide, donc le reset n'avait
+  // jamais lieu.
+  execSync("pnpm --filter @mimir/db exec dotenv -e ../../.env.test -- prisma migrate reset --force", {
+    stdio: "inherit",
+  })
 }

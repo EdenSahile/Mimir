@@ -3,4 +3,4 @@ import { getHealth } from "@/controllers/healthController.js"
 
 export const healthRoutes = Router()
 
-healthRoutes.get("/health", getHealth)
+healthRoutes.get("/api/health", getHealth)
