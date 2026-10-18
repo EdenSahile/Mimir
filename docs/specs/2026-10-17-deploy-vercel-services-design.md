@@ -408,15 +408,43 @@ Audit fait le 2026-10-18 : aucune autre étape de cette spec ne s'applique à un
 
 **Le code tourne aux États-Unis et lit une base en Europe.** Les logs de build annoncent « Running build in Washington, D.C., USA (East) – iad1 », et l'API Vercel le confirme pour l'exécution et non seulement pour le build : `serverlessFunctionRegion: "iad1"` et `functionDefaultRegions: ["iad1"]`. Les 3 branches Neon sont en `eu-central-1`, lisible dans leurs endpoints. **Chaque requête SQL est donc un transfert de données personnelles hors UE**, et ça ne dépend d'aucune donnée qui n'existerait pas encore : c'est vrai dès le premier compte.
 
-**Conséquence technique, à chiffrer dans le ticket** : environ 90 ms d'aller-retour entre `iad1` et `eu-central-1` par requête SQL. Et avec `@prisma/adapter-neon`, qui parle à Neon en HTTP, **chaque requête de la requête HTTP paie ce trajet** : une route qui fait 3 requêtes SQL paie 3 fois, pas une. C'est le poste de latence dominant de l'application, très au-dessus du temps de calcul.
+**Conséquence technique, à chiffrer dans le ticket** : environ 90 ms d'aller-retour entre `iad1` et `eu-central-1` **par requête SQL**, et une route qui enchaîne 3 requêtes séquentielles paie 3 fois. C'est le poste de latence dominant de l'application, très au-dessus du temps de calcul.
 
-**Ce n'est pas un réglage, c'est un arbitrage.** Le choix de la région des fonctions n'est pas disponible sur l'offre Hobby : `iad1` y est imposé. Les issues sont donc, et elles coûtent toutes quelque chose :
+**Ce n'est pas un réglage, c'est un arbitrage.** Le choix de la région des fonctions n'est pas disponible sur l'offre Hobby : `iad1` y est imposé. 4 options, qui coûtent toutes quelque chose :
 
 | Option | Ce que ça règle | Ce que ça coûte |
 |---|---|---|
-| Déplacer les branches Neon en `us-east-1` | La latence disparaît, les 2 côtés sont colocalisés | Les données personnelles sont alors **hébergées** aux États-Unis, pas seulement transférées. Ça aggrave le sujet RGPD au lieu de le régler |
-| Passer sur une offre payante et fixer les fonctions en `fra1` | La latence disparaît **et** le transfert hors UE disparaît | Un abonnement |
-| Rester en l'état et le documenter | Rien | Il faut l'assumer dans la mention d'information, et accepter les 90 ms par requête |
+| 1. Déplacer les branches Neon en `us-east-1` | La latence disparaît, les 2 côtés sont colocalisés | **Change la nature de l'engagement.** Détail ci-dessous. La pire des 4 sur le plan RGPD |
+| 2. Offre payante et fonctions en `fra1` | La latence **et** le transfert hors UE disparaissent | Un abonnement |
+| 3. Rester en l'état et le documenter | Rien | L'assumer dans la mention d'information, et accepter les 90 ms par requête |
+| 4. **Réduire le nombre d'allers-retours** au lieu de leur distance | Une grande partie de la latence, sans abonnement et sans toucher à la localisation | Du travail sur chaque route, et ça ne règle rien du RGPD |
+
+**La nature du coût de l'option 1, qui n'est pas une simple aggravation.** Aujourd'hui les données sont **stockées en UE et traitées aux USA**. Déplacer Neon en `us-east-1` les ferait **stocker ET traiter aux USA**. Ce n'est pas le même engagement à prendre dans la mention d'information : on passe de « vos données sont hébergées en Europe, et traitées aux États-Unis » à « vos données sont hébergées et traitées aux États-Unis ». Pour des utilisateurs français, le stockage en UE est la posture la plus défendable, et c'est justement celle que l'option 1 abandonne. Elle échange un problème de performance contre une régression d'engagement, donc elle est la pire des 4 sur ce plan.
+
+**L'option 4, et pourquoi elle est la première à essayer.** Les 270 ms d'une route à 3 requêtes viennent du nombre d'allers-retours **séquentiels**, pas de la distance seule. Les leviers, par efficacité décroissante :
+
+| Levier | Effet réel |
+|---|---|
+| **Jointures et `include` au lieu de requêtes séparées** | N allers-retours deviennent 1. C'est le seul levier qui supprime vraiment des trajets |
+| **Paralléliser ce qui est indépendant** (`Promise.all`) | N trajets restent N, mais ils se recouvrent : le temps d'attente passe de N × 90 ms à environ 90 ms |
+| **Mettre en cache ce qui ne bouge pas** | Supprime le trajet entièrement sur les lectures répétées |
+| **Regrouper dans une transaction** | **Ne réduit pas les allers-retours.** À noter, parce que c'est contre-intuitif : une transaction interactive les met sur une seule connexion et les **sérialise**, donc elle garantit l'atomicité sans rien gagner en latence, et elle tient la connexion plus longtemps. À utiliser pour la correction, pas pour la performance |
+
+#### La variante WebSocket amortit-elle quelque chose ? Non, pas le trajet par requête
+
+**Et d'abord une correction : notre code n'utilise pas la variante HTTP, contrairement à ce qui était écrit ici.** `packages/db/index.ts` et `packages/db/audit.ts` instancient `PrismaNeon`, qui est `PrismaNeonAdapterFactory` dans `@prisma/adapter-neon@7.10.0` et construit un `neon.Pool`, donc **le protocole Postgres sur WebSocket**. La variante HTTP est exportée séparément, sous `PrismaNeonHttp`. Vérifié en lisant le code de l'adaptateur installé.
+
+Réponse à la question : **chaque requête paie le trajet dans les 2 variantes.** Aucune ne supprime l'aller-retour vers `eu-central-1`, parce qu'une requête doit y aller et revenir. Ce qui diffère est ailleurs :
+
+| | HTTP (`PrismaNeonHttp`) | WebSocket (`PrismaNeon`, ce qu'on utilise) |
+|---|---|---|
+| Trajet par requête | 1 | 1 |
+| Établissement de connexion | aucun, chaque requête est une requête HTTPS indépendante. La documentation Neon le donne comme « l'option la plus rapide pour des requêtes isolées » | plusieurs allers-retours une fois, TCP, TLS, bascule WebSocket et authentification Postgres, **puis amorti sur toutes les requêtes suivantes de la même instance** |
+| Transactions | **refusées**, l'adaptateur lève « Transactions are not supported in HTTP mode » | supportées, y compris interactives |
+
+**Donc ce que le WebSocket amortit, c'est le coût de connexion, pas le coût de distance.** Et il l'amortit d'autant mieux que Fluid Compute réutilise les instances de fonction entre les requêtes : la connexion survit à la requête HTTP et sert les suivantes. C'est un argument pour garder cette variante, pas pour en espérer un gain sur les 90 ms.
+
+Un détail à garder en tête si l'option 4 est explorée : la variante HTTP de Neon sait envoyer **un tableau d'instructions en une seule requête** (`sql.transaction([...])`, non interactif), ce qui collapserait vraiment N trajets en 1. Mais l'adaptateur Prisma en mode HTTP refuse les transactions, donc cette capacité n'est pas accessible depuis Prisma aujourd'hui. Ne pas compter dessus sans l'avoir vérifié sur la version du moment.
 
 **À trancher avant le premier upload**, parce qu'un déplacement de base est bien plus simple avant que des documents existent, et parce que la mention d'information doit dire la vérité sur la localisation au moment où la collecte commence.
 
