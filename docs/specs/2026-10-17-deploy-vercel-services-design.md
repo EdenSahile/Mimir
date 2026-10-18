@@ -398,11 +398,27 @@ Audit fait le 2026-10-18 : aucune autre étape de cette spec ne s'applique à un
 
 | Sujet | Ce qu'il faut trancher |
 |---|---|
-| **Région d'hébergement** | Les branches Neon sont en `eu-central-1`, lu dans les endpoints. La région des fonctions Vercel n'a jamais été vérifiée : une fonction hors UE qui lit une base en UE fait sortir les données. À vérifier et à fixer explicitement, pas à laisser au défaut |
+| **Région d'hébergement** | **Tranché, pas à vérifier** : il y a transfert hors UE à chaque requête. Détail ci-dessous |
 | **Durée de conservation** | Aucune n'est définie. Combien de temps un document, une conversation, un `Memory` sont gardés, et ce qui se passe à l'expiration |
 | **Droit à l'effacement** | Il n'existe aucun chemin de suppression de compte. Les clés étrangères en cascade suppriment les lignes liées, mais pas les fichiers du stockage objet ni les vecteurs, et les 2 arrivent avec l'upload |
 | **Mention d'information** | Quelles données sont collectées, pourquoi, combien de temps, qui les traite. À écrire avant la collecte |
 | **Sous-traitants** | Neon, Vercel, Anthropic, et **le fournisseur d'embeddings**, qui reçoit le contenu des documents. DEC-003 n'est pas tranchée, donc le choix est encore ouvert et le critère de localisation des données peut y entrer |
+
+#### La région : le transfert hors UE est établi, c'est un arbitrage et pas un réglage
+
+**Le code tourne aux États-Unis et lit une base en Europe.** Les logs de build annoncent « Running build in Washington, D.C., USA (East) – iad1 », et l'API Vercel le confirme pour l'exécution et non seulement pour le build : `serverlessFunctionRegion: "iad1"` et `functionDefaultRegions: ["iad1"]`. Les 3 branches Neon sont en `eu-central-1`, lisible dans leurs endpoints. **Chaque requête SQL est donc un transfert de données personnelles hors UE**, et ça ne dépend d'aucune donnée qui n'existerait pas encore : c'est vrai dès le premier compte.
+
+**Conséquence technique, à chiffrer dans le ticket** : environ 90 ms d'aller-retour entre `iad1` et `eu-central-1` par requête SQL. Et avec `@prisma/adapter-neon`, qui parle à Neon en HTTP, **chaque requête de la requête HTTP paie ce trajet** : une route qui fait 3 requêtes SQL paie 3 fois, pas une. C'est le poste de latence dominant de l'application, très au-dessus du temps de calcul.
+
+**Ce n'est pas un réglage, c'est un arbitrage.** Le choix de la région des fonctions n'est pas disponible sur l'offre Hobby : `iad1` y est imposé. Les issues sont donc, et elles coûtent toutes quelque chose :
+
+| Option | Ce que ça règle | Ce que ça coûte |
+|---|---|---|
+| Déplacer les branches Neon en `us-east-1` | La latence disparaît, les 2 côtés sont colocalisés | Les données personnelles sont alors **hébergées** aux États-Unis, pas seulement transférées. Ça aggrave le sujet RGPD au lieu de le régler |
+| Passer sur une offre payante et fixer les fonctions en `fra1` | La latence disparaît **et** le transfert hors UE disparaît | Un abonnement |
+| Rester en l'état et le documenter | Rien | Il faut l'assumer dans la mention d'information, et accepter les 90 ms par requête |
+
+**À trancher avant le premier upload**, parce qu'un déplacement de base est bien plus simple avant que des documents existent, et parce que la mention d'information doit dire la vérité sur la localisation au moment où la collecte commence.
 
 ### 2. La règle de migration n'a aucune application : un contrôle au démarrage manque
 
