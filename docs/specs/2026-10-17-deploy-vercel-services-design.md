@@ -589,6 +589,20 @@ La ligne de migration en échec n'a pas eu à être résolue : elle a disparu av
 
 **Ce que la nouvelle disposition verrouille, définitivement.** La branche de preview naissant saine, le `migrate reset` sur cette branche n'existe plus, donc l'agent n'a aucun besoin de ses identifiants et il n'y a rien à ajouter à `PRISMA_RESET_ALLOWED_HOSTS`. **Les 2 listes blanches restent cantonnées au développement et au test.** Formulé comme règle : l'agent ne détient d'identifiants de base que sur `dev` et `test` ; la production et la preview vivent uniquement côté Vercel, qui les injecte dans ses propres builds et ses propres fonctions.
 
+### Déploiement de contrôle après la séparation
+
+Lancé juste après, sur le même code, pour vérifier que le câblage est bien celui annoncé.
+
+| Vérification | Résultat |
+|---|---|
+| Build | `Ready` |
+| Base visée par `migrate deploy` | `Datasource "db"` annonce `ep-frosty-bird-...`, la **nouvelle branche de preview**, sans suffixe `-pooler` |
+| Migrations | `2 migrations found`, puis `No pending migrations to apply.` : la branche naît déjà à jour, le `migrate deploy` du build n'a plus rien à faire |
+| `/api/health`, protection active | `200`, `{"status":"ok","service":"mimir-api"}` |
+| Suite e2e | **5 sur 5**, en mode `PREVIEW_URL` |
+
+Le `migrate deploy` du `buildCommand` ne devient utile qu'au premier déploiement qui apporte une migration de plus que la branche. C'est le comportement voulu, et le voir ne rien faire sur une branche à jour est la preuve qu'il est bien idempotent.
+
 ## Comptes de test sur la branche Neon de dev
 
 Les tests créent de vrais utilisateurs sur la base de la branche de dev. Pour pouvoir les distinguer et les supprimer, **tout compte de test utilise le domaine `@mimir.test`**, que `uniqueEmail()` de `e2e/helpers.ts` produit déjà, avec un préfixe qui nomme le scénario (`signup-`, `session-`, `login-`). Aucun compte de test n'utilise un autre domaine.
