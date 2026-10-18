@@ -160,7 +160,7 @@ const externalPackages = [apiPkg, dbPkg, sharedPkg]
 
 await build({
   entryPoints: ["src/index.ts"],
-  outfile: "dist/index.mjs",
+  outfile: "dist/index.js",
   bundle: true,
   platform: "node",
   format: "esm",
@@ -236,7 +236,7 @@ CORS devient inutile en preview et en production, mais **reste en place pour l'i
 | `apps/api/src/routes/healthRoutes.ts` | `/health` vers `/api/health` |
 | `apps/api/src/app/app.test.ts` | 2 tests mis à jour, 1 test ajouté sur `x-powered-by` |
 | `apps/api/src/app/app.ts` | `app.disable("x-powered-by")` |
-| `apps/api/vercel.entry.mjs` | nouveau, la passerelle d'entrypoint. En `.js` d'abord, passée en `.mjs` le 2026-10-18 |
+| `apps/api/vercel.entry.js` | nouveau, la passerelle d'entrypoint |
 | `apps/web/src/lib/authClient.ts` | suppression de `baseURL` |
 | `apps/web/src/lib/authClient.test.ts` | réécrit |
 | `apps/web/vite.config.ts` | `strictPort: true` |
@@ -390,11 +390,11 @@ Audit fait le 2026-10-18 : aucune autre étape de cette spec ne s'applique à un
 
 **Version initiale de ce risque, fausse sur l'essentiel** : « tous les previews partagent une seule branche Neon de dev ». La branche partagée n'est pas celle de développement, c'est celle de **production**, et le risque n'est pas « faible aujourd'hui » mais réalisé. Voir le constat en tête de cette spec. Conservé ici pour montrer qu'un risque consigné sur la mauvaise base donne une fausse assurance : il a été écrit, relu et jugé acceptable, alors qu'il décrivait une situation qui n'existait pas.
 
-## 4 manques, en tickets séparés
+## 5 manques, en tickets séparés
 
-Les 2 premiers relevés à la relecture du corps de PR, les 2 suivants par les 2 pannes de production du 2026-10-18.
+Les 2 premiers relevés à la relecture du corps de PR, les 2 suivants par les 2 pannes de production du 2026-10-18, le 5e par la tentative de correctif qui a suivi.
 
-**Ordre de priorité : le contrôle `/api/health` dans la CI (4) passe devant le correctif `.mjs`.** C'est le seul des 2 qui aurait attrapé les 2 pannes du 2026-10-18, l'une et l'autre. Le `.mjs` est de la **défense en profondeur**, pas le correctif : il supprime une classe de panne, et il ne rend pas viable le mode sans les 3 champs, ce que la mesure du paquet montre. Un contrôle qui vérifie qu'un déploiement démarre attrape aussi les pannes qu'on n'a pas prévues ; un correctif ciblé n'attrape que celle qu'il vise.
+**Ordre de priorité : le contrôle `/api/health` dans la CI (4) passe devant le durcissement `.mjs` (5).** C'est le seul des 2 qui aurait attrapé les 2 pannes du 2026-10-18, l'une et l'autre. Le `.mjs` est de la **défense en profondeur**, pas le correctif : il supprime une classe de panne, et il ne rend pas viable le mode sans les 3 champs, ce que la mesure du paquet montre. Un contrôle qui vérifie qu'un déploiement démarre attrape aussi les pannes qu'on n'a pas prévues ; un correctif ciblé n'attrape que celle qu'il vise.
 
 ### 1. Les obligations RGPD, à traiter avant la première fonctionnalité d'upload
 
@@ -505,6 +505,14 @@ Les 2 pannes du 2026-10-18 ont passé la CI au vert. Les contrôles portent sur 
 - Un `401` attendu sur `/api/me` sans cookie complète à un coût nul.
 - La leçon derrière le ticket : nos contrôles vérifiaient que le code est correct, aucun ne vérifiait qu'il **tourne**.
 
+### 5. MIM-103 : rendre le format du bundle indépendant de l'empaquetage, en `.mjs`
+
+Tentée et révertée le 2026-10-18, section « La tentative `.mjs` » plus bas pour le détail. L'extension `.mjs` supprime la dépendance au `package.json` le plus proche, mais elle change aussi le traçage des dépendances par Vercel : `cors` disparaît du paquet alors qu'il est déclaré dans les `dependencies` de `@mimir/api`, et `/api/health` du preview répond `500` sur `Cannot find module 'cors'`.
+
+- **Première étape du ticket** : la mesure qui manquait, le **contenu** du paquet produit en local avec et sans l'extension `.mjs`, et non son seul `handler`. Elle dira quelle partie du traçage l'extension déplace.
+- C'est un **durcissement facultatif** : la production tourne sans, et le ticket 4 le précède.
+- Le `.mjs` ne rend pas viable le mode sans les 3 champs de build. Il ne remplace donc rien.
+
 ## La deuxième panne : les 3 champs de build ne sont pas inertes
 
 ### Ce que cette panne laisse derrière elle : une dépendance fragile
@@ -567,22 +575,25 @@ Enchaînement complet, de la cause à l'erreur : pas de remplacement d'Output Di
 
 Ce que la reproduction locale ne couvre pas, et qui reste dit : dans le paquet cassé produit en local, il n'y a **aucun** fichier à part `.vc-config.json`, alors que le paquet cassé en production contenait bien un `index.js` avec notre bundle. La bascule du handler est reproduite, le contenu exact du paquet ne l'est pas, probablement une différence de version entre le constructeur local et celui du cloud. La chaîne causale tient sur la mesure de production ; la reproduction locale ne sert qu'à désigner le champ.
 
-### Le correctif : `.mjs` sur l'entrypoint et sur le bundle
+### La tentative `.mjs` : écrite, déployée sur un preview, révertée le même soir
 
-**C'est de la défense en profondeur, et il passe après le contrôle `/api/health` en CI.** Il supprime une classe de panne, il n'aurait attrapé ni la première panne du jour, ni l'incomplétude du paquet.
+**Intention.** Un fichier `.mjs` est ESM **par son extension**, donc son format ne dépend d'aucun `package.json` ni de ce que le paquet contient. Les 3 champs restent nécessaires de toute façon, mais cette classe de panne cesserait de dépendre de 3 réglages de tableau de bord. 4 fichiers changeaient : `outfile` de `esbuild.config.mjs`, la passerelle renommée, l'`entrypoint` de `vercel.json`, le script `start`.
 
-Les 3 champs restent en place, mais la panne ne doit pas dépendre de 3 réglages de tableau de bord. Un fichier `.mjs` est ESM **par son extension**, donc son format ne dépend plus d'aucun `package.json`, ni de ce que le paquet contient.
+**Résultat : `/api/health` du preview répond `500`, et l'erreur a changé de nature.**
 
-| Fichier | Avant | Après |
-|---|---|---|
-| `apps/api/esbuild.config.mjs` | `outfile: "dist/index.js"` | `outfile: "dist/index.mjs"` |
-| passerelle | `apps/api/vercel.entry.js` | `apps/api/vercel.entry.mjs` |
-| `vercel.json` | `"entrypoint": "vercel.entry.js"` | `"entrypoint": "vercel.entry.mjs"` |
-| `apps/api/package.json` | `"start": "node dist/index.js"` | `"start": "node dist/index.mjs"` |
+```
+Cannot find module 'cors'
+Require stack:
+- /var/task/apps/api/package.json
+Did you forget to add it to "dependencies" in `package.json`?
+Node.js process exited with exit status: 1.
+```
 
-Mesure du correctif, même protocole qu'au-dessus : sans les 3 champs, le handler devient `index.mjs` au lieu de `index.js`, donc chargé en ESM quoi qu'il arrive ; avec les 3 champs, le handler reste `apps/api/vercel.entry.mjs`, inchangé. Dans les 2 cas, le format ne dépend plus de l'empaquetage, et cette classe de panne disparaît. Le bundle a aussi été chargé en local par un `import()` direct : il démarre.
+**Ce que la tentative apprend, et c'est sa vraie valeur : changer l'extension de l'entrypoint change la façon dont Vercel trace les dépendances.** `cors` est déclaré dans les `dependencies` de `@mimir/api`, et il était bien dans le paquet avant ce changement : la mesure du paquet sain, plus haut, montre un shim `_virtual/_cjs-shim_apps_api_cors.mjs` et un `node_modules` tracé. Avec l'entrypoint en `.mjs`, le module disparaît du paquet. L'empaquetage est par ailleurs de la bonne forme, le chemin de la pile étant `/var/task/apps/api/...` et non un `index.js` à la racine : ce n'est donc pas un retour de la panne du soir, c'est une panne nouvelle.
 
-Ce que le correctif ne fait pas : rendre le mode « sans les 3 champs » viable. Le paquet produit dans ce mode reste différent, et rien ne dit qu'il est complet. Les 3 champs restent nécessaires ; le `.mjs` enlève seulement la dépendance au `package.json` le plus proche.
+**Décision du 2026-10-18 au soir : la tentative est révertée** (`git revert`, pas de réécriture d'historique, pour que la trace reste lisible). Motifs : la production tourne sans, c'est un durcissement facultatif et non un correctif, et le contrôle `/api/health` en CI le précède en priorité. Le ticket reste ouvert avec ce point de départ, et sa première étape est la mesure locale du contenu du paquet, qui n'avait pas été faite.
+
+**Erreur de méthode à l'origine de cette perte de temps.** La mesure annoncée comme validant le correctif portait sur le **`handler`** du paquet, pas sur son **contenu**. Un handler correct ne dit rien des modules présents à côté. C'est la même erreur que la comparaison des logs de build pour une panne d'empaquetage, à 24 heures d'écart. Formulée une fois pour toutes dans la rule `deploiement-production` : une vérification porte sur la chose elle-même, pas sur un indicateur corrélé.
 
 ## Séquence de validation sur le preview
 
@@ -602,7 +613,7 @@ Error: [ENTRYPOINT_NOT_FOUND] Service "api" has entrypoint "dist/index.js" but t
 
 **Ce que ça apprend.** Vercel résout l'`entrypoint` d'un service **avant** le build, contre le contenu du dépôt. Or `dist/index.js` est un artefact produit par le build. Ce n'est pas un mauvais chemin, c'est une poule et un œuf, et aucun réglage de chemin ne le résout. L'erreur apprend aussi que le mode `services` était bien actif : elle n'aurait pas pu nommer le service `api`.
 
-**La passerelle.** `apps/api/vercel.entry.mjs`, versionné, 1 ligne utile qui importe `./dist/index.mjs`. Les 2 fichiers étaient en `.js` jusqu'au 2026-10-18, et l'extension a changé après la deuxième panne de production, pour que le format ESM tienne à l'extension. Le fichier existe dans le dépôt, donc la validation passe ; l'import n'est résolu qu'à l'exécution, quand `dist` existe. Le traçage de fichiers de Vercel a suivi l'import : la fonction déployée contient bien le bundle.
+**La passerelle.** `apps/api/vercel.entry.js`, versionné, 1 ligne utile qui importe `./dist/index.js`. Le fichier existe dans le dépôt, donc la validation passe ; l'import n'est résolu qu'à l'exécution, quand `dist` existe. Le traçage de fichiers de Vercel a suivi l'import : la fonction déployée contient bien le bundle.
 
 **La séquence de validation, protection active**, via `vercel curl --deployment` :
 
@@ -861,7 +872,7 @@ Le bundle esbuild n'existe que pour l'alias `@/` dans `apps/api` et pour `@mimir
 
 Coût mesuré : environ 45 fichiers. 2 `package.json` et 2 configs de build pour les paquets, puis les 31 fichiers de `apps/api/src/` qui importent en `@/`, tests compris, et le retrait de l'alias aux 4 endroits où il est câblé. Ça annule la rule `imports-backend` pour tout le backend.
 
-Différé, mais pas pour le motif « Services sortira de Beta » : la résolution de l'entrypoint avant le build est très probablement un comportement voulu, pas un défaut de Beta, donc la sortie de Beta ne rendra pas `vercel.entry.mjs` inutile. Les déclencheurs réels sont :
+Différé, mais pas pour le motif « Services sortira de Beta » : la résolution de l'entrypoint avant le build est très probablement un comportement voulu, pas un défaut de Beta, donc la sortie de Beta ne rendra pas `vercel.entry.js` inutile. Les déclencheurs réels sont :
 
 - le bundle recasse ;
 - un nouveau paquet du workspace est importé par l'API ;
