@@ -19,6 +19,25 @@ Le test avant d'ecrire une migration : **est-ce que le code actuellement en prod
 
 Rien n'empeche une fusion qui oublie le `pnpm db:deploy`. Le code part alors sur une base en retard et sert des 500. Un ticket ouvert porte le filet manquant : un controle au demarrage de l'API qui compare les migrations enregistrees en base a celles du dossier `prisma/migrations` et refuse de servir si la base est en retard, en tolerant l'avance, qui est le cas normal de cette rule. Tant qu'il n'est pas fait, la regle repose sur la discipline.
 
+## Les 3 champs de build du projet Vercel ne se touchent pas
+
+Build Command, Output Directory et Install Command, au niveau du **projet** Vercel, restent renseignes : `pnpm --filter @mimir/web build`, `apps/web/dist`, `pnpm install --frozen-lockfile`. Ils ne sont pas inertes en mode `services`, contrairement a ce qui avait ete ecrit : ils commandent l'**empaquetage de la fonction**. Les vider a casse la production le 2026-10-18, les 2 routes de l'API repondant `500` sur `SyntaxError: Cannot use import statement outside a module`. Le meme commit redeploye avec les champs reactives repond `200`.
+
+Les logs de build sont identiques avec et sans ces champs : ils ne peuvent pas servir a verifier ce point. La difference se lit dans le paquet de fonction, pas dans le build.
+
+**Le piege, mesure :** ce qui compte est la **presence** d'un remplacement, pas sa valeur. Toute valeur d'Output Directory donne le bon paquet, y compris un dossier qui n'existe pas, **sauf la chaine `dist`**, qui est la valeur par defaut et se comporte comme un champ vide. Un « nettoyage » qui remettrait la valeur par defaut, croyant revenir a un etat neutre, casse donc la production aussi surement qu'un champ vide, et le build reste vert. Il n'y a pas d'etat neutre : il y a un remplacement, ou la panne.
+
+## Une verification porte sur la chose elle-meme, pas sur un indicateur correle
+
+Regle de methode, formulee apres l'avoir manquee 3 fois en 2 jours sur ce chantier.
+
+- Panne d'**empaquetage** de la fonction : conclue « rien n'a change » en comparant les logs de **build**, qui ne decrivent pas l'empaquetage. Les logs sont identiques avec et sans les 3 champs.
+- Correctif `.mjs` annonce comme valide : mesure faite sur le **handler** du paquet, pas sur son **contenu**. Un handler correct ne dit rien des modules presents a cote, et il manquait `cors`.
+
+Donc : avant d'ecrire « verifie », s'assurer que la source consultee **pourrait** montrer le phenomene cherche. Une preuve d'absence tiree d'une source qui ne couvre pas le phenomene n'est pas une preuve.
+
+Et le compte rendu **nomme ce qui a ete mesure et ce qui ne l'a pas ete**. « Le handler est correct » n'est pas « le paquet est correct » ; dire lequel des 2 a ete observe fait partie du resultat, pas des precautions.
+
 ## Ce que ca ne change pas
 
 L'accord explicite de l'utilisateur est requis pour chaque fusion (rule `git`). Cette rule dit ce qu'une fusion declenche, elle n'autorise aucune fusion.
