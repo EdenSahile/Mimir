@@ -2,11 +2,19 @@
 
 Les bases de ce projet ne se valent pas. Les identifiants qu'un agent detient, et ce qu'il a le droit d'en faire, suivent cette distinction.
 
-## Un agent n'a d'identifiants que sur les bases jetables
+## Un agent n'a d'identifiants que sur `dev` et `test`
 
-Sont jetables : la base de developpement local (`.env`), celle de test (`.env.test`) et celle de preview. Elles ne contiennent que des donnees de travail et des comptes de test, et peuvent etre reconstruites a tout moment par les migrations.
+Ces 2 bases sont jetables : la base de developpement local (`.env`) et celle de test (`.env.test`). Elles ne contiennent que des donnees de travail et des comptes de test, et peuvent etre reconstruites a tout moment par les migrations.
 
-La **production** n'est pas dans cette liste, et ne le sera pas. Un agent ne recoit pas ses identifiants, ni pour une lecture, ni temporairement, ni « juste pour verifier ». Ne pas les demander.
+**La production et la preview vivent uniquement cote Vercel**, qui injecte leurs identifiants dans ses propres builds et ses propres fonctions. Un agent ne recoit pas ces identifiants, ni pour une lecture, ni temporairement, ni « juste pour verifier ». Ne pas les demander.
+
+La preview a quitte la liste des bases dont l'agent detient les identifiants le 2026-10-18 : sa branche Neon est creee comme enfant d'une production deja saine, donc elle nait avec un historique de migrations propre et aucune ligne. Il n'y a plus de `migrate reset` a lancer dessus, donc plus aucune raison d'en detenir les identifiants.
+
+## Un identifiant colle dans une conversation est un identifiant a faire tourner
+
+Sans evaluer la probabilite qu'il ait ete lu ni la duree de l'exposition : la rotation est le geste par defaut, immediat. Elle est bon marche, contrairement a l'enquete qui essaierait de l'eviter.
+
+**Les roles Neon sont par branche, pas par projet.** Une rotation ne s'applique qu'a la branche sur laquelle elle est lancee, et une branche creee avant la rotation garde l'ancien mot de passe. Traiter chaque branche separement, et faire tourner avant de creer une branche enfant.
 
 ## La production se mesure par des resultats transmis
 
@@ -28,7 +36,9 @@ Les commandes ne nomment jamais les endpoints dans le depot. Les listes blanches
 
 ## Corollaire sur les commandes destructives
 
-`prisma migrate reset` et `prisma db push` sont restreints par liste blanche de hosts, appliquee dans `packages/db/cliDatasource` et declaree par l'environnement. **Liste absente vaut refus** : l'environnement de production n'a aucune raison de porter ces variables, et c'est ce qui le protege par construction. Cette liste est le dernier rempart contre une faute de frappe sur un fichier d'environnement : elle ne s'elargit pas pour faire passer une commande qui bloque.
+`prisma migrate reset` et `prisma db push` sont restreints par liste blanche de hosts, appliquee dans `packages/db/cliDatasource` et declaree par l'environnement. **Liste absente vaut refus** : ni la production ni la preview n'ont de raison de porter ces variables, et c'est ce qui les protege par construction. **Les 2 listes restent cantonnees a `dev` et `test`, definitivement** : elles ne s'elargissent pas pour faire passer une commande qui bloque, et l'endpoint de production n'y entre jamais, sous aucun pretexte. Si une operation exige de l'y ajouter, la refuser et le dire.
+
+Ne pas presenter cette liste comme le dernier rempart : elle a deja contenu l'endpoint de production sous un mauvais nom (commit `7330824`). Un garde-fou ecrit par celui qu'il est cense contraindre ne vaut que ce que vaut l'information qu'il contient. Le controle reel est la detention des identifiants, et l'identite d'une base cible se verifie dans la console du fournisseur, jamais d'apres le nom d'une variable d'environnement.
 
 ## Ce que ca ne change pas
 

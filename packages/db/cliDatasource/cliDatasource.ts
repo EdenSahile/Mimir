@@ -23,15 +23,17 @@ const POOLED_CONNECTION_COMMANDS = ["generate"]
 // db push applique le schema sans rien inscrire dans _prisma_migrations : la
 // base se retrouve desalignee de l'historique des migrations, et le
 // migrate deploy suivant echoue en P3018 sur un objet deja existant. C'est
-// arrive sur la base de preview, qui est donc hors de cette liste tout en
-// restant dans celle du reset : le reset y est le moyen de rendre l'historique
-// vrai, la ou db push ne ferait que l'ecarter davantage.
+// arrive sur la base que les previews utilisaient, et c'est ce qui a conduit a
+// la reinitialiser plutot qu'a declarer la migration appliquee.
 //
-// migrate reset detruit toutes les donnees : c'est le dernier rempart contre
-// une faute de frappe sur un fichier d'environnement.
+// migrate reset detruit toutes les donnees. C'est un rempart contre une faute
+// de frappe sur un fichier d'environnement, pas le dernier : ce controle a deja
+// contenu l'endpoint de production sous un mauvais nom (commit 7330824). Le
+// controle reel est la detention des identifiants.
 //
-// Liste absente vaut refus. C'est ce qui protege la production par
-// construction : son environnement n'a aucune raison de porter ces variables.
+// Liste absente vaut refus, et les 2 listes sont cantonnees a dev et test : ni
+// la production ni la preview n'ont de raison de porter ces variables, et c'est
+// ce qui les protege par construction.
 const PUSH_ALLOWED_HOSTS_VARIABLE = "PRISMA_PUSH_ALLOWED_HOSTS"
 const RESET_ALLOWED_HOSTS_VARIABLE = "PRISMA_RESET_ALLOWED_HOSTS"
 

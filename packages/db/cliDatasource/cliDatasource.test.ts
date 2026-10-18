@@ -4,14 +4,17 @@ import { resolveCliDatasourceUrl } from "./cliDatasource.js"
 const pooledUrl = "postgresql://user:pass@ep-demo-pooler.eu-central-1.aws.neon.tech/neondb"
 const localDirectUrl = "postgresql://user:pass@ep-locale.c-6.eu-central-1.aws.neon.tech/neondb"
 const testDirectUrl = "postgresql://user:pass@ep-de-test.c-6.eu-central-1.aws.neon.tech/neondb"
-const previewDirectUrl = "postgresql://user:pass@ep-de-preview.c-6.eu-central-1.aws.neon.tech/neondb"
+const unlistedDirectUrl = "postgresql://user:pass@ep-non-declare.c-6.eu-central-1.aws.neon.tech/neondb"
 const productionDirectUrl = "postgresql://user:pass@ep-de-production.c-6.eu-central-1.aws.neon.tech/neondb"
 
 // Les listes blanches sont declarees par l'environnement, pas par le code : les
-// endpoints d'un projet n'ont rien a faire dans un depot public.
+// endpoints d'un projet n'ont rien a faire dans un depot public. Les 2 listes
+// sont cantonnees a dev et test : la preview nait saine d'une production saine,
+// donc aucune commande destructrice ne la vise, et la production n'y entre
+// jamais.
 const disposableHosts = {
   PRISMA_PUSH_ALLOWED_HOSTS: "ep-locale,ep-de-test",
-  PRISMA_RESET_ALLOWED_HOSTS: "ep-locale,ep-de-test,ep-de-preview",
+  PRISMA_RESET_ALLOWED_HOSTS: "ep-locale,ep-de-test",
 }
 
 describe("l'aide et generate ne se connectent a rien", () => {
@@ -78,12 +81,12 @@ describe("db push, restreint aux hosts declares", () => {
   })
 
   // db push applique le schema sans rien inscrire dans _prisma_migrations :
-  // c'est ce qui a desaligne la base de preview de l'historique des migrations.
-  // Le preview est donc hors de SA liste, tout en restant dans celle du reset.
+  // c'est ce qui a desaligne une base de l'historique des migrations. Une
+  // connexion directe valide ne suffit donc pas, le host doit etre declare.
   it("refuse un host hors de sa liste, meme avec une connexion directe valide", () => {
     const pushArgv = ["node", "prisma", "db", "push"]
 
-    expect(() => resolveCliDatasourceUrl({ ...disposableHosts, DIRECT_URL: previewDirectUrl }, pushArgv)).toThrow(
+    expect(() => resolveCliDatasourceUrl({ ...disposableHosts, DIRECT_URL: unlistedDirectUrl }, pushArgv)).toThrow(
       /db push/,
     )
   })
@@ -101,13 +104,13 @@ describe("migrate reset, restreint aux hosts declares", () => {
   it("accepte un host de la liste", () => {
     const resetArgv = ["node", "prisma", "migrate", "reset", "--force"]
 
-    expect(resolveCliDatasourceUrl({ ...disposableHosts, DIRECT_URL: previewDirectUrl }, resetArgv)).toBe(
-      previewDirectUrl,
-    )
+    expect(resolveCliDatasourceUrl({ ...disposableHosts, DIRECT_URL: testDirectUrl }, resetArgv)).toBe(testDirectUrl)
   })
 
-  // Le seul rempart contre une faute de frappe sur le fichier d'environnement :
-  // migrate reset detruit tout.
+  // Un rempart contre une faute de frappe sur le fichier d'environnement, pas
+  // le dernier : ce controle a deja contenu l'endpoint de production sous un
+  // mauvais nom (commit 7330824). Le controle reel est la detention des
+  // identifiants.
   it("refuse un host hors de sa liste", () => {
     const resetArgv = ["node", "prisma", "migrate", "reset", "--force"]
 
