@@ -388,6 +388,35 @@ Audit fait le 2026-10-18 : aucune autre étape de cette spec ne s'applique à un
 
 **Version initiale de ce risque, fausse sur l'essentiel** : « tous les previews partagent une seule branche Neon de dev ». La branche partagée n'est pas celle de développement, c'est celle de **production**, et le risque n'est pas « faible aujourd'hui » mais réalisé. Voir le constat en tête de cette spec. Conservé ici pour montrer qu'un risque consigné sur la mauvaise base donne une fausse assurance : il a été écrit, relu et jugé acceptable, alors qu'il décrivait une situation qui n'existait pas.
 
+## 2 manques relevés à la relecture du corps de PR, en tickets séparés
+
+### 1. Les obligations RGPD, à traiter avant la première fonctionnalité d'upload
+
+**C'était une incohérence de ce document.** Plusieurs décisions de sécurité y sont justifiées par « Mímir stocke des documents personnels » (Deployment Protection maintenue, séparation Production/Preview, identifiants de production hors de portée d'un agent), et aucune ligne ne traitait des obligations que ce même fait crée. Le fait est invoqué quand il sert à refuser quelque chose, ignoré quand il oblige à faire quelque chose.
+
+À traiter **avant** la première fonctionnalité d'upload, pas après : les 2 premiers points deviennent des migrations de données une fois que des documents existent, et les 3 suivants sont des engagements à prendre avant de collecter, pas après.
+
+| Sujet | Ce qu'il faut trancher |
+|---|---|
+| **Région d'hébergement** | Les branches Neon sont en `eu-central-1`, lu dans les endpoints. La région des fonctions Vercel n'a jamais été vérifiée : une fonction hors UE qui lit une base en UE fait sortir les données. À vérifier et à fixer explicitement, pas à laisser au défaut |
+| **Durée de conservation** | Aucune n'est définie. Combien de temps un document, une conversation, un `Memory` sont gardés, et ce qui se passe à l'expiration |
+| **Droit à l'effacement** | Il n'existe aucun chemin de suppression de compte. Les clés étrangères en cascade suppriment les lignes liées, mais pas les fichiers du stockage objet ni les vecteurs, et les 2 arrivent avec l'upload |
+| **Mention d'information** | Quelles données sont collectées, pourquoi, combien de temps, qui les traite. À écrire avant la collecte |
+| **Sous-traitants** | Neon, Vercel, Anthropic, et **le fournisseur d'embeddings**, qui reçoit le contenu des documents. DEC-003 n'est pas tranchée, donc le choix est encore ouvert et le critère de localisation des données peut y entrer |
+
+### 2. La règle de migration n'a aucune application : un contrôle au démarrage manque
+
+La rule `deploiement-production` dit que `pnpm db:deploy` part contre la production **avant** la fusion. **Rien ne l'applique.** Si l'étape est oubliée, le code arrive sur une base en retard et sert des `500` sur la première requête qui touche une table ou une colonne manquante, sans que rien n'ait signalé la cause. La règle ne repose aujourd'hui que sur la discipline de l'utilisateur, et une règle sans filet finit par être oubliée exactement le jour où elle compte.
+
+Le filet manquant, dans l'esprit de l'échec bruyant appliqué partout ailleurs dans ce ticket (`env.ts` qui refuse un repli silencieux, `cliDatasource` qui lève plutôt que de passer par le pooler, `strictPort` qui refuse de glisser sur un autre port) : **un contrôle au démarrage de l'API qui compare les migrations enregistrées en base à celles du dossier `prisma/migrations`, et qui refuse de servir si la base est en retard.**
+
+Points à traiter dans le ticket, parce qu'ils décident si le filet est utilisable :
+
+- **Ce qu'il lit** : les `migration_name` de `_prisma_migrations` contre les noms de dossiers de `prisma/migrations`. Une migration enregistrée mais non terminée (`finished_at` vide) compte comme absente, c'est exactement l'état qui bloquait les builds dans ce ticket.
+- **Base en avance, et c'est le cas normal** : la règle fait partir les migrations avant la fusion, donc la base a légitimement des migrations que le code ne connaît pas encore pendant quelques minutes. Le contrôle doit **refuser le retard et tolérer l'avance**, sinon il casse le déroulé qu'il est censé protéger.
+- **Le coût au démarrage** : 1 requête, sur une fonction qui démarre à froid. À mesurer, et à ne pas mettre sur le chemin de chaque requête.
+- **Ce que `/api/health` renvoie dans cet état** : vraisemblablement un `503` qui nomme les migrations manquantes, pour que la cause se lise dans la réponse au lieu de se déduire des logs.
+
 ## Séquence de validation sur le preview
 
 1. `/api/health` répond.

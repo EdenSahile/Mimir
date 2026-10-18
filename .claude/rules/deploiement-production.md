@@ -15,6 +15,10 @@ La production n'applique pas ses migrations pendant son build (DEC-012) : elle p
 
 Le test avant d'ecrire une migration : **est-ce que le code actuellement en production survit a cette migration pendant 5 minutes ?** Si non, elle se decoupe.
 
+## Limite actuelle : cette rule n'a aucune application technique
+
+Rien n'empeche une fusion qui oublie le `pnpm db:deploy`. Le code part alors sur une base en retard et sert des 500. Un ticket ouvert porte le filet manquant : un controle au demarrage de l'API qui compare les migrations enregistrees en base a celles du dossier `prisma/migrations` et refuse de servir si la base est en retard, en tolerant l'avance, qui est le cas normal de cette rule. Tant qu'il n'est pas fait, la regle repose sur la discipline.
+
 ## Ce que ca ne change pas
 
 L'accord explicite de l'utilisateur est requis pour chaque fusion (rule `git`). Cette rule dit ce qu'une fusion declenche, elle n'autorise aucune fusion.

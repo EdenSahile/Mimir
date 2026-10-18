@@ -158,6 +158,8 @@ La protection standard **reste active sur les previews**, en production comme en
 
 Le fournisseur d'embeddings n'est pas choisi. Options envisagées : OpenAI text-embedding-3-small (1536 dimensions), Voyage AI, modèle open source. La dimension des vecteurs n'est pas figée. Le schéma Prisma ne contient pas encore de colonne vector sur DocumentChunk et Memory. Elle sera ajoutée par une migration SQL brute quand la décision sera prise. Les interfaces `EmbeddingService` et `EmbeddingConfig` dans `packages/shared` permettent de changer de fournisseur sans modifier le reste du code.
 
+**Critère ajouté le 2026-10-18 :** le fournisseur d'embeddings reçoit le **contenu des documents personnels**, c'est donc un sous-traitant au sens du RGPD, et la localisation de son traitement entre dans le choix au même titre que la dimension et le coût. Voir le ticket RGPD ouvert dans `docs/specs/2026-10-17-deploy-vercel-services-design.md`.
+
 ### DEC-004 : Fournisseur de stockage objet
 
 **Statut :** En attente
