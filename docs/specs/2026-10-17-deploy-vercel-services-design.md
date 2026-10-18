@@ -9,6 +9,8 @@
 
 Vérifié par l'utilisateur dans la console Neon. La branche Neon que `DATABASE_URL` de l'environnement **Preview** désigne sur Vercel est la branche de **production**. Il n'existe pas de branche de preview distincte.
 
+**Depuis quand.** `vercel env ls` date l'entrée Preview de `DATABASE_URL`, `DIRECT_URL` et `BETTER_AUTH_SECRET` d'il y a 1 jour, contre 9 jours pour les entrées Production. Les previews n'écrivent donc en production que depuis la création de ces entrées, et non depuis l'origine du projet. À noter aussi, contre une idée répandue dans ce ticket : il y a bien **2 entrées distinctes** par variable, une par portée. Il n'y a donc rien à dédoubler, c'est la **valeur** de l'entrée Preview qui est à changer.
+
 Ce que ça implique, et qui doit être traité avant toute suite :
 
 1. Les déploiements de preview **lisent et écrivent dans la base de production**.
@@ -27,6 +29,24 @@ Ce que ça implique, et qui doit être traité avant toute suite :
 **Un garde-fou que l'agent peut éditer est un pense-bête, pas un contrôle.** L'agent qui écrit le verrou détient aussi la clé : il peut élargir une liste blanche aussi facilement qu'il l'a écrite. Les seuls contrôles réels sont ceux que l'utilisateur détient, les identifiants et la vérification à la source. Démonstration dans cette session même : la liste blanche codée en dur du commit `7330824` contenait **l'endpoint de production** pour `migrate reset`, présenté comme « le dernier rempart ». Ce qui a réellement protégé la base, c'est que l'utilisateur n'a pas fourni les identifiants, puis que le passage en variables d'environnement a hérité de fichiers qui ne listent que les bases de développement et de test.
 
 **Règle absolue qui en découle : l'endpoint de production n'entre dans aucune liste blanche, ni `reset`, ni `push`, jamais.** Si une opération exige de l'y ajouter, elle est refusée et signalée.
+
+#### Le cas du commit `7330824`, l'enseignement le plus utile de ce ticket
+
+Le commit `7330824` introduit le garde-fou sur `migrate reset`, annoncé comme « le dernier rempart contre une faute de frappe sur un fichier d'environnement ». Son code :
+
+```ts
+const RESET_ALLOWED_HOSTS = [...PUSH_ALLOWED_HOSTS, "ep-sweet-paper-b2d3bg45"]
+```
+
+Cette liste **autorisait explicitement `migrate reset` sur la base de production**, parce que l'endpoint y avait été ajouté sous le nom de « base de preview ». Le rempart annoncé laissait donc passer précisément l'opération contre laquelle il était censé protéger, et il a été écrit, commenté, testé et présenté comme un contrôle.
+
+Ce qui a réellement protégé la base, dans l'ordre : l'utilisateur n'a pas fourni les identifiants ; puis le passage des listes en variables d'environnement a hérité de fichiers locaux qui ne déclarent que les bases de développement et de test. Deux fois la protection est venue de l'utilisateur, jamais du dispositif.
+
+À retenir pour tout garde-fou futur : un contrôle écrit par celui qu'il est censé contraindre ne vaut que ce que vaut l'information qu'il contient, et cette information venait ici d'une supposition. Le contrôle réel reste la détention des identifiants.
+
+#### Exposition de l'endpoint de production, et décision
+
+Le commit `7330824` est poussé sur un dépôt public : l'endpoint de la branche de production figure donc dans l'historique. **Décision de l'utilisateur : ni réécriture de l'historique, ni recréation de la branche Neon.** Motif : un endpoint n'est pas un identifiant, il ne donne accès à rien seul, et une réécriture d'historique serait cosmétique puisque les objets restent accessibles par leur SHA. Le seul élément réellement sensible est le mot de passe, et **les mots de passe des 3 branches Neon sont mis en rotation**. Le sujet est clos, il n'a pas à être rouvert.
 
 ### Correctif de fond
 

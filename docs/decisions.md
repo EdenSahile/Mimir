@@ -92,6 +92,8 @@ Vérifié dans la console Neon : la branche que `DATABASE_URL` de l'environnemen
 
 **Un garde-fou que l'agent peut éditer est un pense-bête, pas un contrôle.** L'agent qui écrit le verrou détient aussi la clé. Les contrôles réels sont ceux que l'utilisateur détient : les identifiants, et la vérification à la source. Corollaire absolu : **l'endpoint de production n'entre dans aucune liste blanche, ni `reset`, ni `push`, jamais.** Une opération qui l'exigerait est refusée et signalée.
 
+**Exposition de l'endpoint.** Le commit `7330824`, poussé sur un dépôt public, contient l'endpoint de la branche de production dans une liste blanche codée en dur. Décision : **ni réécriture de l'historique, ni recréation de la branche**, parce qu'un endpoint n'est pas un identifiant et qu'une réécriture serait cosmétique, les objets restant accessibles par leur SHA. Le seul élément sensible est le mot de passe : **les mots de passe des 3 branches Neon sont mis en rotation**. Sujet clos.
+
 **Préalable à la reprise.** Une branche Neon dédiée au preview, créée depuis la production, puis des variables Vercel déclarées par environnement avec des valeurs distinctes, `BETTER_AUTH_SECRET` compris. Le correctif de fond, une branche éphémère par déploiement, passe en priorité.
 
 #### Migrations : automatiques en preview, délibérées en production
