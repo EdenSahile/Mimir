@@ -538,9 +538,32 @@ Si la base est vide, ou ne contient que des essais, elle est réinitialisée ell
 
 Les 2 opérations demandent les identifiants de la base visée, que les variables sensibles de Vercel ne laissent pas lire : ils viennent de la console Neon.
 
-### La liste de nettoyage est un repli
+### Résultat des mesures, et décision : la production est réinitialisée
 
-La suppression ciblée des comptes de test en production ne sert **que** s'il y a quelque chose à garder dans cette base. Si les mesures montrent 0 dans `Document`, `Message` et `Memory`, et uniquement des comptes de test dans `User`, la production est réinitialisée : l'historique des migrations redevient honnête partout, la ligne en échec disparaît, et la liste de suppression devient sans objet. Elle n'est donc pas le plan principal.
+Mesures lancées par l'utilisateur dans la console Neon le 2026-10-18.
+
+| Mesure | Résultat |
+|---|---|
+| Données métier | **0 partout** : `Document`, `DocumentChunk`, `Conversation`, `Message`, `Memory`, `Profile`, `Goal`, `Project`, `Task`, `Verification` |
+| Comptes | 11 `User`, 11 `Account`, 9 `Session`, **tous des comptes de test** créés le 2026-10-17 entre 19:57 et 20:45 : 3 exécutions Playwright, 1 inscription manuelle, 1 compte témoin |
+| Développement d'octobre | aucun compte : l'authentification n'existait pas encore au 3 octobre |
+| `_prisma_migrations` | `init` terminée le 3 octobre. `add_better_auth_tables` démarrée le 17 à 20:48, **0 étape appliquée, jamais résolue**, logs confirmant le `42701` sur `emailVerified` |
+
+Il n'y a donc rien à garder. **Décision : la production est réinitialisée**, ce qui rend l'historique des migrations honnête au lieu de le déclarer, et fait disparaître la ligne en échec qui bloque les builds.
+
+**Et l'ordre change, ce qui supprime 2 étapes.** La production est réinitialisée **avant** la création de la branche de preview, et non après. La branche de preview est alors créée depuis une production déjà saine : elle hérite d'un historique propre et de zéro compte. Disparaissent donc, devenus sans objet :
+
+- le `migrate reset` sur la branche de preview ;
+- l'ajout de son endpoint à `PRISMA_RESET_ALLOWED_HOSTS`, donc une liste blanche qui reste cantonnée au développement et au test ;
+- la liste de suppression ciblée des comptes de test en production, qui n'était un repli que pour le cas où il y aurait eu quelque chose à garder.
+
+C'est 2 étapes et 1 risque en moins, le risque étant qu'une commande destructrice ait eu besoin d'une liste blanche élargie.
+
+### Ce que la réinitialisation recrée, et ce qu'elle n'emporte pas
+
+`DROP SCHEMA public CASCADE` emporte les extensions installées dans ce schéma, pgvector comprise. **Vérifié : la migration `init` les recrée**, sa ligne 2 étant `CREATE EXTENSION IF NOT EXISTS "vector";`, avant les 16 `CREATE TABLE`. La seconde migration ajoute 3 tables. Aucune instruction manuelle n'est donc à lancer avant `pnpm db:deploy`.
+
+À noter : aucune colonne de type vecteur n'existe encore dans le schéma, la dimension des embeddings n'étant pas tranchée (DEC-003). L'extension est créée mais n'est utilisée par rien aujourd'hui.
 
 ## Comptes de test sur la branche Neon de dev
 

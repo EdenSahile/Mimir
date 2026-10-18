@@ -1,4 +1,5 @@
-import { prisma } from "./index"
+import { PrismaClient } from "@prisma/client"
+import { PrismaNeon } from "@prisma/adapter-neon"
 
 // Mesure en LECTURE SEULE de l'etat d'une base, destinee a etre lancee par
 // l'utilisateur sur la production et transmise telle quelle : la sortie ne
@@ -12,8 +13,20 @@ type MigrationRow = {
   applied_steps_count: number
 }
 
+// Une lecture marche aussi bien par la connexion poolee que par la directe :
+// accepter les 2 evite d'exiger DATABASE_URL pour une simple mesure. Le client
+// est construit ici plutot qu'importe de ./index, qui impose DATABASE_URL a
+// l'application et doit le rester.
+const connectionString = process.env.DATABASE_URL ?? process.env.DIRECT_URL
+if (!connectionString) {
+  console.error("DATABASE_URL ou DIRECT_URL est requise pour mesurer une base")
+  process.exit(1)
+}
+
+const prisma = new PrismaClient({ adapter: new PrismaNeon({ connectionString }) })
+
 async function main() {
-  const host = new URL(process.env.DATABASE_URL ?? "").host
+  const host = new URL(connectionString).host
 
   const [users, sessions, accounts, documents, conversations, messages, memories] = await Promise.all([
     prisma.user.count(),
