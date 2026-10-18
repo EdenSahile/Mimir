@@ -113,7 +113,13 @@ Exécuté par l'utilisateur dans les consoles Neon et Vercel, dans cet ordre. **
 Preview et production n'ont pas le même profil de risque. La base de preview est jetable, celle de production contiendra des documents personnels. Les 2 environnements ne suivent donc pas le même chemin :
 
 - **Preview** : `prisma migrate deploy` dans le `buildCommand` du service `api`, conditionné à `VERCEL_ENV === "preview"`. Aucune friction, et un preview teste toujours le code contre son propre schéma.
-- **Production** : **pas dans le build**. Une commande versionnée du dépôt, `DIRECT_URL="..." pnpm db:deploy`, la variable passée pour cette seule commande, lancée délibérément par l'utilisateur avant de promouvoir le déploiement.
+- **Production** : **pas dans le build**. Une commande versionnée du dépôt, `DIRECT_URL="..." pnpm db:deploy`, la variable passée pour cette seule commande, lancée délibérément par l'utilisateur **avant la fusion dans `dev`**.
+
+**Correction du 2026-10-18 : il n'y a pas de `main`, et pas d'étape de promotion.** L'environnement Production du projet Vercel suit la branche **`dev`**, Preview suit toutes les autres branches, et le dépôt n'a pas de branche `main`. Vérifié dans Settings → Environments et par l'API Vercel, qui renvoie `productionBranch: dev`. Les versions précédentes de cette décision décrivaient un « verrou sur la promotion vers `main` » qui ne correspondait à rien : **chaque fusion dans `dev` déploie la production**. La fusion de la PR de MIM-37 est donc le premier déploiement de l'API en production, et le verrou porte sur cette fusion.
+
+Conséquence sur l'ordre, écrite dans la rule `deploiement-production` parce qu'elle vaut au-delà de MIM-37 : `pnpm db:deploy` part **avant** la fusion, donc la base est en avance sur le code pendant quelques minutes. Sans effet pour une migration additive, fatal pour une migration destructrice, qui demande un découpage en 2 PR, l'additive et le code qui s'en passe d'abord, la suppression ensuite.
+
+Même erreur de méthode que pour l'identité des branches Neon : un nom plausible employé sans vérification à la source, et une procédure écrite par-dessus.
 
 Les 2 alternatives ont été écartées pour des motifs symétriques. **Migrer dans le build partout** mettrait la production en migration automatique à chaque merge : si la migration passe et que le build échoue ensuite, la base est migrée sans que le code correspondant soit en ligne. **Sortir la migration du build partout** mettrait une étape manuelle là où on veut zéro friction, et poserait un problème d'ordre, puisque c'est le push qui déclenche le déploiement : il faudrait migrer avant que le code soit en ligne.
 
@@ -121,7 +127,7 @@ Le défaut connu de ce choix est que le chemin de production n'est exercé par a
 
 1. La commande de production est **scriptée et versionnée** (`scripts/db-deploy.sh`), jamais tapée de mémoire.
 2. Elle est **exercée au moins une fois** contre une branche Neon jetable, résultat consigné dans la spec.
-3. La **procédure de déploiement en production est écrite** dans la spec, dans l'ordre : migrer, vérifier, promouvoir.
+3. La **procédure de déploiement en production est écrite** dans la spec, dans l'ordre : migrer, vérifier, fusionner.
 
 **Les migrations ne passent pas par l'URL poolée.** PgBouncer en mode transaction supporte mal les verrous consultatifs et les instructions de session dont les migrations ont besoin. `DIRECT_URL`, la connexion directe de Neon, est donc obligatoire, et existe dans les 2 environnements Vercel. Relevé en vérifiant ce point : sur Prisma 7.10, `directUrl` déclaré dans `prisma.config.ts` **n'était pas emprunté** par `migrate deploy`, qui se connectait au host poolé. Le choix de l'URL du CLI est donc explicite, dans `packages/db/cliDatasource/`, que `prisma.config.ts` traverse sur les 2 chemins de migration. Le défaut y est l'exigence de la connexion directe, et seul `prisma generate` est autorisé sur la connexion poolée : une commande sans `DIRECT_URL`, ou avec une `DIRECT_URL` poolée, **lève**. Le même endroit restreint `db push` aux bases de développement local et de test, puisque c'est lui qui a désaligné la base de preview de l'historique des migrations. Pas de repli sur `DATABASE_URL`, pour la même raison qu'il est interdit dans `env.ts` : un repli silencieux renvoie les migrations par le pooler sans un mot. `prisma generate`, qui ne se connecte à rien, continue de fonctionner sans aucune variable, ce dont la CI dépend.
 

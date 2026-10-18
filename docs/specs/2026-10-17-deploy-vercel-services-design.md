@@ -275,7 +275,7 @@ Observation concordante, le 2026-10-18 par `vercel project inspect` : le Framewo
 
 **Leçon générale, qui vaut au-delà de ce champ :** `experimentalServices` et `services` ont des règles différentes, et une documentation qui parle de l'un se lit à tort comme parlant de l'autre. Vérifier sur quelle page une contrainte figure avant de l'appliquer. Autre exemple de divergence relevé entre les 2 pages : `experimentalServices` injecte une variable `{SERVICENAME}_URL` par service, donc un service nommé `frontend` écraserait notre `FRONTEND_URL`. Le modèle `services` ne fait pas cette injection, il passe par des bindings explicites, et nos services s'appellent de toute façon `web` et `api`.
 2. **Vérifier que l'accès aux variables d'environnement système est activé.** Sans cette case, `VERCEL_ENV` et `VERCEL_URL` n'existent pas, et la dérivation de preview tombe sur le repli de développement.
-3. **Ne PAS vider les 3 champs de build du projet maintenant.** Valeurs lues le 2026-10-18 par `vercel project inspect` : Build Command `pnpm --filter @mimir/web build`, Output Directory `apps/web/dist`, Install Command `pnpm install --frozen-lockfile`, Root Directory `.`. Ils sont bien inertes **en mode `services`**, les logs montrant que c'est le `buildCommand` du service `web` qui a tourné. Mais la production se construit aujourd'hui depuis un commit **sans clé `services`**, et dans ce mode ce sont exactement ces 3 champs qui gouvernent son build : les vider maintenant casserait le prochain déploiement de production. Ils ne deviennent inertes qu'une fois la configuration `services` présente sur la branche de production. L'étape est donc déplacée dans la procédure de promotion, après la fusion. En mode `services`, ces champs appartiennent aux services, et des réglages de tableau de bord concurrents peuvent prendre le dessus.
+3. **Ne PAS vider les 3 champs de build du projet maintenant.** Valeurs lues le 2026-10-18 par `vercel project inspect` : Build Command `pnpm --filter @mimir/web build`, Output Directory `apps/web/dist`, Install Command `pnpm install --frozen-lockfile`, Root Directory `.`. Ils sont bien inertes **en mode `services`**, les logs montrant que c'est le `buildCommand` du service `web` qui a tourné. Mais la production se construit aujourd'hui depuis un commit **sans clé `services`**, et dans ce mode ce sont exactement ces 3 champs qui gouvernent son build : les vider maintenant casserait le prochain déploiement de production. Ils ne deviennent inertes qu'une fois la configuration `services` présente sur `dev`, la branche que l'environnement Production suit. L'étape passe donc après la fusion, en position 2 de la séquence d'après-fusion. En mode `services`, ces champs appartiennent aux services, et des réglages de tableau de bord concurrents peuvent prendre le dessus.
 4. **Laisser Deployment Protection active, et créer un secret de contournement pour l'automatisation.** Deployment Protection → Protection Bypass for Automation → créer un secret, nommé pour son usage (« Playwright »). Vercel l'expose alors aux déploiements sous `VERCEL_AUTOMATION_BYPASS_SECRET`, et il faut **redéployer** pour qu'un déploiement existant le reçoive. Le même secret est déclaré en secret de dépôt GitHub, `Settings → Secrets and variables → Actions`, pour que la CI puisse viser un preview. Il n'entre jamais dans le dépôt. Motif du maintien de la protection dans DEC-012.
 5. **Aucune variable à ajouter, et aucune valeur à comparer.** Preview n'a ni `FRONTEND_URL` ni `BETTER_AUTH_URL` : la dérivation depuis `VERCEL_URL` les remplace. Production garde les siennes.
 
@@ -332,24 +332,57 @@ Le tableau de validation locale ne couvre que ce qui est observable sur une mach
 
 Les points 4 et 5 sont les 2 plus probables : ce sont ceux que la validation locale ne pouvait structurellement pas couvrir, puisque le `node_modules` local est complet et la machine n'est pas Linux.
 
-## Verrou sur la promotion vers `main`
+## Il n'y a pas de `main` : l'environnement Production suit `dev`
 
-**Aucune promotion vers `main` avant que l'état de la base de production soit mesuré et traité.** La fusion dans `dev` ne dépend pas de cette mesure : la PR livre du code, l'état de la base est un acte d'exploitation. Mais le `migrate deploy` que ce code déclenche en preview a montré que les bases créées par `db push` sont désalignées de l'historique, et la production a probablement le même défaut. Promouvoir avant de l'avoir mesuré ferait découvrir le problème en production.
+**Prémisse fausse corrigée le 2026-10-18.** Les versions précédentes de cette spec et de DEC-012 parlaient d'un « verrou sur la promotion vers `main` » et d'une « procédure de promotion » distincte de la fusion. Cet objet n'existe pas. Vérifié par l'utilisateur dans Vercel, Settings → Environments, et confirmé par l'API Vercel qui renvoie `productionBranch: dev` : l'environnement **Production suit la branche `dev`**, Preview suit toutes les autres branches, et le dépôt n'a pas de branche `main`.
 
-L'ordre est donc : mesurer (`prisma migrate diff` et `pnpm db:audit`), décider entre baseliner et réinitialiser, appliquer, puis promouvoir.
+**Conséquence sur ce ticket.** La fusion de cette PR dans `dev` **est** le premier déploiement de l'API en production. Il n'y a pas d'étape de promotion après : la fusion déclenche le déploiement de production, et le verrou porte donc sur cette fusion-ci.
 
-### Étapes qui n'ont de sens qu'APRÈS la fusion
+Même erreur de méthode que pour l'identité des bases Neon : un nom plausible, `main`, a été employé sans être vérifié dans la console du fournisseur, et toute une procédure a été écrite par-dessus. Ici encore, la correction vient de l'utilisateur, pas du dispositif.
 
-Elles supposent toutes que la configuration `services` est présente sur la branche de production, ce qui n'est pas le cas aujourd'hui.
+### Règle durable : chaque fusion dans `dev` déploie la production
 
-| Étape | Pourquoi elle attend |
-|---|---|
-| Vider Build Command, Output Directory et Install Command au niveau du projet | La production se construit depuis un commit sans clé `services` : ces 3 champs gouvernent son build, les vider avant la fusion casserait son prochain déploiement |
-| Vérifier que la production sert bien `/api/health` | Il n'y a pas d'API en production avant la fusion : ce chantier est le premier déploiement du backend |
-| Appliquer les migrations de production (`pnpm db:deploy`) | À faire avant la promotion, mais seulement une fois la décision prise sur l'état de la base, et l'API ne lira le schéma qu'après la fusion |
-| Créer le secret de contournement pour l'automatisation | Utile dès maintenant pour la CI, mais sans effet sur la production tant qu'aucune API n'y tourne |
+Elle vaut au-delà de MIM-37, et elle est écrite dans la rule `deploiement-production`.
+
+**Avant toute PR qui apporte une nouvelle migration, `pnpm db:deploy` est lancé contre la production AVANT la fusion.** Motif : la production ne migre pas dans son build (DEC-012), donc rien ne migrerait au moment du déploiement, et le code arriverait sur un schéma qu'il ne reconnaît pas.
+
+**Conséquence à accepter : la base est en avance sur le code pendant quelques minutes**, le temps que la PR soit fusionnée et que le déploiement se termine.
+
+- **Migration additive** (nouvelle table, nouvelle colonne nullable, nouvel index) : sans effet. L'ancien code ignore ce qu'il ne connaît pas.
+- **Migration destructrice** (colonne supprimée ou renommée, contrainte resserrée, type changé) : l'ancien code continue de lire ou d'écrire ce qui vient de disparaître pendant ces quelques minutes, et il casse. Elle demande un **découpage en 2 temps** : d'abord une migration additive plus un code qui n'utilise plus l'ancienne forme, fusionné et déployé ; puis, dans une seconde PR, la migration qui supprime. Jamais les 2 dans la même fusion.
+
+### Étapes d'après-fusion, dans cet ordre exact
+
+Elles supposent toutes que la configuration `services` est présente sur la branche `dev`, ce qui n'est pas le cas avant la fusion.
+
+| # | Étape | Pourquoi dans cet ordre |
+|---|---|---|
+| 1 | **La fusion** de cette PR dans `dev` | Elle déclenche le déploiement de production. Les migrations sont déjà appliquées, la production ayant été réinitialisée puis remigrée le 2026-10-18, donc rien à lancer avant |
+| 2 | **Vider Build Command, Output Directory et Install Command** au niveau du projet | Avant la fusion, `dev` n'a pas de clé `services` et ces 3 champs gouvernent le build de production : les vider avant casserait ce déploiement. Après, ce sont les services qui portent leurs réglages, et des champs de projet concurrents peuvent prendre le dessus |
+| 3 | **Vérifier `/api/health` en `200` et `/api/me` sans cookie en `401`** | 2 appels en lecture, **aucun compte créé en production**. Ils suffisent : le premier prouve que l'API est servie et routée, le second qu'elle parle à Better Auth et refuse une requête anonyme |
+
+**Pas d'inscription en production pour tester.** Le `401` de `/api/me` sans cookie couvre le chemin d'authentification sans écrire une ligne. Une inscription de test en production rejouerait exactement ce qui a mis 11 comptes dans cette base.
+
+Hors séquence, sans effet sur la production : créer `VERCEL_AUTOMATION_BYPASS_SECRET` dans Deployment Protection et le déclarer en secret de dépôt GitHub, utile dès maintenant pour que la CI joue les e2e contre un preview protégé.
 
 Audit fait le 2026-10-18 : aucune autre étape de cette spec ne s'applique à une production qui n'est pas encore en mode `services`. Les réglages restants, variables système et Deployment Protection, valent pour les 2 modes.
+
+### Si l'authentification se comporte mal au premier déploiement, regarder là
+
+`BETTER_AUTH_URL` et `FRONTEND_URL` en Production datent du 2026-10-08, sont marquées `sensitive` donc **illisibles pour tout le monde**, et le projet a plusieurs domaines. Ces 2 variables ne peuvent porter qu'**un seul** hôte chacune, alors que la production répond sur plusieurs : si celui qui y est écrit n'est pas celui par lequel tu arrives, l'authentification casse, et elle casse d'une façon particulière.
+
+| Symptôme | Cause la plus probable |
+|---|---|
+| L'inscription renvoie `200` mais aucune session ne s'ouvre, et aucun cookie n'apparaît dans l'onglet Application du navigateur | `BETTER_AUTH_URL` porte un autre hôte que celui visité : le cookie est posé sur un domaine qui n'est pas le tien, donc le navigateur le jette |
+| L'appel échoue avant toute réponse utile, avec une erreur d'origine dans la console du navigateur | `FRONTEND_URL` porte un autre hôte : il alimente `trustedOrigins` et CORS, donc l'origine visitée n'est pas de confiance |
+| Tout marche sur un domaine et rien sur un autre | Les 2 variables sont correctes, mais pour un seul des domaines |
+
+**Comment trancher sans pouvoir lire les valeurs.** Elles sont illisibles, donc le diagnostic ne passe pas par leur lecture. 2 voies :
+
+1. **Par l'observation.** La réponse de connexion porte un `Set-Cookie` dont le domaine est écrit en clair : c'est la valeur effective de `BETTER_AUTH_URL`. Et l'en-tête `access-control-allow-origin` de n'importe quelle réponse de l'API révèle la valeur effective de `FRONTEND_URL`. 2 en-têtes, et les 2 variables sont identifiées sans jamais être lues.
+2. **Par le remplacement.** Comme pour les `BETTER_AUTH_SECRET`, on n'essaie pas de lire : on écrit par-dessus avec la valeur du domaine canonique, celui par lequel on veut que l'application réponde. Puis on redéploie, une variable n'étant lue qu'au démarrage de la fonction.
+
+**Le domaine canonique à y mettre.** Le seul domaine de projet vérifié est `mimir-navy.vercel.app`, lu par l'API Vercel le 2026-10-18. Les autres hôtes sur lesquels la production répond sont les alias générés par Vercel, de la forme `mimir-<hash>-<équipe>.vercel.app` et `mimir-git-dev-<équipe>.vercel.app`, qui changent ou dépendent de la branche. **Ce sont les 2 variables qui doivent porter le domaine stable, pas un alias**, sinon elles se périment au déploiement suivant.
 
 ## Risque consigné, non corrigé dans MIM-37
 
@@ -451,9 +484,9 @@ Dans cet ordre, et pas un autre :
 
 1. **Migrer** : `DIRECT_URL="..." pnpm db:deploy`, la variable passée pour cette seule commande. Les migrations partent sur la connexion directe, pas sur le pooler.
 2. **Vérifier** : la sortie liste les migrations appliquées. En cas de doute, rejouer la commande, qui est idempotente et répond « No pending migrations to apply ».
-3. **Promouvoir** le déploiement de production depuis Vercel.
+3. **Fusionner** la PR dans `dev`, ce qui déclenche le déploiement de production.
 
-Le code part donc toujours sur un schéma déjà migré.
+Le code part donc toujours sur un schéma déjà migré. Il n'y a pas de 4e étape : l'environnement Production suit `dev`, donc aucune promotion ne vient après la fusion (rule `deploiement-production`).
 
 ### Résultat de l'exercice de la commande de production
 
@@ -615,7 +648,16 @@ echo 'DELETE FROM "User" WHERE email LIKE '"'"'%@mimir.test'"'"';' \
   | pnpm exec dotenv -e ../../.env -- prisma db execute --stdin
 ```
 
-Les lignes liées (`Session`, `Account`) partent avec, les clés étrangères étant en cascade. 2 pièges relevés en l'exécutant : la table est `"User"`, avec la majuscule du modèle Prisma et donc les guillemets obligatoires, et le `dotenv` de `packages/db` est en version 8, qui attend `-e fichier --` là où celui de la racine est en version 11 et attend `run -f fichier --`.
+Les lignes liées (`Session`, `Account`) partent avec, les clés étrangères étant en cascade. 2 pièges relevés en l'exécutant : la table est `"User"`, avec la majuscule du modèle Prisma et donc les guillemets obligatoires, et la commande `dotenv` n'a pas la même syntaxe selon l'endroit d'où on la lance.
+
+**Pourquoi, et ma première explication était fausse.** J'avais attribué cet écart à 2 versions de `dotenv-cli`, la 8 à la racine et la 11 dans `packages/db`. Vérifié en remontant les shims de `node_modules/.bin` : ce sont **2 paquets différents qui revendiquent le même nom de binaire**.
+
+| Depuis | Le binaire `dotenv` vient de | Syntaxe |
+|---|---|---|
+| la racine | `dotenv@18.0.5`, qui livre sa propre CLI depuis la v17 | `dotenv run -f fichier -- commande` |
+| `packages/db` | `dotenv-cli@11.0.0` | `dotenv -e fichier -- commande` |
+
+`dotenv-cli@8.0.0` est bien déclaré à la racine, mais il **perd la collision de nom** face à `dotenv@18` : son binaire n'y est jamais celui qui s'exécute. Les 2 versions de `dotenv-cli`, 8 et 11, attendent d'ailleurs exactement la même syntaxe `-e fichier --`, ce que leur propre texte d'aide confirme. La leçon tient en une phrase : quand une commande se comporte différemment selon le répertoire, remonter au binaire réellement résolu avant d'invoquer une différence de version.
 
 ## Option différée : supprimer le bundle au lieu de le faire tenir
 

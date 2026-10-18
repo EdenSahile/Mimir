@@ -2,8 +2,10 @@
 # Applique les migrations Prisma en attente.
 #
 # La production n'applique PAS ses migrations pendant le build (voir DEC-012) :
-# elle passe par cette commande, lancee deliberement par l'utilisateur, avant
-# de promouvoir le deploiement. Le controle de la connexion directe vit dans
+# elle passe par cette commande, lancee deliberement par l'utilisateur, AVANT
+# la fusion dans dev. L'environnement Production de Vercel suit dev, donc la
+# fusion declenche le deploiement et il n'y a pas d'etape de promotion ensuite
+# (rule deploiement-production). Le controle de la connexion directe vit dans
 # packages/db/cliDatasource, que prisma.config.ts traverse.
 #
 # Usage :
