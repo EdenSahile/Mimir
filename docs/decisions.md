@@ -108,6 +108,16 @@ Exécuté par l'utilisateur dans les consoles Neon et Vercel, dans cet ordre. **
 
 **Enseignement : un identifiant collé dans une conversation est un identifiant à faire tourner, point.** Sans évaluer la probabilité qu'il ait été lu ni la durée de l'exposition. La rotation est le geste par défaut et elle est bon marché, contrairement à l'enquête qui essaierait de l'éviter. Consigné dans la rule `bases-et-identifiants`.
 
+#### Correction du 2026-10-18 : les 3 champs de build du projet sont nécessaires, pas inertes
+
+La version précédente de cette décision prévoyait, après la fusion, de **vider les 3 champs de build du projet** (Build Command, Output Directory, Install Command), déclarés inertes en mode `services`. **Cette étape est supprimée : elle est fausse, et son exécution a cassé la production.** Les 2 routes de l'API sont reparties en `500 FUNCTION_INVOCATION_FAILED`, sur `SyntaxError: Cannot use import statement outside a module`.
+
+Ces 3 champs ne gouvernent pas le build des services, ils gouvernent l'**empaquetage de la fonction**. Mesure : le même commit `b6717b5` redéployé avec les champs réactivés répond `200`, les logs de build étant identiques dans les 2 cas. Le champ qui porte l'effet est l'**Output Directory**, et le constructeur réagit à la présence d'un remplacement explicite, pas à sa valeur. Sans ce remplacement, le handler devient un `index.js` à la racine d'un paquet sans `package.json`, donc Node charge un bundle ESM comme du CommonJS. Détail complet dans la spec de MIM-37.
+
+**L'entrypoint et le bundle passent en `.mjs`** (`apps/api/vercel.entry.mjs`, `dist/index.mjs`). Un `.mjs` est ESM par son extension : le format ne dépend plus d'aucun `package.json` ni de ce que le paquet contient. Les 3 champs restent nécessaires, mais cette classe de panne ne dépend plus de 3 réglages de tableau de bord.
+
+**Enseignement de méthode.** Le premier diagnostic a conclu que les 3 champs étaient inertes en comparant les **logs de build**, qui ne décrivent pas l'empaquetage. Une preuve d'absence tirée d'une source qui ne couvre pas le phénomène n'est pas une preuve : avant d'écrire « rien n'a changé », vérifier que la source consultée pourrait montrer le changement cherché.
+
 #### Migrations : automatiques en preview, délibérées en production
 
 Preview et production n'ont pas le même profil de risque. La base de preview est jetable, celle de production contiendra des documents personnels. Les 2 environnements ne suivent donc pas le même chemin :

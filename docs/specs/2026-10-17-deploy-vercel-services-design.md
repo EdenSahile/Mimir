@@ -160,7 +160,7 @@ const externalPackages = [apiPkg, dbPkg, sharedPkg]
 
 await build({
   entryPoints: ["src/index.ts"],
-  outfile: "dist/index.js",
+  outfile: "dist/index.mjs",
   bundle: true,
   platform: "node",
   format: "esm",
@@ -236,7 +236,7 @@ CORS devient inutile en preview et en production, mais **reste en place pour l'i
 | `apps/api/src/routes/healthRoutes.ts` | `/health` vers `/api/health` |
 | `apps/api/src/app/app.test.ts` | 2 tests mis à jour, 1 test ajouté sur `x-powered-by` |
 | `apps/api/src/app/app.ts` | `app.disable("x-powered-by")` |
-| `apps/api/vercel.entry.js` | nouveau, la passerelle d'entrypoint |
+| `apps/api/vercel.entry.mjs` | nouveau, la passerelle d'entrypoint. En `.js` d'abord, passée en `.mjs` le 2026-10-18 |
 | `apps/web/src/lib/authClient.ts` | suppression de `baseURL` |
 | `apps/web/src/lib/authClient.test.ts` | réécrit |
 | `apps/web/vite.config.ts` | `strictPort: true` |
@@ -275,7 +275,7 @@ Observation concordante, le 2026-10-18 par `vercel project inspect` : le Framewo
 
 **Leçon générale, qui vaut au-delà de ce champ :** `experimentalServices` et `services` ont des règles différentes, et une documentation qui parle de l'un se lit à tort comme parlant de l'autre. Vérifier sur quelle page une contrainte figure avant de l'appliquer. Autre exemple de divergence relevé entre les 2 pages : `experimentalServices` injecte une variable `{SERVICENAME}_URL` par service, donc un service nommé `frontend` écraserait notre `FRONTEND_URL`. Le modèle `services` ne fait pas cette injection, il passe par des bindings explicites, et nos services s'appellent de toute façon `web` et `api`.
 2. **Vérifier que l'accès aux variables d'environnement système est activé.** Sans cette case, `VERCEL_ENV` et `VERCEL_URL` n'existent pas, et la dérivation de preview tombe sur le repli de développement.
-3. **Ne PAS vider les 3 champs de build du projet maintenant.** Valeurs lues le 2026-10-18 par `vercel project inspect` : Build Command `pnpm --filter @mimir/web build`, Output Directory `apps/web/dist`, Install Command `pnpm install --frozen-lockfile`, Root Directory `.`. Ils sont bien inertes **en mode `services`**, les logs montrant que c'est le `buildCommand` du service `web` qui a tourné. Mais la production se construit aujourd'hui depuis un commit **sans clé `services`**, et dans ce mode ce sont exactement ces 3 champs qui gouvernent son build : les vider maintenant casserait le prochain déploiement de production. Ils ne deviennent inertes qu'une fois la configuration `services` présente sur `dev`, la branche que l'environnement Production suit. L'étape passe donc après la fusion, en position 2 de la séquence d'après-fusion. En mode `services`, ces champs appartiennent aux services, et des réglages de tableau de bord concurrents peuvent prendre le dessus.
+3. **Ne jamais vider les 3 champs de build du projet.** Valeurs lues le 2026-10-18 par `vercel project inspect` : Build Command `pnpm --filter @mimir/web build`, Output Directory `apps/web/dist`, Install Command `pnpm install --frozen-lockfile`, Root Directory `.`. La première version de cette spec les déclarait inertes en mode `services` et prévoyait de les vider après la fusion. **C'est faux, et c'est ce vidage qui a cassé la production le 2026-10-18.** Ces 3 champs ne gouvernent pas le build des services, mais l'**empaquetage de la fonction**, et ils sont nécessaires : sans eux, le paquet livré n'est pas celui qui démarre. La section « La deuxième panne : les 3 champs de build ne sont pas inertes » donne la mesure et la cause. On n'y touche pas.
 4. **Laisser Deployment Protection active, et créer un secret de contournement pour l'automatisation.** Deployment Protection → Protection Bypass for Automation → créer un secret, nommé pour son usage (« Playwright »). Vercel l'expose alors aux déploiements sous `VERCEL_AUTOMATION_BYPASS_SECRET`, et il faut **redéployer** pour qu'un déploiement existant le reçoive. Le même secret est déclaré en secret de dépôt GitHub, `Settings → Secrets and variables → Actions`, pour que la CI puisse viser un preview. Il n'entre jamais dans le dépôt. Motif du maintien de la protection dans DEC-012.
 5. **Aucune variable à ajouter, et aucune valeur à comparer.** Preview n'a ni `FRONTEND_URL` ni `BETTER_AUTH_URL` : la dérivation depuis `VERCEL_URL` les remplace. Production garde les siennes.
 
@@ -358,7 +358,7 @@ Elles supposent toutes que la configuration `services` est présente sur la bran
 | # | Étape | Pourquoi dans cet ordre |
 |---|---|---|
 | 1 | **La fusion** de cette PR dans `dev` | Elle déclenche le déploiement de production. Les migrations sont déjà appliquées, la production ayant été réinitialisée puis remigrée le 2026-10-18, donc rien à lancer avant |
-| 2 | **Vider Build Command, Output Directory et Install Command** au niveau du projet | Avant la fusion, `dev` n'a pas de clé `services` et ces 3 champs gouvernent le build de production : les vider avant casserait ce déploiement. Après, ce sont les services qui portent leurs réglages, et des champs de projet concurrents peuvent prendre le dessus |
+| 2 | **Laisser Build Command, Output Directory et Install Command tels quels** au niveau du projet | Cette étape disait l'inverse, « les vider », et c'est elle qui a cassé la production le 2026-10-18. Ces 3 champs ne sont pas inertes en mode `services` : ils commandent l'empaquetage de la fonction. Il n'y a rien à faire ici, et il n'y aura jamais rien à y faire |
 | 3 | **Vérifier `/api/health` en `200` et `/api/me` sans cookie en `401`** | 2 appels en lecture, **aucun compte créé en production**. Ils suffisent : le premier prouve que l'API est servie et routée, le second qu'elle parle à Better Auth et refuse une requête anonyme |
 
 **Pas d'inscription en production pour tester.** Le `401` de `/api/me` sans cookie couvre le chemin d'authentification sans écrire une ligne. Une inscription de test en production rejouerait exactement ce qui a mis 11 comptes dans cette base.
@@ -390,9 +390,11 @@ Audit fait le 2026-10-18 : aucune autre étape de cette spec ne s'applique à un
 
 **Version initiale de ce risque, fausse sur l'essentiel** : « tous les previews partagent une seule branche Neon de dev ». La branche partagée n'est pas celle de développement, c'est celle de **production**, et le risque n'est pas « faible aujourd'hui » mais réalisé. Voir le constat en tête de cette spec. Conservé ici pour montrer qu'un risque consigné sur la mauvaise base donne une fausse assurance : il a été écrit, relu et jugé acceptable, alors qu'il décrivait une situation qui n'existait pas.
 
-## 3 manques, en tickets séparés
+## 4 manques, en tickets séparés
 
-Les 2 premiers relevés à la relecture du corps de PR, le 3e par une panne de production.
+Les 2 premiers relevés à la relecture du corps de PR, les 2 suivants par les 2 pannes de production du 2026-10-18.
+
+**Ordre de priorité : le contrôle `/api/health` dans la CI (4) passe devant le correctif `.mjs`.** C'est le seul des 2 qui aurait attrapé les 2 pannes du 2026-10-18, l'une et l'autre. Le `.mjs` est de la **défense en profondeur**, pas le correctif : il supprime une classe de panne, et il ne rend pas viable le mode sans les 3 champs, ce que la mesure du paquet montre. Un contrôle qui vérifie qu'un déploiement démarre attrape aussi les pannes qu'on n'a pas prévues ; un correctif ciblé n'attrape que celle qu'il vise.
 
 ### 1. Les obligations RGPD, à traiter avant la première fonctionnalité d'upload
 
@@ -492,6 +494,96 @@ C'est une incohérence avec le reste du dispositif, qui refuse partout le passag
 
 **Le risque consigné s'est réalisé, exactement comme écrit.** Ce document notait que le défaut du découpage des migrations était que « le chemin de production n'est exercé par aucun preview ». La panne est précisément celle-là, sur une autre variable : en preview, `BETTER_AUTH_URL` est **dérivée de `VERCEL_URL`**, donc la valeur de production n'a jamais été exercée par un seul déploiement, et les 5 e2e verts ne pouvaient structurellement pas la voir. Un risque écrit, relu et jugé acceptable s'est produit au premier déploiement réel. L'enseignement n'est pas qu'il fallait le corriger plus tôt, c'est que **la dérivation en preview protège du besoin de configurer, et masque du même coup ce qui est mal configuré ailleurs** : tout ce qui est dérivé en preview est, par construction, non testé en production.
 
+### 4. Rien dans la CI ne vérifie qu'un déploiement DÉMARRE, et c'est le plus prioritaire des 4
+
+Les 2 pannes du 2026-10-18 ont passé la CI au vert. Les contrôles portent sur le lint, les types et les tests, c'est-à-dire sur le code **avant** qu'il soit empaqueté et lancé. Le preview de la PR #60 était `Ready` alors que sa fonction ne bootait pas : `Ready` décrit la fin du build, pas un processus qui répond.
+
+**Le ticket.** Un appel à `/api/health` sur le preview, dans la CI, attendant un `200`. Ce seul appel aurait attrapé les 2 pannes du jour : celle de `BETTER_AUTH_URL`, qui lève au chargement du module, et celle de l'empaquetage, qui échoue avant la première ligne de notre code.
+
+- Il faut l'URL du preview, que l'action de déploiement Vercel expose, et le contournement de Deployment Protection, donc `VERCEL_AUTOMATION_BYPASS_SECRET` en secret de dépôt. C'est la même dépendance que les e2e en CI, déjà listée hors séquence.
+- `/api/health` suffit, et c'est pour ça qu'il existe : il ne touche ni la base ni l'authentification, donc un `200` prouve que le processus démarre et que la route est servie, sans rien écrire.
+- Un `401` attendu sur `/api/me` sans cookie complète à un coût nul.
+- La leçon derrière le ticket : nos contrôles vérifiaient que le code est correct, aucun ne vérifiait qu'il **tourne**.
+
+## La deuxième panne : les 3 champs de build ne sont pas inertes
+
+### Ce que cette panne laisse derrière elle : une dépendance fragile
+
+**La production dépend maintenant d'un comportement de Vercel non documenté et contre-intuitif** : un champ dont la **valeur est ignorée**, mais dont la **présence décide de l'empaquetage** de la fonction. Rien dans le tableau de bord ne le dit, rien dans les logs de build ne le montre, et le mot « Override » suggère l'inverse de ce qui se passe.
+
+Conséquence à garder en tête : **quelqu'un qui range ce tableau de bord dans 6 mois casse la production en silence, avec un build vert.** C'est exactement ce qui est arrivé le 2026-10-18, en suivant une étape que cette spec prescrivait.
+
+**Le piège précis, mesuré :** toute valeur d'Output Directory donne le bon paquet, y compris un dossier qui n'existe pas, **sauf une seule, la chaîne `dist`**, qui est la valeur par défaut. Un futur « nettoyage » qui remettrait la valeur par défaut, en croyant revenir à un état neutre, casserait donc tout aussi sûrement qu'un champ vidé. Il n'y a pas de valeur neutre : il y a un remplacement, ou la panne.
+
+Après la fusion de la PR #60 (18 montées de dépendances), `/api/health` et `/api/me` sont repassés en `500`. 2 changements étaient partis ensemble : les dépendances, et le **vidage des 3 champs de build du projet**, fait juste avant parce que cette spec le prescrivait. Erreur d'exécution brute :
+
+```
+(node:8) Warning: Failed to load the ES module: /var/task/index.js.
+Make sure to set "type": "module" in the nearest package.json file or use the .mjs extension.
+/var/task/index.js:2
+import cors from "cors";
+^^^^^^
+SyntaxError: Cannot use import statement outside a module
+    at wrapSafe (node:internal/modules/cjs/loader:1861:18)
+Node.js process exited with exit status: 1.
+```
+
+### Le tri a d'abord été fait sur la mauvaise source
+
+La première analyse a comparé les **logs de build** des 2 déploiements, n'y a vu aucune différence de comportement, et en a conclu que les 3 champs étaient bien inertes et que les dépendances étaient coupables. **La conclusion était fausse, et la méthode aussi** : l'erreur portait sur l'**empaquetage** de la fonction, que les logs de build ne décrivent à aucun moment. Mesure faite depuis : avec et sans les 3 champs, en local, les logs de build sont identiques au mot près, jusqu'aux 2 dernières lignes.
+
+**Enseignement de méthode, général :** une preuve d'absence tirée d'une source qui ne couvre pas le phénomène n'est pas une preuve. Avant d'écrire « rien n'a changé », vérifier que la source consultée **pourrait** montrer le changement cherché. Ici l'indice était dans l'analyse elle-même, qui nommait l'empaquetage comme le siège du problème tout en concluant depuis une source qui ne le montre pas.
+
+### Ce que la mesure établit
+
+L'expérience décisive a été faite côté production : les 3 champs réactivés, le **même commit** `b6717b5` redéployé sans cache, `/api/health` en `200`.
+
+| Mesure | Déploiement cassé | Déploiement sain |
+|---|---|---|
+| Commit | `b6717b5` | `b6717b5`, le même |
+| `projectSettings` enregistrés sur le déploiement | `buildCommand`, `installCommand`, `outputDirectory` à `null` | les 3 renseignés |
+| Taille du paquet de fonction | 3 822 745 octets | 3 824 542 octets |
+| Logs de build | identiques | identiques |
+
+Même commit, même lockfile, même code : **les dépendances de la PR #60 sont innocentes**, et les 3 champs sont causaux.
+
+### Pourquoi, mesuré et non déduit
+
+Le mécanisme a été reproduit en local avec `vercel build` (CLI 64.5.0, le CLI installé en 53.2.0 ne connaît pas encore `services`), en écrivant les réglages à la main dans `.vercel/project.json` pour garder le contrôle de la comparaison, et sans aucun `vercel pull`, qui aurait écrit des variables de Preview sur le disque.
+
+| Réglages de projet | `handler` du paquet | Contenu du paquet |
+|---|---|---|
+| Les 3 renseignés | `apps/api/vercel.entry.mjs` | `apps/api/package.json`, le bundle, `node_modules` tracé, des shims `_virtual/` |
+| Aucun | `index.js` | aucun `package.json` |
+| Install Command seule | `index.js` | aucun `package.json` |
+| Build Command seule | `index.js` | aucun `package.json` |
+| Output Directory seule | `apps/api/vercel.entry.mjs` | paquet complet |
+
+**Le champ qui porte l'effet est l'Output Directory, pas l'Install Command.** L'hypothèse de départ, « l'Install Command gouverne l'installation à la racine », a donc été testée et elle est fausse : seule l'Install Command renseignée, le paquet reste cassé.
+
+Détail qui dit la nature du mécanisme : `outputDirectory` vaut `apps/web/dist` chez nous, et n'importe quelle autre valeur donne le bon paquet, y compris un dossier qui n'existe pas. **Une seule valeur se comporte comme un champ vide : la chaîne `dist`**, qui est la valeur par défaut. Le constructeur ne réagit donc pas à la valeur ni à son existence sur le disque, mais au fait qu'un **remplacement explicite** est posé : `dist` est lu comme « pas de remplacement ».
+
+Enchaînement complet, de la cause à l'erreur : pas de remplacement d'Output Directory → le constructeur prend l'autre chemin d'empaquetage → le handler devient `index.js` à la racine du paquet, sans `package.json` à côté → Node décide du format d'après le `package.json` le plus proche, n'en trouve aucun, retombe sur CommonJS → le bundle ESM lève `SyntaxError: Cannot use import statement outside a module`. Le `"type": "module"` de `apps/api/package.json` est bien là, mais il n'est plus dans le paquet, donc il ne s'applique plus.
+
+Ce que la reproduction locale ne couvre pas, et qui reste dit : dans le paquet cassé produit en local, il n'y a **aucun** fichier à part `.vc-config.json`, alors que le paquet cassé en production contenait bien un `index.js` avec notre bundle. La bascule du handler est reproduite, le contenu exact du paquet ne l'est pas, probablement une différence de version entre le constructeur local et celui du cloud. La chaîne causale tient sur la mesure de production ; la reproduction locale ne sert qu'à désigner le champ.
+
+### Le correctif : `.mjs` sur l'entrypoint et sur le bundle
+
+**C'est de la défense en profondeur, et il passe après le contrôle `/api/health` en CI.** Il supprime une classe de panne, il n'aurait attrapé ni la première panne du jour, ni l'incomplétude du paquet.
+
+Les 3 champs restent en place, mais la panne ne doit pas dépendre de 3 réglages de tableau de bord. Un fichier `.mjs` est ESM **par son extension**, donc son format ne dépend plus d'aucun `package.json`, ni de ce que le paquet contient.
+
+| Fichier | Avant | Après |
+|---|---|---|
+| `apps/api/esbuild.config.mjs` | `outfile: "dist/index.js"` | `outfile: "dist/index.mjs"` |
+| passerelle | `apps/api/vercel.entry.js` | `apps/api/vercel.entry.mjs` |
+| `vercel.json` | `"entrypoint": "vercel.entry.js"` | `"entrypoint": "vercel.entry.mjs"` |
+| `apps/api/package.json` | `"start": "node dist/index.js"` | `"start": "node dist/index.mjs"` |
+
+Mesure du correctif, même protocole qu'au-dessus : sans les 3 champs, le handler devient `index.mjs` au lieu de `index.js`, donc chargé en ESM quoi qu'il arrive ; avec les 3 champs, le handler reste `apps/api/vercel.entry.mjs`, inchangé. Dans les 2 cas, le format ne dépend plus de l'empaquetage, et cette classe de panne disparaît. Le bundle a aussi été chargé en local par un `import()` direct : il démarre.
+
+Ce que le correctif ne fait pas : rendre le mode « sans les 3 champs » viable. Le paquet produit dans ce mode reste différent, et rien ne dit qu'il est complet. Les 3 champs restent nécessaires ; le `.mjs` enlève seulement la dépendance au `package.json` le plus proche.
+
 ## Séquence de validation sur le preview
 
 1. `/api/health` répond.
@@ -510,7 +602,7 @@ Error: [ENTRYPOINT_NOT_FOUND] Service "api" has entrypoint "dist/index.js" but t
 
 **Ce que ça apprend.** Vercel résout l'`entrypoint` d'un service **avant** le build, contre le contenu du dépôt. Or `dist/index.js` est un artefact produit par le build. Ce n'est pas un mauvais chemin, c'est une poule et un œuf, et aucun réglage de chemin ne le résout. L'erreur apprend aussi que le mode `services` était bien actif : elle n'aurait pas pu nommer le service `api`.
 
-**La passerelle.** `apps/api/vercel.entry.js`, versionné, 1 ligne utile qui importe `./dist/index.js`. Le fichier existe dans le dépôt, donc la validation passe ; l'import n'est résolu qu'à l'exécution, quand `dist` existe. Le traçage de fichiers de Vercel a suivi l'import : la fonction déployée contient bien le bundle.
+**La passerelle.** `apps/api/vercel.entry.mjs`, versionné, 1 ligne utile qui importe `./dist/index.mjs`. Les 2 fichiers étaient en `.js` jusqu'au 2026-10-18, et l'extension a changé après la deuxième panne de production, pour que le format ESM tienne à l'extension. Le fichier existe dans le dépôt, donc la validation passe ; l'import n'est résolu qu'à l'exécution, quand `dist` existe. Le traçage de fichiers de Vercel a suivi l'import : la fonction déployée contient bien le bundle.
 
 **La séquence de validation, protection active**, via `vercel curl --deployment` :
 
@@ -769,7 +861,7 @@ Le bundle esbuild n'existe que pour l'alias `@/` dans `apps/api` et pour `@mimir
 
 Coût mesuré : environ 45 fichiers. 2 `package.json` et 2 configs de build pour les paquets, puis les 31 fichiers de `apps/api/src/` qui importent en `@/`, tests compris, et le retrait de l'alias aux 4 endroits où il est câblé. Ça annule la rule `imports-backend` pour tout le backend.
 
-Différé, mais pas pour le motif « Services sortira de Beta » : la résolution de l'entrypoint avant le build est très probablement un comportement voulu, pas un défaut de Beta, donc la sortie de Beta ne rendra pas `vercel.entry.js` inutile. Les déclencheurs réels sont :
+Différé, mais pas pour le motif « Services sortira de Beta » : la résolution de l'entrypoint avant le build est très probablement un comportement voulu, pas un défaut de Beta, donc la sortie de Beta ne rendra pas `vercel.entry.mjs` inutile. Les déclencheurs réels sont :
 
 - le bundle recasse ;
 - un nouveau paquet du workspace est importé par l'API ;
