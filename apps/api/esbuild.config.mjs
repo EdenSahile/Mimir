@@ -14,9 +14,7 @@ const externalPackages = [apiPkg, dbPkg, sharedPkg]
 
 await build({
   entryPoints: ["src/index.ts"],
-  // .mjs et non .js : le format ESM tient alors a l'extension, et ne depend plus
-  // du package.json le plus proche dans le paquet de fonction (voir vercel.entry.mjs).
-  outfile: "dist/index.mjs",
+  outfile: "dist/index.js",
   bundle: true,
   platform: "node",
   format: "esm",
