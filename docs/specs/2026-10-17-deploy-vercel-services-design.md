@@ -389,6 +389,8 @@ Les 7 points de la section précédente sont levés, dont les 2 jugés les plus 
 
 La suite e2e Playwright passe 5 tests sur 5 contre ce preview protégé, en mode `PREVIEW_URL`.
 
+**Ce que ces 5 verts valident, et ce qu'ils ne valident pas.** En mode preview, `skipsDatabaseAssertions` de `e2e/helpers.ts` désactive les assertions qui interrogent la base avec Prisma, parce que le runner lit `.env.test` alors que le déploiement écrit sur sa propre branche Neon : le test chercherait l'utilisateur dans la mauvaise base et trouverait `null`. Ces 5 verts valident donc **le comportement visible dans le navigateur et les réponses de l'API**, inscription, connexion, cookie de session, `/api/me`, et **pas l'état de la base**. La couverture de la base est assurée par les mêmes tests lancés en local contre `.env.test`, où toutes les assertions sont actives. Les assertions de navigateur, elles, ne sont jamais désactivées : aucun test ne devient creux, chacun perd une vérification nommée.
+
 ## Cartographie des bases Neon
 
 Établie par expérience, pas par lecture de configuration, après une contradiction dans mes propres comptes rendus sur l'identité des branches.
@@ -397,10 +399,10 @@ La suite e2e Playwright passe 5 tests sur 5 contre ce preview protégé, en mode
 |---|---|---|---|
 | Développement local (`pnpm dev:api`, `pnpm db:*`) | `.env` du dépôt | branche A | base de développement |
 | Suite e2e locale et `globalSetup` | `.env.test` du dépôt | branche B | base de test, réinitialisée à chaque run |
-| Déploiements de preview | `DATABASE_URL` de l'environnement Preview sur Vercel | branche C | **base de production** |
-| Production | `DATABASE_URL` de l'environnement Production sur Vercel | très probablement la branche C | base de production |
+| Déploiements de preview | `DATABASE_URL` de l'environnement Preview sur Vercel | branche C jusqu'au 2026-10-18, branche D depuis | **base de production**, puis base de preview |
+| Production | `DATABASE_URL` de l'environnement Production sur Vercel | branche C | base de production |
 
-Aucun endpoint de production n'existe dans les fichiers locaux du dépôt, `.env` et `.env.test` ne portant que les branches A et B.
+Aucun endpoint de production n'existe dans les fichiers locaux du dépôt, `.env` et `.env.test` ne portant que les branches A et B. La branche D, créée le 2026-10-18 comme enfant de la production réinitialisée, n'y figure pas non plus : ses identifiants vivent uniquement dans les variables Preview de Vercel.
 
 **La méthode, et sa limite.** Un compte témoin a été créé par l'API d'un preview, puis cherché dans les 2 bases locales. Il n'est **ni** dans la branche A **ni** dans la branche B : les previews écrivent donc sur une 3e branche, distincte des 2 bases locales. Ça établissait une seule chose, que `.env` local ne pointe pas la base de production. Ça n'établissait **pas** ce qu'était la branche C, et c'est pourtant ce qui a été écrit ici : « base de preview », d'après le nom de la variable Vercel qui la désigne. L'identité réelle a été lue dans la console Neon par l'utilisateur, et c'est la production. Une case laissée « inconnue » dans un tableau n'est pas un trou neutre : tant qu'elle l'est, aucune ligne du tableau ne peut être présentée comme établie.
 
@@ -436,18 +438,18 @@ Le découpage et ses motifs sont dans DEC-012. Côté code :
 | Environnement | Chemin |
 |---|---|
 | Preview | `prisma migrate deploy` dans le `buildCommand` du service `api`, derrière `[ "$VERCEL_ENV" = "preview" ]` |
-| Production | `pnpm db:deploy production`, lancé à la main |
+| Production | `DIRECT_URL="..." pnpm db:deploy`, lancé à la main par l'utilisateur |
 | Local | `pnpm db:deploy .env` ou `.env.test` |
 
-`scripts/db-deploy.sh` prend **un chemin de fichier d'environnement**, et rien d'autre. La production n'est donc pas un mode à part : c'est le même chemin de code, avec un fichier différent, ce qui évite d'annoncer un chemin de production que rien n'exercerait.
+`scripts/db-deploy.sh` accepte **2 formes et pas une de plus** : un chemin de fichier d'environnement en argument, ou les variables déjà présentes dans le shell. Sans l'une des 2, il refuse de démarrer. La production n'est donc pas un mode à part, c'est le même chemin de code avec une source d'identifiants différente, ce qui évite d'annoncer un chemin de production que rien n'exercerait. **`DIRECT_URL` seule suffit** pour `db:deploy`, `cliDatasource` posant l'URL du CLI sur `DIRECT_URL` pour toute commande de migration : `DATABASE_URL` n'est jamais lue sur ce chemin.
 
-**Pourquoi le fichier est fourni à la main.** La première version récupérait les variables de production depuis Vercel. Vérifié : ça ne marche pas. Les variables du projet sont marquées sensibles, donc `vercel env pull` les rapporte **vides** (`DATABASE_URL=""`), et `vercel env run` charge le `.env` local par-dessus, au point de renvoyer la même valeur pour Preview et pour Production. La promesse a été retirée plutôt que laissée en l'état. Les identifiants viennent de la console Neon, dans un dossier temporaire supprimé après usage, jamais dans le dépôt ni dans un chemin fixe.
+**Pourquoi le fichier est fourni à la main.** La première version récupérait les variables de production depuis Vercel. Vérifié : ça ne marche pas. Les variables du projet sont marquées sensibles, donc `vercel env pull` les rapporte **vides** (`DATABASE_URL=""`), et `vercel env run` charge le `.env` local par-dessus, au point de renvoyer la même valeur pour Preview et pour Production. La promesse a été retirée plutôt que laissée en l'état. Les identifiants viennent de la console Neon et sont passés **en variables de shell pour une seule commande**, jamais écrits sur le disque : un fichier d'identifiants reste lisible par n'importe quel processus de la machine tant qu'il existe, y compris par un shell d'agent, alors qu'une variable passée devant la commande ne survit pas à cette commande.
 
 ### Procédure de déploiement en production
 
 Dans cet ordre, et pas un autre :
 
-1. **Migrer** : `pnpm db:deploy production`. Les migrations partent sur la connexion directe, pas sur le pooler.
+1. **Migrer** : `DIRECT_URL="..." pnpm db:deploy`, la variable passée pour cette seule commande. Les migrations partent sur la connexion directe, pas sur le pooler.
 2. **Vérifier** : la sortie liste les migrations appliquées. En cas de doute, rejouer la commande, qui est idempotente et répond « No pending migrations to apply ».
 3. **Promouvoir** le déploiement de production depuis Vercel.
 
@@ -493,7 +495,7 @@ ERROR: column "emailVerified" of relation "User" already exists
 
 **Diagnostic.** La branche de preview a été construite par `prisma db push`, qui applique le schéma sans rien inscrire dans `_prisma_migrations`. Les tables et les colonnes existent donc, mais l'historique ne les connaît pas : `migrate deploy` rejoue la migration 2, qui recrée une colonne déjà là. L'échec est enregistré, donc tout `migrate deploy` suivant sur cette base est bloqué jusqu'à résolution.
 
-**Portée.** Ce n'est pas un défaut du chemin de migration, qui a fait exactement son travail : il a trouvé 2 migrations, en a appliqué 1 et s'est arrêté net sur l'incohérence. C'est l'état des bases créées avant que les migrations existent. La base de production a probablement été créée de la même façon, donc le premier `pnpm db:deploy production` échouera de la même manière si rien n'est fait.
+**Portée.** Ce n'est pas un défaut du chemin de migration, qui a fait exactement son travail : il a trouvé 2 migrations, en a appliqué 1 et s'est arrêté net sur l'incohérence. C'est l'état des bases créées avant que les migrations existent. La base de production a probablement été créée de la même façon, donc le premier `pnpm db:deploy` contre elle échouera de la même manière si rien n'est fait. Confirmé, et c'est ce qui a conduit à la réinitialisation plus bas.
 
 **Décision pour la base de preview : réinitialisation, pas baselining.** `migrate resolve --applied` est une **affirmation non vérifiée** : il déclare la migration appliquée sans comparer quoi que ce soit. Or la base vient de `db push`, dont le résultat peut différer de ce que produisent les migrations sur les index, les contraintes, les valeurs par défaut ou l'ordre des énumérations. La réinitialisation rend l'historique vrai au lieu de le déclarer. Et un preview qui tourne sur une base rafistolée ne teste plus ce que la production fera, ce qui annule l'intérêt du dispositif. Le coût est nul : cette base ne contient que des comptes de test, dont ceux que le nettoyage n'a pas pu atteindre.
 
@@ -564,6 +566,28 @@ C'est 2 étapes et 1 risque en moins, le risque étant qu'une commande destructr
 `DROP SCHEMA public CASCADE` emporte les extensions installées dans ce schéma, pgvector comprise. **Vérifié : la migration `init` les recrée**, sa ligne 2 étant `CREATE EXTENSION IF NOT EXISTS "vector";`, avant les 16 `CREATE TABLE`. La seconde migration ajoute 3 tables. Aucune instruction manuelle n'est donc à lancer avant `pnpm db:deploy`.
 
 À noter : aucune colonne de type vecteur n'existe encore dans le schéma, la dimension des embeddings n'étant pas tranchée (DEC-003). L'extension est créée mais n'est utilisée par rien aujourd'hui.
+
+### Séquence réellement exécutée le 2026-10-18, par l'utilisateur
+
+Dans cet ordre, dans les consoles Neon et Vercel.
+
+| Étape | Résultat |
+|---|---|
+| `DROP SCHEMA public CASCADE` puis `CREATE SCHEMA public` sur la branche de production | schéma vidé |
+| `pnpm db:deploy`, avec `DIRECT_URL` exportée pour cette seule commande puis retirée | `init` et `add_better_auth_tables` appliquées |
+| Vérification | 2 lignes dans `_prisma_migrations`, `finished_at` au 2026-10-18 08:48:37, `applied_steps_count` à 1 chacune, `rolled_back_at` vide. 20 tables dans `public`, `vector` présente, `User` à 0 |
+| Rotation du rôle `neondb_owner` sur les 3 branches, puis mise à jour des 2 entrées Production sur Vercel et des fichiers `.env` et `.env.test` | `pnpm db:audit` vérifié sur les 2 bases locales |
+| Création de la branche de preview, **enfant de la production déjà saine** | née avec l'historique propre et 0 ligne |
+| Les 2 entrées Preview de `DATABASE_URL` et `DIRECT_URL` pointent cette nouvelle branche | preview et production enfin séparés |
+| 4 `BETTER_AUTH_SECRET` distincts : Production, Preview, `.env`, `.env.test` | plus aucun secret partagé entre environnements |
+
+La ligne de migration en échec n'a pas eu à être résolue : elle a disparu avec le schéma, et l'historique est vrai au lieu d'être déclaré.
+
+**Correction à consigner : les rôles Neon sont par branche, pas par projet.** Une rotation de mot de passe ne s'applique qu'à la branche sur laquelle elle est lancée, et une branche créée avant la rotation garde l'ancien mot de passe. C'est pourquoi les 3 branches ont été traitées séparément. À vérifier au prochain usage : une branche créée **après** une rotation hérite du mot de passe courant de son parent, donc l'ordre rotation puis création est le bon.
+
+**Enseignement : un identifiant collé dans une conversation est un identifiant à faire tourner, point.** Pas de jugement sur la probabilité qu'il ait été lu ni sur la durée d'exposition : la rotation est le geste par défaut, immédiat, et il est bon marché. Ça rejoint la rule `bases-et-identifiants`, qui dit déjà que les identifiants de production ne circulent pas.
+
+**Ce que la nouvelle disposition verrouille, définitivement.** La branche de preview naissant saine, le `migrate reset` sur cette branche n'existe plus, donc l'agent n'a aucun besoin de ses identifiants et il n'y a rien à ajouter à `PRISMA_RESET_ALLOWED_HOSTS`. **Les 2 listes blanches restent cantonnées au développement et au test.** Formulé comme règle : l'agent ne détient d'identifiants de base que sur `dev` et `test` ; la production et la preview vivent uniquement côté Vercel, qui les injecte dans ses propres builds et ses propres fonctions.
 
 ## Comptes de test sur la branche Neon de dev
 

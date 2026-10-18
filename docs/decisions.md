@@ -98,12 +98,22 @@ Vérifié dans la console Neon : la branche que `DATABASE_URL` de l'environnemen
 
 **Préalable à la reprise.** Une branche Neon dédiée au preview, créée depuis la production, puis des variables Vercel déclarées par environnement avec des valeurs distinctes, `BETTER_AUTH_SECRET` compris. Le correctif de fond, une branche éphémère par déploiement, passe en priorité.
 
+#### Traitement du 2026-10-18 : le constat est soldé
+
+Exécuté par l'utilisateur dans les consoles Neon et Vercel, dans cet ordre. **La production est réinitialisée** (`DROP SCHEMA public CASCADE`, puis `pnpm db:deploy`) : elle ne contenait aucune donnée métier, seulement 11 comptes de test créés la veille par les previews, et une ligne de migration en échec qui bloquait les builds. Les 2 migrations sont désormais enregistrées terminées, l'historique est vrai au lieu d'être déclaré, et `migrate resolve --applied` n'a pas eu à être employé. **La branche de preview est créée ensuite, comme enfant de cette production saine** : elle naît avec un historique propre et zéro ligne, et les 2 entrées Preview de `DATABASE_URL` et `DIRECT_URL` pointent dessus. **Les 4 `BETTER_AUTH_SECRET` sont distincts** (Production, Preview, `.env`, `.env.test`), et les mots de passe des rôles Neon ont tourné sur les 3 branches.
+
+**Ce que l'ordre inverse a supprimé.** Réinitialiser la production **avant** de créer la branche de preview retire le `migrate reset` qui était prévu sur cette branche, donc l'élargissement de `PRISMA_RESET_ALLOWED_HOSTS` qu'il aurait demandé, donc le besoin pour l'agent d'en détenir les identifiants. **Les 2 listes blanches restent cantonnées à `dev` et `test`, définitivement.** C'est une étape et un risque en moins, obtenus en changeant un ordre, pas en ajoutant un contrôle.
+
+**Les rôles Neon sont par branche, pas par projet.** Une rotation de mot de passe ne vaut que pour la branche sur laquelle elle est lancée, et une branche créée avant la rotation garde l'ancien mot de passe. D'où les 3 branches traitées séparément, et l'ordre rotation puis création pour une branche enfant.
+
+**Enseignement : un identifiant collé dans une conversation est un identifiant à faire tourner, point.** Sans évaluer la probabilité qu'il ait été lu ni la durée de l'exposition. La rotation est le geste par défaut et elle est bon marché, contrairement à l'enquête qui essaierait de l'éviter. Consigné dans la rule `bases-et-identifiants`.
+
 #### Migrations : automatiques en preview, délibérées en production
 
 Preview et production n'ont pas le même profil de risque. La base de preview est jetable, celle de production contiendra des documents personnels. Les 2 environnements ne suivent donc pas le même chemin :
 
 - **Preview** : `prisma migrate deploy` dans le `buildCommand` du service `api`, conditionné à `VERCEL_ENV === "preview"`. Aucune friction, et un preview teste toujours le code contre son propre schéma.
-- **Production** : **pas dans le build**. Une commande versionnée du dépôt, `pnpm db:deploy production`, lancée délibérément avant de promouvoir le déploiement.
+- **Production** : **pas dans le build**. Une commande versionnée du dépôt, `DIRECT_URL="..." pnpm db:deploy`, la variable passée pour cette seule commande, lancée délibérément par l'utilisateur avant de promouvoir le déploiement.
 
 Les 2 alternatives ont été écartées pour des motifs symétriques. **Migrer dans le build partout** mettrait la production en migration automatique à chaque merge : si la migration passe et que le build échoue ensuite, la base est migrée sans que le code correspondant soit en ligne. **Sortir la migration du build partout** mettrait une étape manuelle là où on veut zéro friction, et poserait un problème d'ordre, puisque c'est le push qui déclenche le déploiement : il faudrait migrer avant que le code soit en ligne.
 
@@ -123,7 +133,7 @@ La protection standard **reste active sur les previews**, en production comme en
 
 **Conséquence sur les tests automatisés.** Playwright ne passe pas par le CLI : il utilise le mécanisme HTTP documenté. `playwright.config.ts` lit `PREVIEW_URL` et `VERCEL_AUTOMATION_BYPASS_SECRET`, et envoie 2 en-têtes sur chaque requête, `x-vercel-protection-bypass` avec le secret et `x-vercel-set-bypass-cookie: true` pour que les navigations du navigateur qui suivent passent aussi. Sans le secret, la configuration échoue au démarrage avec la cause, au lieu de laisser 5 tests échouer sur une page de connexion. Le secret n'entre jamais dans le dépôt : il est créé dans Deployment Protection → Protection Bypass for Automation, d'où Vercel l'expose aux déploiements comme variable système, et il est déclaré en secret de dépôt GitHub pour la CI.
 
-**Règle permanente sur les identifiants.** Un agent n'a d'identifiants que sur les bases jetables : développement local, test, preview. La production se **mesure** par une commande en lecture seule dont l'utilisateur transmet la sortie, et s'**écrit** par une commande que l'utilisateur lance lui-même, `pnpm db:deploy` restant la sienne. Écrite en détail dans la rule `bases-et-identifiants`, parce que c'est une contrainte de comportement et pas seulement une décision d'architecture.
+**Règle permanente sur les identifiants.** Un agent n'a d'identifiants que sur `dev` et `test`. La production et la preview vivent uniquement côté Vercel, qui les injecte dans ses propres builds et ses propres fonctions. La production se **mesure** par une commande en lecture seule dont l'utilisateur transmet la sortie, et s'**écrit** par une commande que l'utilisateur lance lui-même, `pnpm db:deploy` restant la sienne. Écrite en détail dans la rule `bases-et-identifiants`, parce que c'est une contrainte de comportement et pas seulement une décision d'architecture.
 
 **Règle permanente :** `DATABASE_URL`, `BETTER_AUTH_SECRET` et le futur bucket de stockage objet sont **distincts entre Production et Preview**. Un preview ne touche jamais les données de production.
 
