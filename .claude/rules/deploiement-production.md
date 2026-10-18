@@ -19,6 +19,14 @@ Le test avant d'ecrire une migration : **est-ce que le code actuellement en prod
 
 Rien n'empeche une fusion qui oublie le `pnpm db:deploy`. Le code part alors sur une base en retard et sert des 500. Un ticket ouvert porte le filet manquant : un controle au demarrage de l'API qui compare les migrations enregistrees en base a celles du dossier `prisma/migrations` et refuse de servir si la base est en retard, en tolerant l'avance, qui est le cas normal de cette rule. Tant qu'il n'est pas fait, la regle repose sur la discipline.
 
+## Les 3 champs de build du projet Vercel ne se touchent pas
+
+Build Command, Output Directory et Install Command, au niveau du **projet** Vercel, restent renseignes : `pnpm --filter @mimir/web build`, `apps/web/dist`, `pnpm install --frozen-lockfile`. Ils ne sont pas inertes en mode `services`, contrairement a ce qui avait ete ecrit : ils commandent l'**empaquetage de la fonction**. Les vider a casse la production le 2026-10-18, les 2 routes de l'API repondant `500` sur `SyntaxError: Cannot use import statement outside a module`. Le meme commit redeploye avec les champs reactives repond `200`.
+
+Les logs de build sont identiques avec et sans ces champs : ils ne peuvent pas servir a verifier ce point. La difference se lit dans le paquet de fonction, pas dans le build.
+
+**Le piege, mesure :** ce qui compte est la **presence** d'un remplacement, pas sa valeur. Toute valeur d'Output Directory donne le bon paquet, y compris un dossier qui n'existe pas, **sauf la chaine `dist`**, qui est la valeur par defaut et se comporte comme un champ vide. Un « nettoyage » qui remettrait la valeur par defaut, croyant revenir a un etat neutre, casse donc la production aussi surement qu'un champ vide, et le build reste vert. Il n'y a pas d'etat neutre : il y a un remplacement, ou la panne.
+
 ## Ce que ca ne change pas
 
 L'accord explicite de l'utilisateur est requis pour chaque fusion (rule `git`). Cette rule dit ce qu'une fusion declenche, elle n'autorise aucune fusion.
