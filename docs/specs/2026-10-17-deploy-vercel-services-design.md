@@ -386,9 +386,13 @@ Audit fait le 2026-10-18 : aucune autre étape de cette spec ne s'applique à un
 
 ## Risque consigné, non corrigé dans MIM-37
 
+**Ce risque s'est réalisé le 2026-10-18**, sur `BETTER_AUTH_URL` et non sur les migrations : voir le 3e manque plus haut. Le chemin de production n'était exercé par aucun preview, et c'est exactement par là que la panne est arrivée.
+
 **Version initiale de ce risque, fausse sur l'essentiel** : « tous les previews partagent une seule branche Neon de dev ». La branche partagée n'est pas celle de développement, c'est celle de **production**, et le risque n'est pas « faible aujourd'hui » mais réalisé. Voir le constat en tête de cette spec. Conservé ici pour montrer qu'un risque consigné sur la mauvaise base donne une fausse assurance : il a été écrit, relu et jugé acceptable, alors qu'il décrivait une situation qui n'existait pas.
 
-## 2 manques relevés à la relecture du corps de PR, en tickets séparés
+## 3 manques, en tickets séparés
+
+Les 2 premiers relevés à la relecture du corps de PR, le 3e par une panne de production.
 
 ### 1. Les obligations RGPD, à traiter avant la première fonctionnalité d'upload
 
@@ -460,6 +464,33 @@ Points à traiter dans le ticket, parce qu'ils décident si le filet est utilisa
 - **Base en avance, et c'est le cas normal** : la règle fait partir les migrations avant la fusion, donc la base a légitimement des migrations que le code ne connaît pas encore pendant quelques minutes. Le contrôle doit **refuser le retard et tolérer l'avance**, sinon il casse le déroulé qu'il est censé protéger.
 - **Le coût au démarrage** : 1 requête, sur une fonction qui démarre à froid. À mesurer, et à ne pas mettre sur le chemin de chaque requête.
 - **Ce que `/api/health` renvoie dans cet état** : vraisemblablement un `503` qui nomme les migrations manquantes, pour que la cause se lise dans la réponse au lieu de se déduire des logs.
+
+### 3. `env.ts` vérifie la présence des variables, pas leur forme
+
+**Panne réelle, production cassée le 2026-10-18 après la fusion.** `BETTER_AUTH_URL` en Production valait la chaîne d'un caractère `x`, posée le 8 octobre et jamais relue. `/api/health` et `/api/me` renvoyaient tous les deux `500 FUNCTION_INVOCATION_FAILED`, et la trace réelle était :
+
+```
+[BetterAuthError: Invalid base URL: x. Please provide a valid base URL.]
+  [cause]: TypeError: Invalid URL
+    at assertHasProtocol (better-auth/dist/utils/url.mjs:35:21)
+    at getBaseURL (better-auth/dist/utils/url.mjs:69:18)
+    at init (better-auth/dist/context/init.mjs:10:20)
+  code: 'ERR_INVALID_URL', input: 'x'
+Node.js process exited with exit status: 1.
+```
+
+**Le trou.** `resolveUrl` dans `apps/api/src/config/env/env.ts` teste `if (value)`, donc la **présence**. Une chaîne non vide passe, quelle qu'elle soit. La valeur a traversé `env.ts` sans un mot, puis Better Auth a levé 3 couches plus loin, à l'initialisation du module et non sur une route : c'est pourquoi `/api/health`, qui ne touche ni la base ni l'authentification, tombait exactement comme `/api/me`.
+
+C'est une incohérence avec le reste du dispositif, qui refuse partout le passage silencieux : `env.ts` lui-même interdit le repli en production, `cliDatasource` lève plutôt que d'emprunter le pooler, `strictPort` refuse de glisser sur un autre port. La vérification de forme manquait au seul endroit où la valeur vient d'un collage à la main.
+
+**Le ticket.** Les variables qui sont des URL doivent se **parser comme une URL avec un protocole**, sinon `env.ts` lève, avec le nom de la variable et la valeur reçue. Le message aurait été `BETTER_AUTH_URL n'est pas une URL valide : "x"`, et le diagnostic aurait pris 10 secondes au lieu d'un aller-retour de logs d'exécution.
+
+- Concerne `FRONTEND_URL` et `BETTER_AUTH_URL`, et l'URL dérivée de `VERCEL_URL` en preview par la même occasion.
+- La valeur reçue figure dans le message : c'est un hôte, pas un secret. Ne pas étendre ce principe aux variables sensibles, où un message ne doit jamais contenir la valeur.
+- Lever **au chargement du module**, comme aujourd'hui, et non à la première requête : une fonction qui refuse de démarrer est plus lisible qu'une fonction qui sert des `500`.
+- Les tests de `env.test.ts` couvrent la présence ; à compléter par les cas de forme, en premier (rule `tests-tdd`).
+
+**Le risque consigné s'est réalisé, exactement comme écrit.** Ce document notait que le défaut du découpage des migrations était que « le chemin de production n'est exercé par aucun preview ». La panne est précisément celle-là, sur une autre variable : en preview, `BETTER_AUTH_URL` est **dérivée de `VERCEL_URL`**, donc la valeur de production n'a jamais été exercée par un seul déploiement, et les 5 e2e verts ne pouvaient structurellement pas la voir. Un risque écrit, relu et jugé acceptable s'est produit au premier déploiement réel. L'enseignement n'est pas qu'il fallait le corriger plus tôt, c'est que **la dérivation en preview protège du besoin de configurer, et masque du même coup ce qui est mal configuré ailleurs** : tout ce qui est dérivé en preview est, par construction, non testé en production.
 
 ## Séquence de validation sur le preview
 
