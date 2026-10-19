@@ -1,6 +1,10 @@
-# Sortie de TO TEST : ce qui fait passer un ticket en DONE
+# Portes d'entree en DONE, et sortie de TO TEST
 
 `TO TEST` veut dire : **le code existe, et rien ne confirme encore qu'il fonctionne la ou l'utilisateur le verra.** Ce fichier dit a quelles conditions un ticket quitte cette colonne, parce que sans condition ecrite elle ne fait que grossir.
+
+**Les 5 portes conditionnent l'entree en `DONE`, par quelque colonne qu'on y arrive.** Un ticket qui passe de `TODO` ou `DOING` directement en `DONE` les franchit toutes, exactement comme s'il venait de `TO TEST`. Sans ca, le critere se contourne en sautant une colonne.
+
+Motif, mesure le 2026-10-19 : la passe sur les 8 tickets `DONE` du backlog a trouve **1 critere non tenu (MIM-37, le domaine), 4 criteres perimes repartis sur MIM-1, MIM-2 et MIM-10, et 1 incoherence (MIM-22)**. Aucun de ces tickets n'etait passe par un controle, parce que le critere ne portait que sur la sortie de `TO TEST`. **Un `TO TEST` annonce honnetement que rien n'est confirme ; un `DONE` faux ne sera jamais rouvert.**
 
 Ecrit le 2026-10-19 en le testant contre **MIM-12 (Assistant)** et **MIM-13 (machine d'etat simulee)**, les 2 cas les plus durs de la colonne, et non contre les tickets visuels. Un critere ecrit en regardant les tickets qu'on s'apprete a valider est un critere qu'ils passent par construction.
 
@@ -58,6 +62,15 @@ L'URL du deploiement, la date, et ce qui a ete regarde. Un DONE sans trace est u
 ## Aucune estimation de cout avant mesure
 
 Ne pas annoncer qu'une validation « sera rapide » : le mesurer, puis l'annoncer. L'argument « les smokes ont ete faits pendant le dev, il ne reste qu'a verifier sur le deploiement » a exactement la forme du raisonnement qui a echoue 2 fois la semaine du 2026-10-18, celle qui conclut depuis un indicateur voisin au lieu de la chose elle-meme.
+
+## Un ticket n'est jamais plus avance que ses dependances
+
+Un `DONE` ou un `TO TEST` pose au-dessus d'une dependance non validee est un faux vert : ce qui le porte n'est pas verifie. Quand ca se produit, 2 cas seulement, et le tri se fait en lisant les criteres, pas les titres.
+
+- **La dependance declaree est fausse.** C'etait le cas de MIM-13, declare dependant de MIM-12 alors que son perimetre est un hook d'etat dont MIM-12 est le consommateur. Inversion corrigee le 2026-10-19.
+- **Le statut est faux**, et il redescend.
+
+Cas ouvert au 2026-10-19 : MIM-10 (Landing) est `DONE` alors que ses 3 dependances declarees, MIM-5, MIM-7 et MIM-9, sont en `TO TEST`.
 
 ## Ce que ca ne change pas
 
