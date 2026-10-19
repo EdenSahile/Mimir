@@ -41,6 +41,14 @@ pnpm db:deploy <.env>  # Appliquer les migrations en attente sur la base du fich
 pnpm db:audit <.env>   # Mesurer en lecture seule l'etat d'une base (meme 2 formes)
 ```
 
+Pour exécuter du SQL ponctuel, depuis `packages/db` et **sans `--schema`** :
+
+```bash
+echo "SELECT 1;" | DIRECT_URL="..." pnpm exec prisma db execute --stdin
+```
+
+Depuis Prisma 7, `schema` vit dans `prisma.config.ts`, et passer `--schema` fait échouer la commande en réaffichant son aide, « Script input, only 1 must be provided », qui désigne l'entrée du script alors que le fautif est le drapeau. Les variables se passent devant la commande, pour la durée de cette seule commande, jamais par `export`.
+
 `db:push` applique le schéma sans rien inscrire dans l'historique des migrations : la base se retrouve désalignée, et le `db:deploy` suivant échoue sur un objet déjà existant. Il ne s'utilise donc que sur la base de développement local et sur celle de test, jamais sur preview ni sur production, où le schéma ne change que par une migration. Le contrôle est automatique : `packages/db/cliDatasource` refuse un `db push` dont la cible n'est pas l'une de ces 2 bases.
 
 ## Principes
