@@ -40,6 +40,20 @@ Les commandes ne nomment jamais les endpoints dans le depot. Les listes blanches
 
 Ne pas presenter cette liste comme le dernier rempart : elle a deja contenu l'endpoint de production sous un mauvais nom (commit `7330824`). Un garde-fou ecrit par celui qu'il est cense contraindre ne vaut que ce que vaut l'information qu'il contient. Le controle reel est la detention des identifiants, et l'identite d'une base cible se verifie dans la console du fournisseur, jamais d'apres le nom d'une variable d'environnement.
 
+## Comptes de test en production : une mesure deliberee, supprimee dans la meme session
+
+**Pas d'inscription de test en production, sauf une mesure deliberee dont la suppression est executee dans la meme session et consignee dans le ticket.**
+
+Formulation du 2026-10-19, qui remplace l'interdiction seche ecrite dans la spec de MIM-37. Motif du changement : les 11 comptes trouves dans la base de production venaient de **tests repetes non suivis**, pas d'une mesure unique. Une regle qui interdit la seule verification possible de ce qu'elle protege est mal formulee.
+
+Les 3 conditions sont cumulatives, et l'absence d'une seule fait tomber l'autorisation.
+
+- **Deliberee** : elle repond a une question precise qu'aucune sonde en lecture ne ferme. Les sondes se tentent d'abord, et leur echec se montre.
+- **Supprimee dans la meme session** : la suppression demande les identifiants de production, que l'agent ne detient pas. C'est donc **une commande que l'utilisateur lance**, et l'agent la lui fournit prete a coller avant de creer le compte, pas apres.
+- **Consignee dans le ticket** : l'adresse utilisee, la date, ce qui a ete mesure, et la confirmation de la suppression.
+
+Un compte de mesure n'est jamais reutilise d'une session a l'autre : il n'existe pas de « compte de test de production » permanent, sinon c'est un compte de production comme un autre, avec un mot de passe qui vieillit.
+
 ## Ce que ca ne change pas
 
 Un acte destructeur sur une base jetable reste soumis a l'accord explicite de l'utilisateur, demande juste avant, pour cette operation precise.
