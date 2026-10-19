@@ -361,7 +361,11 @@ Elles supposent toutes que la configuration `services` est présente sur la bran
 | 2 | **Laisser Build Command, Output Directory et Install Command tels quels** au niveau du projet | Cette étape disait l'inverse, « les vider », et c'est elle qui a cassé la production le 2026-10-18. Ces 3 champs ne sont pas inertes en mode `services` : ils commandent l'empaquetage de la fonction. Il n'y a rien à faire ici, et il n'y aura jamais rien à y faire |
 | 3 | **Vérifier `/api/health` en `200` et `/api/me` sans cookie en `401`** | 2 appels en lecture, **aucun compte créé en production**. Ils suffisent : le premier prouve que l'API est servie et routée, le second qu'elle parle à Better Auth et refuse une requête anonyme |
 
-**Pas d'inscription en production pour tester.** Le `401` de `/api/me` sans cookie couvre le chemin d'authentification sans écrire une ligne. Une inscription de test en production rejouerait exactement ce qui a mis 11 comptes dans cette base.
+**Pas d'inscription en production pour tester**, et le `401` de `/api/me` sans cookie suffit pour cette étape : il prouve que la route refuse un anonyme sans écrire une ligne.
+
+**Amendement du 2026-10-19 : cette interdiction était trop large, et elle est reformulée dans la rule `bases-et-identifiants`.** « Pas d'inscription de test en production, sauf une mesure délibérée dont la suppression est exécutée dans la même session et consignée dans le ticket. » Motif : les 11 comptes trouvés dans la base venaient de tests répétés non suivis, pas d'une mesure unique, et la règle interdisait la seule vérification possible de ce qu'elle protège. Ce qu'elle protège reste intact : aucun compte qui survit à la session, aucune inscription de confort, et les sondes en lecture d'abord.
+
+Ce que le `401` ne prouve pas, et qui a motivé l'amendement : le 2026-10-08, avec `BETTER_AUTH_URL` à `x` et la production cassée, `/api/me` sans cookie renvoyait **aussi** un `401`. Une mesure qui donne le même résultat quand tout va bien et quand tout est cassé ne mesure rien.
 
 Hors séquence, sans effet sur la production : créer `VERCEL_AUTOMATION_BYPASS_SECRET` dans Deployment Protection et le déclarer en secret de dépôt GitHub, utile dès maintenant pour que la CI joue les e2e contre un preview protégé.
 
