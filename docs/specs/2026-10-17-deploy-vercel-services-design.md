@@ -763,6 +763,10 @@ cd ../..
 DATABASE_URL="..." DIRECT_URL="..." pnpm db:audit
 ```
 
+**`--schema` entre en conflit avec `prisma.config.ts`, et l'erreur ne le dit pas.** Relevé le 2026-10-19 en préparant la commande de suppression du compte de mesure. `prisma db execute --stdin --schema prisma/schema.prisma` échoue en réaffichant l'aide de la commande, « Script input, only 1 must be provided », ce qui désigne l'entrée du script alors que le fautif est `--schema`. Sans ce drapeau, la même commande passe. Depuis Prisma 7, c'est `prisma.config.ts` qui porte `schema`, et le drapeau n'est plus à passer. Vérifié par A/B sur la base de développement.
+
+Aucune commande du dépôt ne portait ce drapeau, vérifié par recherche dans `.claude/`, `docs/`, `scripts/`, `CLAUDE.md`, `packages/` et `.github/` : il venait d'une commande improvisée hors du dépôt. C'est l'argument pour versionner les commandes de production plutôt que de les réécrire à chaque fois, comme le fait déjà `pnpm db:audit`.
+
 **Les noms d'options ont changé sur Prisma 7**, et la version naïve de ces commandes n'existe plus : `--to-schema-datamodel` est devenu `--to-schema`, et `--from-url` a disparu au profit de `--from-config-datasource`, qui lit la base par `prisma.config.ts`, donc par `DIRECT_URL`. Vérifié en lisant l'aide de la commande installée, après l'avoir vue échouer.
 
 ### La mesure de production est rigoureuse, parce que l'historique et le schéma sont d'accord
