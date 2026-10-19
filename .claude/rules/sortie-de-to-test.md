@@ -70,7 +70,9 @@ Un `DONE` ou un `TO TEST` pose au-dessus d'une dependance non validee est un fau
 - **La dependance declaree est fausse.** C'etait le cas de MIM-13, declare dependant de MIM-12 alors que son perimetre est un hook d'etat dont MIM-12 est le consommateur. Inversion corrigee le 2026-10-19.
 - **Le statut est faux**, et il redescend.
 
-Cas ouvert au 2026-10-19 : MIM-10 (Landing) est `DONE` alors que ses 3 dependances declarees, MIM-5, MIM-7 et MIM-9, sont en `TO TEST`.
+Cas tranche le 2026-10-19 : MIM-10 (Landing) etait `DONE` alors que ses 3 dependances declarees, MIM-5, MIM-7 et MIM-9, sont en `TO TEST`. **Les dependances sont justes** : une landing page repose reellement sur le design system, les composants UI et l'avatar. C'est donc le statut qui etait faux, et MIM-10 est repasse en `TO TEST`.
+
+La regle ne laisse pas de troisieme issue, et une liste de « cas ouverts » n'en est pas une : si les dependances sont justes, le statut descend.
 
 ## Ce que ca ne change pas
 
