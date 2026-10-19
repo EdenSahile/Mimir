@@ -16,6 +16,30 @@ Sans evaluer la probabilite qu'il ait ete lu ni la duree de l'exposition : la ro
 
 **Les roles Neon sont par branche, pas par projet.** Une rotation ne s'applique qu'a la branche sur laquelle elle est lancee, et une branche creee avant la rotation garde l'ancien mot de passe. Traiter chaque branche separement, et faire tourner avant de creer une branche enfant.
 
+## Rotation d'un mot de passe de base : la sequence complete
+
+Une rotation ne se termine pas dans la console du fournisseur. **Changer une variable sur Vercel n'atteint pas un deploiement deja construit** : les variables sont lues au demarrage de la fonction, donc un deploiement en cours de service continue avec l'ancienne valeur jusqu'a ce qu'un nouveau le remplace. C'est l'etape oubliee partout, et elle laisse croire que la rotation a echoue alors qu'elle n'a pas ete appliquee.
+
+L'ordre impose une fenetre de panne de quelques minutes, entre la rotation et le redeploiement. Elle est le prix de la rotation, pas un defaut de la procedure.
+
+1. **Fournisseur** : reinitialiser le mot de passe du role, sur la **branche** concernee. Les roles Neon sont par branche, donc une seule branche est touchee.
+2. **Vercel** : remplacer `DATABASE_URL` **et** `DIRECT_URL` dans l'environnement concerne, la chaine poolee pour la premiere, la directe pour la seconde.
+3. **Redeployer** cet environnement. Sans ca, rien n'a change pour le code qui tourne.
+4. **Verifier**, par les 2 controles de sortie ci-dessous.
+
+### Les 2 controles de sortie
+
+- `/api/health` repond **`200`**. Il prouve que la fonction demarre, donc qu'aucune variable ne fait lever `env.ts` au chargement.
+- Une tentative de connexion avec des identifiants bidon repond **`401`**, et non `500` :
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" -X POST https://<domaine>/api/auth/sign-in/email \
+  -H "Content-Type: application/json" \
+  -d '{"email":"inexistant@example.invalid","password":"MotDePasseQuiNExistePas123!"}'
+```
+
+Le second controle est le seul des 2 qui touche la base : `401` signifie que la recherche de l'utilisateur a eu lieu, donc que la nouvelle chaine fonctionne. **Un `500` signifie que la base n'est pas joignable**, donc que la rotation est incomplete, le plus souvent faute du redeploiement ou parce qu'une seule des 2 variables a ete remplacee. `/api/health` seul ne le verrait pas, puisqu'il ne touche ni la base ni l'authentification.
+
 ## La production se mesure par des resultats transmis
 
 Quand l'etat de la production est necessaire, l'agent ne va pas le chercher : il **fournit la commande exacte**, en lecture seule, et l'utilisateur lui colle la sortie. Les commandes de mesure sont donc versionnees dans le depot plutot qu'improvisees, et leur sortie ne doit contenir ni identifiant, ni chaine de connexion, ni donnee personnelle. `pnpm db:audit` est faite pour ca.
@@ -49,7 +73,7 @@ Formulation du 2026-10-19, qui remplace l'interdiction seche ecrite dans la spec
 Les 3 conditions sont cumulatives, et l'absence d'une seule fait tomber l'autorisation.
 
 - **Deliberee** : elle repond a une question precise qu'aucune sonde en lecture ne ferme. Les sondes se tentent d'abord, et leur echec se montre.
-- **Supprimee dans la meme session** : la suppression demande les identifiants de production, que l'agent ne detient pas. C'est donc **une commande que l'utilisateur lance**, et l'agent la lui fournit prete a coller avant de creer le compte, pas apres.
+- **Supprimee dans la meme session** : **la suppression est executee par le detenteur des identifiants**, et la commande lui est fournie prete a coller **avant** la creation du compte, pas apres. Formule ainsi parce que « l'utilisateur la lance » decrit une circonstance, pas une exigence : le jour ou un agent detiendrait des identifiants de production, la protection tomberait sans que la regle ait change.
 - **Consignee dans le ticket** : l'adresse utilisee, la date, ce qui a ete mesure, et la confirmation de la suppression.
 
 Un compte de mesure n'est jamais reutilise d'une session a l'autre : il n'existe pas de « compte de test de production » permanent, sinon c'est un compte de production comme un autre, avec un mot de passe qui vieillit.
