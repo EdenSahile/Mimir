@@ -1,5 +1,15 @@
 # Une mesure qui contredit un enonce corrige cet enonce dans la meme passe
 
+## Regle zero : la regle qu'on vient d'ecrire s'applique d'abord a la phrase qu'on vient d'ecrire
+
+Elle est en tete parce qu'elle **gouverne l'application de toutes les autres**, et qu'une regle lue en dernier ne gouverne rien.
+
+**Le controle** : avant de rendre un texte qui enonce une regle, relire **ce meme texte** a travers elle. Le point aveugle n'est pas l'ecrit ancien, c'est la phrase que l'on vient de taper : on la croit conforme du fait de l'avoir ecrite en connaissant la regle.
+
+Cas reel du 2026-10-29 : la ligne « cout de la fuite : probablement nul » a ete ecrite dans `docs/incidents.md` **dans la meme passe** que la regle interdisant de presenter un enonce non mesure comme mesure. **Rattrapee par l'utilisateur, pas par l'agent**, et les 2 textes etaient dans le meme commit.
+
+## L'obligation principale
+
 **Quand une mesure contredit un enonce ecrit ailleurs, cet enonce est corrige dans la meme passe, et la correction est listee dans le rapport.**
 
 « Ailleurs » veut dire partout : un autre ticket Notion, une rule, une spec de `docs/specs/`, `CLAUDE.md`, un commentaire de code, un handoff. L'endroit ne change rien a l'obligation.
@@ -33,6 +43,42 @@ Cas reel du 2026-10-29. Diagnostic d'une panne de production : `vercel promote` 
 La regle pratique : **avant toute action qui modifie un etat, lire et consigner les reglages qui entrent dans le diagnostic.** Un diagnostic coute une lecture ; une lecture manquee coute la cause.
 
 Et quand l'ordre a deja ete inverse : ne pas presenter la mesure d'apres comme la valeur d'avant. Ecrire les 3 choses, la valeur lue, le fait qu'elle a ete lue apres telle action, et que la valeur anterieure est inconnue.
+
+## Un code de statut n'est pas un diagnostic
+
+**On lit le corps de la reponse et les logs avant de conclure sur une cause.** Un code de statut dit qu'une requete a echoue ; il ne dit ni ou, ni pourquoi, ni meme quel composant a repondu.
+
+Le controle, avant d'ecrire une cause :
+
+- **le corps de la reponse a ete lu**, pas seulement son code ;
+- **les logs d'execution ont ete lus**, et le compte rendu cite l'erreur reelle ;
+- si la cause est annoncee sans log, le compte rendu dit qu'elle est **deduite** et de quoi.
+
+2 cas nommes de ce chantier, a reconnaitre quand ils se reproduisent. **La procedure executable vit dans le runbook de `deploiement-production`, section « Les 3 pieges, tous rencontres » ; elle n'est pas recopiee ici.**
+
+- **Le `401` du mur de protection.** Le code venait de l'infrastructure d'hebergement, avant que la requete n'atteigne l'application. Il etait **identique** a celui attendu en cas de succes, donc le resultat paraissait conforme. Seul le corps de la reponse distinguait les 2.
+- **L'echec d'authentification du driver de base.** Un `500` sur une route d'authentification est compatible avec au moins 4 causes : identifiants perimes, base suspendue ou branche supprimee, schema non migre, configuration d'authentification cassee. Le code n'en elimine aucune. **Le log les a toutes tranchees en une lecture**, par l'erreur du pilote et par une pile d'appels qui mettait les 3 autres hypotheses hors de cause.
+
+La lecon de cout : 10 jours de panne ont ete diagnostiques a partir d'un code de statut, et le log a donne la reponse en une minute le jour ou il a enfin ete lu.
+
+## Interdiction du mecanisme qui explique tout
+
+Une cause qui explique elegamment tous les symptomes est **suspecte**, pas confirmee : c'est aussi la forme que prend une hypothese seduisante qu'on n'a pas testee.
+
+Avant d'adopter une cause unique, **2 productions sont dues**, et leur absence vaut refus :
+
+1. **Ce que la cause n'explique pas.** Chercher explicitement, et l'ecrire. S'il n'y a rien, le dire aussi, et c'est alors un resultat.
+2. **Au moins une hypothese concurrente**, avec **l'observation qui l'eliminerait**. Une hypothese concurrente sans son test de refutation ne compte pas : elle decore.
+
+Et quand les mesures ne tranchent pas, **ne pas combler le trou par une explication**. Ecrire que la contradiction n'est pas resolue, et produire un **protocole falsifiable** : l'observation a faire, et ce que chaque resultat conclurait. La rule `deploiement-production` en contient un exemple execute, section « Le protocole de resolution, a executer a la prochaine fusion ».
+
+## La synthese est soumise a la meme exigence que le detail
+
+**La synthese qui arrondit** est la forme la plus discrete du defaut : un corps d'analyse juste, annonce par une ligne de tete qui ecrase la nuance. Le corps est exact, personne ne le relit, et c'est la ligne de tete qui reste.
+
+Cas reel du 2026-10-29 : un inventaire detaillant « 1 complete, 1 couverte en partie, 2 absentes » a ete annonce par « 2 existent deja, 2 manquent ». La nuance perdue, « couverte en partie », etait precisement celle qui portait le travail delicat, puisqu'elle imposait un deplacement sans duplication.
+
+**Le controle** : une synthese se relit six mois plus tard comme un fait. Elle porte donc la meme exigence de provenance que le detail, et un arrondi qui supprime une categorie en est une alteration, pas un raccourci.
 
 ## Ne pas se reecrire en faute sur le mauvais point
 
