@@ -8,7 +8,9 @@
 
 Une mesure vit le temps d'une session. Un enonce ecrit reste, et il est lu par la session suivante comme s'il etait vrai. Laisser les 2 coexister ne produit pas une incertitude, ca produit une **regression** : la mesure est oubliee, l'enonce est applique, et le travail repart sur le faux.
 
-Le cout est mesure sur ce chantier. La rule `deploiement-production` affirmait que fusionner une PR dans `dev` deploie la production. Mesure du 2026-10-29 : `mimir-navy.vercel.app` servait un deploiement du 2026-10-18, et **15 deploiements de production posterieurs**, tous `READY`, ne servaient aucun trafic. L'enonce est reste faux **10 jours** apres avoir ete contredit, et pendant ces 10 jours il a servi a conclure que la production etait a jour.
+Le cout est mesure sur ce chantier. La rule `deploiement-production` affirmait que fusionner une PR dans `dev` deploie la production. Mesure du 2026-10-29 : `mimir-navy.vercel.app` servait un deploiement du 2026-10-18 12:43 CEST, et **15 deploiements de production posterieurs**, tous `READY`, ne servaient aucun trafic. L'enonce est donc reste faux **11 jours**, et pendant ces 11 jours il a servi a conclure que la production etait a jour.
+
+Ne pas confondre les 2 durees de cet incident, elles ne mesurent pas la meme chose : **11 jours** d'epinglage du domaine, du 2026-10-18 au 2026-10-29, et **10 jours** de panne d'authentification, du 2026-10-19, date de la rotation des identifiants, au 2026-10-29. Le detail est dans `docs/incidents.md`.
 
 ## Les 2 obligations sont cumulatives
 
@@ -26,7 +28,7 @@ Le cout est mesure sur ce chantier. La rule `deploiement-production` affirmait q
 
 **Les reglages se lisent avant d'agir, pas apres.** Une mesure prise apres une action decrit l'etat que cette action a laisse. Elle ne dit rien de l'etat qui a produit le probleme, et elle ne peut plus etre refaite : l'agent a detruit sa propre preuve.
 
-Cas reel du 2026-10-29. Diagnostic d'une panne de production : `vercel promote` lance d'abord, puis lecture de `autoAssignCustomDomains`, qui rend `true`. Conclusion ecrite : « le reglage vaut `true`, mon affirmation precedente etait fausse ». Or [vercel/vercel#15095](https://github.com/vercel/vercel/issues/15095) rapporte que `vercel promote` **remet ce champ a `true` a chaque appel**. La lecture decrivait donc l'etat d'apres mutation. La valeur reelle pendant les 11 jours de panne est **inconnue, et le restera**, parce que l'ordre des 2 gestes etait inverse.
+Cas reel du 2026-10-29. Diagnostic d'une panne de production : `vercel promote` lance d'abord, puis lecture de `autoAssignCustomDomains`, qui rend `true`. Conclusion ecrite : « le reglage vaut `true`, mon affirmation precedente etait fausse ». Or [vercel/vercel#15095](https://github.com/vercel/vercel/issues/15095) rapporte que `vercel promote` **remet ce champ a `true` a chaque appel**. La lecture decrivait donc l'etat d'apres mutation. La valeur reelle pendant les 11 jours d'epinglage du domaine est **inconnue, et le restera**, parce que l'ordre des 2 gestes etait inverse.
 
 La regle pratique : **avant toute action qui modifie un etat, lire et consigner les reglages qui entrent dans le diagnostic.** Un diagnostic coute une lecture ; une lecture manquee coute la cause.
 
