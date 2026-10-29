@@ -15,6 +15,14 @@ Ce fichier guide Claude Code pendant le développement de Mímir. Il ne fait pas
 - Recherche vectorielle : pgvector
 - IA : Claude API
 
+### Version de Node : ligne 24, plancher 24.22.1
+
+Les 3 environnements suivent la **ligne 24** : la machine de dev par `.nvmrc`, la CI par `node-version-file: .nvmrc`, et les fonctions Vercel par le réglage du projet. Le plancher `>=24.22.1` est déclaré dans `engines.node` du `package.json` racine.
+
+Le plancher n'est pas arbitraire : il est la première version 24.x corrigeant les 10 CVE de la publication de sécurité Node du 2026-10-21, dont **CVE-2026-111497**, une écriture hors limites dans le décodeur Brotli embarqué dans Node, entrée dans la liste CISA des failles exploitées le 2026-10-27. Les lignes 22.x et 26.x ont leurs propres correctifs, 22.23.4 et 26.12.1 ; toutes les autres, dont 20.x et 25.x, restent vulnérables et ne recevront rien.
+
+**Ne jamais épingler un patch exact** dans `.nvmrc` ni dans la CI. `24` désigne le dernier 24.x disponible, donc les correctifs de sécurité suivants arrivent d'eux-mêmes. Figer `24.22.1` ferait rater le prochain. Le plancher appartient à `engines`, la ligne appartient à `.nvmrc`.
+
 ## Structure
 
 ```
