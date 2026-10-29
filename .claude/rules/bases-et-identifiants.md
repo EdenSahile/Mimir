@@ -12,33 +12,32 @@ La preview a quitte la liste des bases dont l'agent detient les identifiants le 
 
 ## Un identifiant colle dans une conversation est un identifiant a faire tourner
 
-Sans evaluer la probabilite qu'il ait ete lu ni la duree de l'exposition : la rotation est le geste par defaut, immediat. Elle est bon marche, contrairement a l'enquete qui essaierait de l'eviter.
+Sans evaluer la probabilite qu'il ait ete lu ni la duree de l'exposition : la rotation est le geste par defaut, immediat. Elle reste moins couteuse que l'enquete qui essaierait de l'eviter.
+
+**Corrige le 2026-10-29 : cette rule affirmait que la rotation est « bon marche ». C'est faux.** La rotation du 2026-10-19 a casse la production pendant **10 jours**. Ce qui est bon marche, c'est le geste chez le fournisseur ; ce qui coute, c'est la sequence qui doit suivre, et qu'on croit terminee avant qu'elle le soit. Rotater reste le bon reflexe, mais **une rotation s'ouvre comme une operation en 5 etapes**, pas comme un clic, et elle ne se lance pas sans aller jusqu'au controle de sortie. Le detail est dans `docs/incidents.md`.
 
 **Les roles Neon sont par branche, pas par projet.** Une rotation ne s'applique qu'a la branche sur laquelle elle est lancee, et une branche creee avant la rotation garde l'ancien mot de passe. Traiter chaque branche separement, et faire tourner avant de creer une branche enfant.
 
-## Rotation d'un mot de passe de base : la sequence complete
+## Rotation d'un mot de passe de base : le runbook vit ailleurs
 
-Une rotation ne se termine pas dans la console du fournisseur. **Changer une variable sur Vercel n'atteint pas un deploiement deja construit** : les variables sont lues au demarrage de la fonction, donc un deploiement en cours de service continue avec l'ancienne valeur jusqu'a ce qu'un nouveau le remplace. C'est l'etape oubliee partout, et elle laisse croire que la rotation a echoue alors qu'elle n'a pas ete appliquee.
+**La sequence complete est le runbook de `deploiement-production`**, section « toute rotation de secret casse la production si elle s'arrete au fournisseur ». Elle n'est pas recopiee ici : 2 definitions de la meme sequence divergeraient a la premiere etape ajoutee, et c'est deja arrive sur ce chantier.
 
-L'ordre impose une fenetre de panne de quelques minutes, entre la rotation et le redeploiement. Elle est le prix de la rotation, pas un defaut de la procedure.
+Ce qui est propre aux bases, et qui reste ici : **les roles Neon sont par branche**, donc une rotation ne touche qu'une branche, et il faut remplacer `DATABASE_URL` **et** `DIRECT_URL`, la poolee et la directe. En oublier une donne la meme panne qu'en oublier le redeploiement.
 
-1. **Fournisseur** : reinitialiser le mot de passe du role, sur la **branche** concernee. Les roles Neon sont par branche, donc une seule branche est touchee.
-2. **Vercel** : remplacer `DATABASE_URL` **et** `DIRECT_URL` dans l'environnement concerne, la chaine poolee pour la premiere, la directe pour la seconde.
-3. **Redeployer** cet environnement. Sans ca, rien n'a change pour le code qui tourne.
-4. **Verifier**, par les 2 controles de sortie ci-dessous.
+Ce qu'il faut retenir sans ouvrir l'autre fichier : **une rotation ne se termine ni dans la console du fournisseur, ni a l'ecriture de la variable sur Vercel.** Elle se termine quand le domaine sert un deploiement construit apres l'ecriture, et que la connexion bidon rend `401` et non `500`.
 
-### Les 2 controles de sortie
+## Ne jamais demander la valeur d'un secret
 
-- `/api/health` repond **`200`**. Il prouve que la fonction demarre, donc qu'aucune variable ne fait lever `env.ts` au chargement.
-- Une tentative de connexion avec des identifiants bidon repond **`401`**, et non `500` :
+**Un agent travaille a partir du nom d'un secret, jamais de sa valeur.** Il ne la demande pas, ne la suggere pas, ne propose aucun contournement pour l'obtenir.
 
-```bash
-curl -s -o /dev/null -w "%{http_code}\n" -X POST https://<domaine>/api/auth/sign-in/email \
-  -H "Content-Type: application/json" \
-  -d '{"email":"inexistant@example.invalid","password":"MotDePasseQuiNExistePas123!"}'
-```
+Ce n'est pas une precaution theorique : `vercel env ls production` n'affiche que les **noms** et les **dates**, et le 2026-10-29 cette seule information a suffi a dater la rotation, identifier le deploiement fautif et conclure le diagnostic. La valeur n'a servi a rien a aucun moment.
 
-Le second controle est le seul des 2 qui touche la base : `401` signifie que la recherche de l'utilisateur a eu lieu, donc que la nouvelle chaine fonctionne. **Un `500` signifie que la base n'est pas joignable**, donc que la rotation est incomplete, le plus souvent faute du redeploiement ou parce qu'une seule des 2 variables a ete remplacee. `/api/health` seul ne le verrait pas, puisqu'il ne touche ni la base ni l'authentification.
+**Si l'utilisateur donne quand meme une valeur**, 2 obligations, dans cet ordre :
+
+1. **Le signaler**, immediatement et explicitement, parce que la valeur est desormais a faire tourner.
+2. **Ne pas l'utiliser.** Ni pour un test, ni pour une lecture, ni « puisqu'elle est deja la ». L'employer transformerait une fuite en dependance, et rendrait la rotation plus couteuse qu'elle ne l'est.
+
+Le cout reel se lit dans l'incident du 2026-10-18 au 29, consigne dans `docs/incidents.md` : un mot de passe colle dans une conversation, impact probablement nul, mais **10 jours de production cassee** causes par la rotation de precaution. Le secret non transmis est donc le seul geste vraiment bon marche. Une fois transmis, meme sans aucune exposition publique, sa remediation coute plus que la fuite.
 
 ## La production se mesure par des resultats transmis
 
