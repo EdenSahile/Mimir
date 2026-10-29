@@ -4,17 +4,121 @@ L'environnement **Production** du projet Vercel suit la branche **`dev`**. L'env
 
 Verifie le 2026-10-18 dans Settings → Environments et par l'API Vercel, qui renvoie `productionBranch: dev`. Ne pas ecrire de procedure qui suppose un `main`.
 
-## Corrige le 2026-10-29 : la fusion ne suffit pas, le domaine est epingle
+## Corrige le 2026-10-29 : un deploiement `READY` ne sert pas forcement le domaine
 
 Cette rule affirmait qu'il n'existe aucune etape de promotion apres la fusion. **C'est faux**, et ca a coute 10 jours de panne d'authentification en production.
 
-Le projet porte **`autoAssignCustomDomains: false`**. Un nouveau deploiement de production est donc construit, passe a `READY`, et **ne prend pas le domaine** : l'alias reste la ou une promotion l'a mis. Mesure du 2026-10-29 : `mimir-navy.vercel.app` servait encore un deploiement du **2026-10-18**, et les **7 deploiements de production posterieurs**, tous `READY`, ne servaient aucun trafic.
+### Ce qui est mesure
 
-Consequence a retenir, parce qu'elle rend la panne invisible : **les variables d'environnement sont figees dans le deploiement a sa creation.** Changer `DATABASE_URL` sur Vercel puis fusionner ne touche donc pas le deploiement qui sert, qui continue avec l'ancienne valeur. C'est exactement ce qui a produit un `/api/health` a `200` et un `sign-in` a `500` pendant 10 jours.
+Le 2026-10-29, par `vercel inspect` et `vercel ls --prod` :
 
-Donc, apres toute fusion dont le resultat doit etre en ligne : **verifier quel deploiement porte l'alias**, pas seulement qu'un deploiement recent existe. Les 2 controles de sortie de la rule `bases-et-identifiants` sont faits pour ca, et le second est le seul qui touche la base.
+- `mimir-navy.vercel.app` servait un deploiement du **2026-10-18 12:43 CEST**, `dpl_GmaLZ75HPbmokiFPG7vjZFjrPKaE`.
+- **15 deploiements de production crees apres lui** etaient tous `READY`, et aucun ne portait le domaine. Les 3 plus recents avaient 17 minutes.
+- `vercel promote <url>` a deplace le domaine, et les 2 controles de sortie sont passes dans la minute.
 
-Le choix de fond n'est pas tranche, et **aucun ticket ne le porte au 2026-10-29** : soit reactiver l'attribution automatique du domaine, soit assumer une promotion explicite et l'ecrire dans la procedure. MIM-56 ne couvre pas ce reglage, il porte le choix d'un nom de domaine.
+La cause du `500` est etablie par le log d'execution, pas deduite d'un code HTTP : `P1000`, `Authentication failed against the database server`, `DriverAdapterError: AuthenticationFailed` levee par `PrismaNeonAdapter`. Mot de passe de base perime, fige dans le deploiement servi.
+
+**Pourquoi la panne est invisible : les variables d'environnement sont figees dans le deploiement a sa creation.** Changer `DATABASE_URL` sur Vercel puis fusionner ne touche pas le deploiement qui sert, qui continue avec l'ancienne valeur. D'ou un `/api/health` a `200`, puisqu'il ne touche pas la base, et un `sign-in` a `500` pendant 10 jours.
+
+### Le reglage : valeur inconnue pendant la panne
+
+**`autoAssignCustomDomains` a ete lu a `true`** par `GET /v9/projects/{id}` de l'API Vercel le 2026-10-29. Et `GET /v9/projects/{id}/domains` rend `mimir-navy.vercel.app` avec `verified: true` et `gitBranch: null`, donc rattache a la production.
+
+**Cette lecture ne vaut pas pour la periode de la panne**, et il faut 3 precisions pour ne pas s'y tromper.
+
+1. Elle a ete faite **apres un `vercel promote`**, dans la meme session.
+2. [vercel/vercel#15095](https://github.com/vercel/vercel/issues/15095) rapporte que `vercel promote` **remet ce champ a `true` a chaque appel**. Ouverte le 2026-02-18, sans reponse officielle ni correctif connu : c'est un rapport de bug, pas la documentation, donc confiance moyenne.
+3. Donc **la valeur du 2026-10-18 au 2026-10-29 est inconnue, et le restera** : la mesure d'apres a efface l'etat d'avant. `autoAssignCustomDomainsUpdatedAt` est absent de la reponse de l'API, donc un changement n'est pas non plus datable.
+
+Si le champ etait a `false` pendant la panne, le comportement est entierement explique : la [documentation Vercel sur la promotion](https://vercel.com/docs/deployments/promoting-a-deployment) dit que desactiver l'attribution des domaines pour la branche de production est precisement le mecanisme de la promotion manuelle. Ce n'est pas etabli, c'est l'hypothese la plus economique.
+
+**Effet de bord a connaitre : un `promote` peut donc reactiver l'attribution automatique sans le dire.** Si `false` etait un choix delibere, il est a remettre apres chaque promotion, et a relire pour le verifier.
+
+### Le protocole de resolution, a executer a la prochaine fusion
+
+L'ordre compte, et la premiere etape est celle qui a manque.
+
+1. **Avant tout deploiement**, lire et consigner le reglage :
+   ```bash
+   # avec le token du CLI, sans l'afficher
+   GET https://api.vercel.com/v9/projects/<projectId>?teamId=<orgId>  ->  autoAssignCustomDomains
+   ```
+2. **Pousser**, et laisser la fusion construire son deploiement de production.
+3. **Lire quel deploiement porte l'alias** :
+   ```bash
+   vercel inspect https://<domaine>
+   ```
+
+Les 3 issues, et ce qu'elles concluent :
+
+| Observation | Conclusion |
+| --- | --- |
+| Le domaine suit tout seul | L'attribution automatique fonctionne, et la valeur pendant la panne etait **probablement `false`**. L'affaire est close. |
+| Le domaine ne suit pas, alors que le reglage lit `true` | **Le reglage n'est pas le mecanisme.** Chercher ailleurs : rien dans les mesures actuelles n'explique alors la panne. |
+| Le reglage lit `false` sans que personne ne l'ait touche | Probleme de configuration a instruire, et non un comportement de Vercel. |
+
+Tant que ce protocole n'a pas tourne une fois, **ne rien affirmer sur la cause de l'epinglage**. Le comportement est mesure, son mecanisme ne l'est pas.
+
+### Ce qu'on en fait
+
+**Ne pas se fier au reglage, lire quel deploiement porte l'alias.** Apres toute fusion dont le resultat doit etre en ligne :
+
+```bash
+vercel inspect https://<domaine>          # l'identifiant du deploiement a-t-il change ?
+```
+
+Si l'identifiant n'a pas bouge, le domaine est reste en arriere, et `vercel promote <url-du-deploiement>` est une etape obligatoire de la procedure, quoi que dise le reglage.
+
+**Tester le candidat avant de promouvoir**, sur son URL technique et non sur le domaine. 2 pieges s'y trouvent :
+
+- La Deployment Protection garde les URL techniques et rend elle-meme un `401` sur `/api/auth/sign-in/email`, plus un `302` sur `/api/health`. Lu vite, ce `401` ressemble au resultat attendu alors qu'il vient de Vercel et n'a jamais atteint Express. Passer par `vercel curl <chemin> --deployment <url> -- <args curl>`, qui franchit la protection avec la session du CLI.
+- Un `401` concluant se reconnait a **son corps**, `{"message":"Invalid email or password","code":"INVALID_EMAIL_OR_PASSWORD"}`, qui est celui de l'application. Le code HTTP seul ne distingue pas les 2 cas.
+
+Un `500` sur le candidat signifie que le probleme n'est pas le domaine : ne rien promouvoir, revenir aux logs.
+
+MIM-62 porte cette correction. MIM-56 ne couvre pas ce reglage, il porte le choix d'un nom de domaine.
+
+## Runbook : toute rotation de secret casse la production si elle s'arrete au fournisseur
+
+**C'est la lecon principale de l'incident du 2026-10-18 au 29**, et elle passe devant toute idee de supervision, parce qu'elle traite la cause et non la detection.
+
+Le mecanisme, en une phrase : **les variables d'environnement sont copiees dans le deploiement a sa creation**, pas lues a chaque requete. Changer un secret cote Vercel n'atteint donc **aucun** deploiement existant. Le deploiement qui sert continue avec l'ancienne valeur, indefiniment, et il la presentera a un fournisseur qui ne l'accepte plus.
+
+Vaut pour **tout** secret, pas seulement le mot de passe de base : `DATABASE_URL`, `DIRECT_URL`, `BETTER_AUTH_SECRET`, et le futur bucket. Un `BETTER_AUTH_SECRET` rotate sans redeploiement casse 100 % des connexions reelles tout en laissant la base joignable.
+
+### La sequence, dans cet ordre
+
+L'ordre impose une fenetre de panne de quelques minutes, entre la rotation et la mise en ligne. Elle est le prix de la rotation, pas un defaut de la procedure.
+
+1. **Fournisseur** : changer le secret a la source. Pour une base Neon, le role est **par branche**, donc une seule branche est touchee.
+2. **Vercel** : remplacer la ou les variables dans l'environnement concerne. Pour une base, `DATABASE_URL` **et** `DIRECT_URL`, la poolee et la directe. En oublier une donne exactement la meme panne.
+3. **Redeployer** cet environnement. Sans ca, rien n'a change pour le code qui tourne.
+4. **Verifier que le domaine sert le nouveau deploiement**, et pas seulement qu'un nouveau deploiement existe :
+   ```bash
+   vercel inspect https://<domaine>     # l'identifiant du deploiement a-t-il change ?
+   ```
+   S'il n'a pas change, `vercel promote <url-du-nouveau-deploiement>`. **C'est l'etape qui a manque pendant 11 jours.**
+5. **Lancer le controle de sortie** ci-dessous.
+
+### Le controle de sortie qui termine une rotation
+
+Une rotation n'est pas terminee quand la variable est ecrite. Elle est terminee quand ceci repond :
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" -X POST https://<domaine>/api/auth/sign-in/email \
+  -H "Content-Type: application/json" \
+  -d '{"email":"inexistant@example.invalid","password":"MotDePasseQuiNExistePas123!"}'
+```
+
+**`401` attendu. `500` signifie que la rotation est incomplete.** C'est le seul controle qui touche la base : `401` prouve que la recherche d'utilisateur a eu lieu, donc que la nouvelle chaine fonctionne.
+
+**`/api/health` ne remplace pas ce controle et ne le completera jamais utilement ici**, parce qu'il ne touche ni la base ni l'authentification. Il a repondu `200` pendant les 10 jours de panne. Un indicateur qui reste vert pendant la panne qu'il est cense couvrir est pire qu'absent : il rassure.
+
+### Les 3 pieges, tous rencontres
+
+- **Le deploiement qui sert n'est pas le dernier cree.** Comparer les dates du dernier deploiement avec celles des ecritures de variables ne prouve rien : l'objet qui compte est celui qui porte l'alias.
+- **Un `401` peut venir de Vercel, pas de l'application.** La Deployment Protection garde les URL techniques et rend elle-meme un `401` sur le login et un `302` sur `/api/health`. Sur une URL technique, passer par `vercel curl <chemin> --deployment <url> -- <args>`, et verifier que le corps est bien `INVALID_EMAIL_OR_PASSWORD`.
+- **Un `promote` peut reactiver l'attribution automatique des domaines** sans le dire ([vercel/vercel#15095](https://github.com/vercel/vercel/issues/15095)). Si le reglage etait a `false` deliberement, le relire apres.
 
 ## Consequence : les migrations partent AVANT la fusion
 
@@ -41,12 +145,9 @@ Les logs de build sont identiques avec et sans ces champs : ils ne peuvent pas s
 
 ## Une verification porte sur la chose elle-meme, pas sur un indicateur correle
 
-Regle de methode, formulee apres l'avoir manquee 3 fois en 2 jours sur ce chantier.
+Avant d'ecrire « verifie », s'assurer que la source consultee **pourrait** montrer le phenomene cherche. Une preuve d'absence tiree d'une source qui ne couvre pas le phenomene n'est pas une preuve. Et un fait repris d'une session anterieure n'est pas une mesure : le dire, ou le remesurer.
 
-- Panne d'**empaquetage** de la fonction : conclue « rien n'a change » en comparant les logs de **build**, qui ne decrivent pas l'empaquetage. Les logs sont identiques avec et sans les 3 champs.
-- Correctif `.mjs` annonce comme valide : mesure faite sur le **handler** du paquet, pas sur son **contenu**. Un handler correct ne dit rien des modules presents a cote, et il manquait `cors`.
-
-Donc : avant d'ecrire « verifie », s'assurer que la source consultee **pourrait** montrer le phenomene cherche. Une preuve d'absence tiree d'une source qui ne couvre pas le phenomene n'est pas une preuve.
+Les occurrences sur ce chantier sont consignees dans `docs/incidents.md`, qui est le journal. Elles n'ont pas leur place ici : une rule enonce une contrainte, elle ne tient pas le compte des fois ou elle a ete manquee.
 
 Et le compte rendu **nomme ce qui a ete mesure et ce qui ne l'a pas ete**. « Le handler est correct » n'est pas « le paquet est correct » ; dire lequel des 2 a ete observe fait partie du resultat, pas des precautions.
 
