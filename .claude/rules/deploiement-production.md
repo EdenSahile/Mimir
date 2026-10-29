@@ -14,7 +14,7 @@ Consequence a retenir, parce qu'elle rend la panne invisible : **les variables d
 
 Donc, apres toute fusion dont le resultat doit etre en ligne : **verifier quel deploiement porte l'alias**, pas seulement qu'un deploiement recent existe. Les 2 controles de sortie de la rule `bases-et-identifiants` sont faits pour ca, et le second est le seul qui touche la base.
 
-Un ticket ouvert porte le choix de fond : reactiver l'attribution automatique du domaine, ou assumer une promotion explicite et l'ecrire dans la procedure.
+Le choix de fond n'est pas tranche, et **aucun ticket ne le porte au 2026-10-29** : soit reactiver l'attribution automatique du domaine, soit assumer une promotion explicite et l'ecrire dans la procedure. MIM-56 ne couvre pas ce reglage, il porte le choix d'un nom de domaine.
 
 ## Consequence : les migrations partent AVANT la fusion
 
