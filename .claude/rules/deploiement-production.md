@@ -78,6 +78,48 @@ Un `500` sur le candidat signifie que le probleme n'est pas le domaine : ne rien
 
 MIM-62 porte cette correction. MIM-56 ne couvre pas ce reglage, il porte le choix d'un nom de domaine.
 
+## Runbook : toute rotation de secret casse la production si elle s'arrete au fournisseur
+
+**C'est la lecon principale de l'incident du 2026-10-18 au 29**, et elle passe devant toute idee de supervision, parce qu'elle traite la cause et non la detection.
+
+Le mecanisme, en une phrase : **les variables d'environnement sont copiees dans le deploiement a sa creation**, pas lues a chaque requete. Changer un secret cote Vercel n'atteint donc **aucun** deploiement existant. Le deploiement qui sert continue avec l'ancienne valeur, indefiniment, et il la presentera a un fournisseur qui ne l'accepte plus.
+
+Vaut pour **tout** secret, pas seulement le mot de passe de base : `DATABASE_URL`, `DIRECT_URL`, `BETTER_AUTH_SECRET`, et le futur bucket. Un `BETTER_AUTH_SECRET` rotate sans redeploiement casse 100 % des connexions reelles tout en laissant la base joignable.
+
+### La sequence, dans cet ordre
+
+L'ordre impose une fenetre de panne de quelques minutes, entre la rotation et la mise en ligne. Elle est le prix de la rotation, pas un defaut de la procedure.
+
+1. **Fournisseur** : changer le secret a la source. Pour une base Neon, le role est **par branche**, donc une seule branche est touchee.
+2. **Vercel** : remplacer la ou les variables dans l'environnement concerne. Pour une base, `DATABASE_URL` **et** `DIRECT_URL`, la poolee et la directe. En oublier une donne exactement la meme panne.
+3. **Redeployer** cet environnement. Sans ca, rien n'a change pour le code qui tourne.
+4. **Verifier que le domaine sert le nouveau deploiement**, et pas seulement qu'un nouveau deploiement existe :
+   ```bash
+   vercel inspect https://<domaine>     # l'identifiant du deploiement a-t-il change ?
+   ```
+   S'il n'a pas change, `vercel promote <url-du-nouveau-deploiement>`. **C'est l'etape qui a manque pendant 11 jours.**
+5. **Lancer le controle de sortie** ci-dessous.
+
+### Le controle de sortie qui termine une rotation
+
+Une rotation n'est pas terminee quand la variable est ecrite. Elle est terminee quand ceci repond :
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" -X POST https://<domaine>/api/auth/sign-in/email \
+  -H "Content-Type: application/json" \
+  -d '{"email":"inexistant@example.invalid","password":"MotDePasseQuiNExistePas123!"}'
+```
+
+**`401` attendu. `500` signifie que la rotation est incomplete.** C'est le seul controle qui touche la base : `401` prouve que la recherche d'utilisateur a eu lieu, donc que la nouvelle chaine fonctionne.
+
+**`/api/health` ne remplace pas ce controle et ne le completera jamais utilement ici**, parce qu'il ne touche ni la base ni l'authentification. Il a repondu `200` pendant les 10 jours de panne. Un indicateur qui reste vert pendant la panne qu'il est cense couvrir est pire qu'absent : il rassure.
+
+### Les 3 pieges, tous rencontres
+
+- **Le deploiement qui sert n'est pas le dernier cree.** Comparer les dates du dernier deploiement avec celles des ecritures de variables ne prouve rien : l'objet qui compte est celui qui porte l'alias.
+- **Un `401` peut venir de Vercel, pas de l'application.** La Deployment Protection garde les URL techniques et rend elle-meme un `401` sur le login et un `302` sur `/api/health`. Sur une URL technique, passer par `vercel curl <chemin> --deployment <url> -- <args>`, et verifier que le corps est bien `INVALID_EMAIL_OR_PASSWORD`.
+- **Un `promote` peut reactiver l'attribution automatique des domaines** sans le dire ([vercel/vercel#15095](https://github.com/vercel/vercel/issues/15095)). Si le reglage etait a `false` deliberement, le relire apres.
+
 ## Consequence : les migrations partent AVANT la fusion
 
 La production n'applique pas ses migrations pendant son build (DEC-012) : elle passe par `pnpm db:deploy`, lance par l'utilisateur. Donc **avant toute PR qui apporte une nouvelle migration, `pnpm db:deploy` est lance contre la production AVANT la fusion**. Sans ca, le code arrive sur un schema qu'il ne reconnait pas, et rien ne le migrerait.
