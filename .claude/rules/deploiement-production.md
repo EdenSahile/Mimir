@@ -120,6 +120,16 @@ curl -s -o /dev/null -w "%{http_code}\n" -X POST https://<domaine>/api/auth/sign
 - **Un `401` peut venir de Vercel, pas de l'application.** La Deployment Protection garde les URL techniques et rend elle-meme un `401` sur le login et un `302` sur `/api/health`. Sur une URL technique, passer par `vercel curl <chemin> --deployment <url> -- <args>`, et verifier que le corps est bien `INVALID_EMAIL_OR_PASSWORD`.
 - **Un `promote` peut reactiver l'attribution automatique des domaines** sans le dire ([vercel/vercel#15095](https://github.com/vercel/vercel/issues/15095)). Si le reglage etait a `false` deliberement, le relire apres.
 
+## Le moniteur n'est jamais heberge dans le systeme qu'il surveille
+
+Un controle qui vit dans le systeme qu'il observe meurt avec lui, et **son silence sera lu comme un succes**. C'est la forme generale du defaut qui a laisse passer 10 jours de panne : `/api/health` repondait `200` parce qu'il ne touchait pas ce qui etait casse.
+
+Concretement sur ce projet : **pas de cron Vercel dans le projet Mimir pour surveiller Mimir.** La panne qui abat les fonctions abattrait son temoin.
+
+Le corollaire, moins intuitif et tout aussi contraignant : **l'absence de verification doit elle-meme etre detectable.** Un service de supervision tiers peut se mettre en pause, expirer ou perdre son palier gratuit sans bruit. Il faut donc un temoin d'activite dont l'absence est alertee, et ce temoin ne vit pas chez le moniteur qu'il surveille, pour la meme raison.
+
+Ecrit ici et pas seulement dans un ticket : **un ticket se ferme, une rule reste.** Le jour ou le ticket de supervision passera en DONE, ce principe doit survivre a sa fermeture, sinon personne ne saura plus pourquoi le moniteur est chez un tiers. La mise en oeuvre est le sujet d'un ticket ; le principe est le sujet de cette rule.
+
 ## Consequence : les migrations partent AVANT la fusion
 
 La production n'applique pas ses migrations pendant son build (DEC-012) : elle passe par `pnpm db:deploy`, lance par l'utilisateur. Donc **avant toute PR qui apporte une nouvelle migration, `pnpm db:deploy` est lance contre la production AVANT la fusion**. Sans ca, le code arrive sur un schema qu'il ne reconnait pas, et rien ne le migrerait.
