@@ -15,6 +15,14 @@ Ce fichier guide Claude Code pendant le développement de Mímir. Il ne fait pas
 - Recherche vectorielle : pgvector
 - IA : Claude API
 
+### Version de Node : ligne 24, plancher 24.22.1
+
+Les 3 environnements suivent la **ligne 24** : la machine de dev par `.nvmrc`, la CI par `node-version-file: .nvmrc`, et les fonctions Vercel par le réglage du projet. Le plancher `>=24.22.1` est déclaré dans `engines.node` du `package.json` racine.
+
+Le plancher n'est pas arbitraire : il est la première version 24.x corrigeant les 10 CVE de la publication de sécurité Node du 2026-10-21, dont **CVE-2026-111497**, une écriture hors limites dans le décodeur Brotli embarqué dans Node, entrée dans la liste CISA des failles exploitées le 2026-10-27. Les lignes 22.x et 26.x ont leurs propres correctifs, 22.23.4 et 26.12.1 ; toutes les autres, dont 20.x et 25.x, restent vulnérables et ne recevront rien.
+
+**Ne jamais épingler un patch exact** dans `.nvmrc` ni dans la CI. `24` désigne le dernier 24.x disponible, donc les correctifs de sécurité suivants arrivent d'eux-mêmes. Figer `24.22.1` ferait rater le prochain. Le plancher appartient à `engines`, la ligne appartient à `.nvmrc`.
+
 ## Structure
 
 ```
@@ -40,6 +48,14 @@ pnpm db:deploy <.env>  # Appliquer les migrations en attente sur la base du fich
                        # ou DIRECT_URL="..." pnpm db:deploy, sans fichier
 pnpm db:audit <.env>   # Mesurer en lecture seule l'etat d'une base (meme 2 formes)
 ```
+
+Pour exécuter du SQL ponctuel, depuis `packages/db` et **sans `--schema`** :
+
+```bash
+echo "SELECT 1;" | DIRECT_URL="..." pnpm exec prisma db execute --stdin
+```
+
+Depuis Prisma 7, `schema` vit dans `prisma.config.ts`, et passer `--schema` fait échouer la commande en réaffichant son aide, « Script input, only 1 must be provided », qui désigne l'entrée du script alors que le fautif est le drapeau. Les variables se passent devant la commande, pour la durée de cette seule commande, jamais par `export`.
 
 `db:push` applique le schéma sans rien inscrire dans l'historique des migrations : la base se retrouve désalignée, et le `db:deploy` suivant échoue sur un objet déjà existant. Il ne s'utilise donc que sur la base de développement local et sur celle de test, jamais sur preview ni sur production, où le schéma ne change que par une migration. Le contrôle est automatique : `packages/db/cliDatasource` refuse un `db push` dont la cible n'est pas l'une de ces 2 bases.
 

@@ -1,14 +1,26 @@
-# Deploiement : chaque fusion dans `dev` deploie la production
+# Deploiement : une fusion dans `dev` construit la production, elle ne la met pas en ligne
 
-L'environnement **Production** du projet Vercel suit la branche **`dev`**. L'environnement Preview suit toutes les autres branches. **Il n'y a pas de branche `main`**, et il n'existe aucune etape de promotion apres la fusion : fusionner une PR dans `dev` deploie la production.
+L'environnement **Production** du projet Vercel suit la branche **`dev`**. L'environnement Preview suit toutes les autres branches. **Il n'y a pas de branche `main`.**
 
-Verifie le 2026-10-18 dans Settings → Environments et par l'API Vercel, qui renvoie `productionBranch: dev`. Ne pas ecrire de procedure qui suppose un `main`, ni parler de « promotion » : le mot exact est « fusion ».
+Verifie le 2026-10-18 dans Settings → Environments et par l'API Vercel, qui renvoie `productionBranch: dev`. Ne pas ecrire de procedure qui suppose un `main`.
+
+## Corrige le 2026-10-29 : la fusion ne suffit pas, le domaine est epingle
+
+Cette rule affirmait qu'il n'existe aucune etape de promotion apres la fusion. **C'est faux**, et ca a coute 10 jours de panne d'authentification en production.
+
+Le projet porte **`autoAssignCustomDomains: false`**. Un nouveau deploiement de production est donc construit, passe a `READY`, et **ne prend pas le domaine** : l'alias reste la ou une promotion l'a mis. Mesure du 2026-10-29 : `mimir-navy.vercel.app` servait encore un deploiement du **2026-10-18**, et les **7 deploiements de production posterieurs**, tous `READY`, ne servaient aucun trafic.
+
+Consequence a retenir, parce qu'elle rend la panne invisible : **les variables d'environnement sont figees dans le deploiement a sa creation.** Changer `DATABASE_URL` sur Vercel puis fusionner ne touche donc pas le deploiement qui sert, qui continue avec l'ancienne valeur. C'est exactement ce qui a produit un `/api/health` a `200` et un `sign-in` a `500` pendant 10 jours.
+
+Donc, apres toute fusion dont le resultat doit etre en ligne : **verifier quel deploiement porte l'alias**, pas seulement qu'un deploiement recent existe. Les 2 controles de sortie de la rule `bases-et-identifiants` sont faits pour ca, et le second est le seul qui touche la base.
+
+Le choix de fond n'est pas tranche, et **aucun ticket ne le porte au 2026-10-29** : soit reactiver l'attribution automatique du domaine, soit assumer une promotion explicite et l'ecrire dans la procedure. MIM-56 ne couvre pas ce reglage, il porte le choix d'un nom de domaine.
 
 ## Consequence : les migrations partent AVANT la fusion
 
 La production n'applique pas ses migrations pendant son build (DEC-012) : elle passe par `pnpm db:deploy`, lance par l'utilisateur. Donc **avant toute PR qui apporte une nouvelle migration, `pnpm db:deploy` est lance contre la production AVANT la fusion**. Sans ca, le code arrive sur un schema qu'il ne reconnait pas, et rien ne le migrerait.
 
-**La base est alors en avance sur le code pendant quelques minutes**, le temps de la fusion et du deploiement. C'est acceptable ou non selon la nature de la migration.
+**La base est alors en avance sur le code**, le temps de la fusion et de la mise en ligne. Tant que le domaine reste epingle, cette fenetre ne dure pas quelques minutes mais jusqu'a la promotion, donc potentiellement des jours. C'est acceptable ou non selon la nature de la migration.
 
 - **Migration additive** (nouvelle table, nouvelle colonne nullable, nouvel index) : sans effet, l'ancien code ignore ce qu'il ne connait pas.
 - **Migration destructrice** (colonne supprimee ou renommee, contrainte resserree, type change) : l'ancien code lit ou ecrit ce qui vient de disparaitre, et il casse. Elle demande un **decoupage en 2 temps**, 2 PR distinctes : d'abord une migration additive plus un code qui n'utilise plus l'ancienne forme, fusionne et deploye ; puis la migration qui supprime. Jamais les 2 dans la meme fusion.

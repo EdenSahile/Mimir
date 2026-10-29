@@ -2,6 +2,9 @@
   "name": "mimir",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24.22.1"
+  },
   "scripts": {
     "dev": "pnpm run --parallel dev:api dev:web",
     "dev:api": "pnpm --filter @mimir/api dev",
