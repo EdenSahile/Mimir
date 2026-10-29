@@ -26,12 +26,19 @@ Regle tiree de ces cas : `.claude/rules/deploiement-production.md`, section « U
 
 L'intuition se trompe ici, et dans ce sens precis :
 
-| Phase | Ce qui s'est passe | Cout reel |
+| Phase | Ce qui s'est passe | Cout |
 | --- | --- | --- |
-| **1. La fuite** | Un mot de passe de base colle dans une conversation avec l'agent. Pas dans un commit, pas dans l'historique git, aucune exposition publique. Mimir est un site de demonstration, sans utilisateur reel et sans donnee personnelle de tiers. | **Probablement nul.** |
-| **2. La remediation** | Rotation de precaution du mot de passe, le 2026-10-19. | **10 jours de production cassee**, sans qu'aucun mecanisme ne le signale. |
+| **1. La fuite** | Un mot de passe de base colle dans une conversation avec l'agent, le 2026-10-19. | **Probablement nul.** Conclusion, non mesuree : voir les 2 premisses ci-dessous. |
+| **2. La remediation** | Rotation de precaution de ce mot de passe. | **10 jours de production cassee**, sans qu'aucun mecanisme ne le signale. Mesure : log `P1000` et `vercel inspect`. |
 
-Consequences etablies, a ne pas re-instruire : rien a nettoyer dans l'historique git, aucune question de notification ou de reglementation, aucun autre secret concerne, et le vecteur est connu, donc sans enquete a mener.
+**Le « probablement nul » est une conclusion, pas une mesure.** Elle repose entierement sur 2 premisses **fournies par l'utilisateur le 2026-10-29 et non verifiees par l'agent** :
+
+1. Le vecteur etait une **conversation**, pas un commit : le secret n'est jamais entre dans le depot ni dans l'historique git, donc aucune exposition publique. L'agent n'a pas audite l'historique pour le confirmer.
+2. Mimir est un **site de demonstration**, sans utilisateur reel et sans donnee personnelle de tiers. L'agent n'a pas verifie le contenu de la base de production, et ne detient pas les identifiants pour le faire.
+
+Si l'une des 2 premisses tombe, la conclusion tombe avec elle. **Ne pas relire cette ligne dans six mois comme un fait etabli** : c'est exactement le mecanisme qui a produit l'erreur `autoAssignCustomDomains`, un enonce herite pris pour une mesure. La regle est dans `.claude/rules/mesures-et-enonces.md`.
+
+Decisions prises par l'utilisateur sur ces bases, a ne pas re-instruire : rien a nettoyer dans l'historique git, aucune question de notification ou de reglementation, aucun autre secret concerne, et le vecteur est etabli, donc sans enquete a mener. Ce sont ses decisions, pas des constats de l'agent.
 
 **La lecon** : le danger n'etait pas la fuite, c'etait la rotation incomplete. Une rotation presentee comme « bon marche » a coute 10 jours d'indisponibilite. D'ou le runbook de `.claude/rules/deploiement-production.md`, qui traite la cause, et qui passe devant toute idee de supervision.
 
