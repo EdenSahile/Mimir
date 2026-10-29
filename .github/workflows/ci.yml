@@ -17,7 +17,9 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          # La ligne majeure, jamais un patch exact : la valeur resout vers le
+          # dernier 24.x, donc la CI recupere les correctifs de securite d'elle-meme.
+          node-version-file: .nvmrc
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
