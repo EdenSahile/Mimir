@@ -17,9 +17,9 @@
     "@prisma/client": "^7.10.1"
   },
   "devDependencies": {
-    "dotenv-cli": "^11.0.0",
+    "dotenv-cli": "^11.1.0",
     "prisma": "^7.10.1",
     "tsx": "^4.19.0",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   }
 }
